@@ -3,428 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>프리미엄 플레이어</title>
-
-    <!-- PWA 설정 -->
+    <title>내 뮤직 플레이어</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e1e1e">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
-    <!-- CSS: 디자인 및 스타일 -->
     <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-color: #bb86fc;
-            --secondary-color: #03dac6;
-            --text-color: #e0e0e0;
-            --subtle-text-color: #888;
-            --border-color: #333;
-            --danger-color: #cf6679;
-        }
-        html {
-            box-sizing: border-box;
-        }
-        *, *:before, *:after {
-            box-sizing: inherit;
-        }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
-        .app-container {
+        :root{--bg-color:#121212;--surface-color:#1e1e1e;--primary-color:#bb86fc;--secondary-color:#03dac6;--text-color:#e0e0e0;--subtle-text-color:#888;--border-color:#333;--danger-color:#cf6679;}
+        html{box-sizing:border-box;}*,*:before,*:after{box-sizing:inherit;}
+        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:var(--bg-color);color:var(--text-color);padding:15px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}
+        .app-container{width:100%;max-width:500px;background-color:var(--surface-color);border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:20px;overflow:hidden;}
+        header h1{text-align:center;font-size:24px;color:var(--primary-color);margin:0 0 20px 0;}
+        .input-section{display:flex;gap:10px;margin-bottom:20px;}
+        #youtubeUrl{flex-grow:1;min-width:0;background-color:var(--bg-color);border:1px solid var(--border-color);border-radius:12px;padding:12px;font-size:14px;color:var(--text-color);}
+        #youtubeUrl:focus{outline:none;border-color:var(--primary-color);}
+        #addBtn{flex-shrink:0;padding:0 20px;font-size:14px;font-weight:600;border:none;border-radius:12px;cursor:pointer;color:#121212;background:linear-gradient(45deg,var(--primary-color),var(--secondary-color));touch-action:manipulation;}
+        #addBtn:disabled{background:var(--border-color);color:var(--subtle-text-color);cursor:not-allowed;}
+        
+        /* 플레이어 섹션 UI 변경 */
+        .player-section { margin-bottom: 20px; text-align: center; }
+        .album-art-section {
             width: 100%;
-            max-width: 500px;
-            background-color: var(--surface-color);
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,.3);
-            padding: 20px;
-        }
-        header h1 {
-            text-align: center;
-            font-size: 24px;
-            color: var(--primary-color);
-            margin: 0 0 20px 0;
-        }
-        .input-section {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        #youtubeUrl {
-            flex-grow: 1;
-            min-width: 0; /* flex item이 줄어들 수 있도록 함 */
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 12px;
-            font-size: 14px;
-            color: var(--text-color);
-        }
-        #youtubeUrl:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        #addBtn {
-            flex-shrink: 0; /* 버튼 크기 고정 */
-            padding: 0 20px;
-            font-size: 14px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            color: #121212;
-            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-            touch-action: manipulation;
-        }
-        #addBtn:disabled {
-            background: var(--border-color);
-            color: var(--subtle-text-color);
-            cursor: not-allowed;
-        }
-        .player-section {
-            margin-bottom: 20px;
-        }
-        #nowPlaying {
-            font-size: 14px;
-            color: var(--subtle-text-color);
-            text-align: center;
-            margin-bottom: 10px;
-            height: 20px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        video {
-            width: 100%;
-            border-radius: 12px;
+            max-width: 250px;
+            margin: 0 auto 15px auto;
+            aspect-ratio: 1 / 1;
             background-color: #000;
-            aspect-ratio: 16 / 9; /* 비디오 비율 유지 */
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .playlist-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 0 5px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .playlist-controls label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .control-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .control-buttons button {
-            background: none;
-            border: 1px solid var(--border-color);
-            color: var(--subtle-text-color);
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .control-buttons button.danger {
-            border-color: var(--danger-color);
-            color: var(--danger-color);
-        }
-        #playlist {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: calc(100vh - 550px); /* 화면 크기에 따라 유연하게 높이 조절 */
-            min-height: 100px;
-            overflow-y: auto;
-        }
-        #playlist li {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color .2s;
-        }
-        #playlist li:hover {
-            background-color: rgba(255,255,255,.05);
-        }
-        .thumbnail {
-            width: 80px;
-            height: 45px;
-            border-radius: 6px;
+        #albumArt {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            flex-shrink: 0;
         }
-        .video-info {
-            flex-grow: 1;
-            overflow: hidden;
-        }
-        .video-info .title {
-            font-size: 15px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin: 0 0 4px 0;
-        }
-        .video-info .channel {
-            font-size: 12px;
-            color: var(--subtle-text-color);
-            margin: 0;
-        }
-        input[type=checkbox] {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--subtle-text-color);
-            border-radius: 6px;
-            cursor: pointer;
-            position: relative;
-            flex-shrink: 0;
-        }
-        input[type=checkbox]:checked {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        input[type=checkbox]:checked::after {
-            content: '✔';
-            color: var(--surface-color);
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 14px;
-        }
+        #nowPlaying { font-size: 16px; font-weight: 500; color: var(--text-color); margin-bottom: 5px; height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #nowPlayingChannel { font-size: 14px; color: var(--subtle-text-color); height: 20px; margin-bottom: 15px; }
+        audio { width: 100%; }
+
+        .playlist-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding:0 5px;flex-wrap:wrap;gap:10px;}
+        .playlist-controls label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;}
+        .control-buttons{display:flex;gap:10px;}
+        .control-buttons button{background:none;border:1px solid var(--border-color);color:var(--subtle-text-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;}
+        .control-buttons button.danger{border-color:var(--danger-color);color:var(--danger-color);}
+        #playlist{list-style:none;padding:0;margin:0;max-height:calc(100vh - 600px);min-height:100px;overflow-y:auto;}
+        #playlist li{display:flex;align-items:center;gap:15px;padding:10px;border-radius:10px;cursor:pointer;transition:background-color .2s;}
+        #playlist li.playing { background-color: rgba(187, 134, 252, 0.1); }
+        #playlist li:hover{background-color:rgba(255,255,255,.05);}
+        .thumbnail{width:50px;height:50px;border-radius:6px;object-fit:cover;flex-shrink:0;}
+        .video-info{flex-grow:1;overflow:hidden;}
+        .video-info .title{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 4px 0;}
+        .video-info .channel{font-size:12px;color:var(--subtle-text-color);margin:0;}
+        input[type=checkbox]{appearance:none;-webkit-appearance:none;width:20px;height:20px;border:2px solid var(--subtle-text-color);border-radius:6px;cursor:pointer;position:relative;flex-shrink:0;}
+        input[type=checkbox]:checked{background-color:var(--primary-color);border-color:var(--primary-color);}
+        input[type=checkbox]:checked::after{content:'✔';color:var(--surface-color);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:14px;}
     </style>
 </head>
 <body>
-
     <div class="app-container">
-        <header>
-            <h1>내 플레이리스트</h1>
-        </header>
-
+        <header><h1>내 뮤직 플레이어</h1></header>
         <main>
             <div class="input-section">
                 <input type="text" id="youtubeUrl" placeholder="유튜브 링크 붙여넣기">
                 <button id="addBtn">추가</button>
             </div>
-            
             <div class="player-section">
-                <p id="nowPlaying">재생할 영상을 선택하세요.</p>
-                <video id="mediaPlayer" controls controlslist="nodownload" playsinline></video>
+                <div class="album-art-section">
+                    <img id="albumArt" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333'%3E%3Cpath d='M9.525 5.5A.525.525 0 0 0 9 6.025v11.45a.525.525 0 0 0 .525.525h5a.525.525 0 0 0 .525-.525V6.025a.525.525 0 0 0-.525-.525h-5ZM9.525 4C8.683 4 8 4.683 8 5.525v11.45C8 17.817 8.683 18.5 9.525 18.5h5c.842 0 1.525-.683 1.525-1.525V5.525C16.05 4.683 15.367 4 14.525 4h-5Z'/%3E%3Cpath d='M12.025 16.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z'/%3E%3C/svg%3E" alt="앨범 아트">
+                </div>
+                <p id="nowPlaying">재생할 음악을 선택하세요.</p>
+                <p id="nowPlayingChannel"></p>
+                <audio id="mediaPlayer" controls controlslist="nodownload"></audio>
             </div>
-            
             <div class="playlist-section">
                 <div class="playlist-controls">
-                    <label>
-                        <input type="checkbox" id="selectAllCheckbox">
-                        <span>전체 선택</span>
-                    </label>
+                    <label><input type="checkbox" id="selectAllCheckbox"><span>전체 선택</span></label>
                     <div class="control-buttons">
                         <button id="deleteSelectedBtn">선택 삭제</button>
                         <button id="clearAllBtn" class="danger">전체 삭제</button>
                     </div>
                 </div>
-                <ul id="playlist">
-                    <!-- 플레이리스트 아이템이 여기에 동적으로 추가됩니다. -->
-                </ul>
+                <ul id="playlist"></ul>
             </div>
         </main>
     </div>
-
-    <!-- 서비스 워커 등록 스크립트 -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('서비스 워커 등록 성공:', registration);
-            })
-            .catch(error => {
-              console.log('서비스 워커 등록 실패:', error);
-            });
-        });
-      }
+      if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').then(reg=>console.log('서비스 워커 등록 성공:',reg)).catch(err=>console.log('서비스 워커 등록 실패:',err));});}
     </script>
-    
-    <!-- 앱 기능 전체 스크립트 -->
     <script>
-        const urlInput = document.getElementById('youtubeUrl');
-        const addBtn = document.getElementById('addBtn');
-        const mediaPlayer = document.getElementById('mediaPlayer');
-        const nowPlaying = document.getElementById('nowPlaying');
-        const playlistElement = document.getElementById('playlist');
-        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-        
+        const urlInput=document.getElementById('youtubeUrl'),addBtn=document.getElementById('addBtn'),mediaPlayer=document.getElementById('mediaPlayer'),nowPlaying=document.getElementById('nowPlaying'),nowPlayingChannel=document.getElementById('nowPlayingChannel'),albumArt=document.getElementById('albumArt'),playlistElement=document.getElementById('playlist'),selectAllCheckbox=document.getElementById('selectAllCheckbox'),deleteSelectedBtn=document.getElementById('deleteSelectedBtn'),clearAllBtn=document.getElementById('clearAllBtn');
         const BACKEND_URL = "https://getvideoinfo-jwzyh4xuka-uc.a.run.app"; 
+        let playlist=[],currentPlayingIndex=-1;
         
-        let playlist = [];
+        window.addEventListener('load',loadPlaylist);addBtn.addEventListener('click',addVideo);deleteSelectedBtn.addEventListener('click',deleteSelected);clearAllBtn.addEventListener('click',clearAll);selectAllCheckbox.addEventListener('change',toggleSelectAll);
+        mediaPlayer.addEventListener('ended', playNext);
 
-        window.addEventListener('load', loadPlaylist); 
-        addBtn.addEventListener('click', addVideo);
-        deleteSelectedBtn.addEventListener('click', deleteSelected);
-        clearAllBtn.addEventListener('click', clearAll);
-        selectAllCheckbox.addEventListener('change', toggleSelectAll);
-
-        function renderPlaylist() {
-            playlistElement.innerHTML = '';
-            if (playlist.length === 0) {
-                playlistElement.innerHTML = `<li style="justify-content:center; color: var(--subtle-text-color);">재생 목록이 비어있습니다.</li>`;
-            } else {
-                playlist.forEach((video, index) => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <input type="checkbox" class="item-checkbox" data-index="${index}">
-                        <img class="thumbnail" src="${video.thumbnail}" alt="영상 썸네일">
-                        <div class="video-info">
-                            <h3 class="title">${video.title}</h3>
-                            <p class="channel">${video.channel}</p>
-                        </div>
-                    `;
-                    li.addEventListener('click', (e) => {
-                        if (e.target.type !== 'checkbox') playVideo(index);
-                    });
-                    playlistElement.appendChild(li);
-                });
-            }
-            updateSelectAllCheckboxState();
-        }
-
-        async function addVideo() {
-            const url = urlInput.value.trim();
-            if (!isValidYouTubeUrl(url)) {
-                alert("올바른 유튜브 링크를 입력해주세요.");
-                return;
-            }
-
-            nowPlaying.textContent = "영상 정보 불러오는 중...";
-            addBtn.disabled = true;
-
-            try {
-                const response = await fetch(`${BACKEND_URL}?url=${encodeURIComponent(url)}`);
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || '서버에서 정보를 가져오지 못했습니다.');
-                }
-                const videoData = await response.json();
-
-                const newVideo = {
-                    title: videoData.title,
-                    channel: videoData.channel,
-                    thumbnail: videoData.thumbnail,
-                    streamUrl: videoData.streamUrl,
-                };
-                
-                playlist.push(newVideo);
-                savePlaylist();
-                renderPlaylist();
-                urlInput.value = '';
-
-            } catch (error) {
-                console.error(error);
-                alert(`오류: ${error.message}`);
-            } finally {
-                nowPlaying.textContent = "재생할 영상을 선택하세요.";
-                addBtn.disabled = false;
-            }
-        }
-
-        function playVideo(index) {
-            const video = playlist[index];
-            if (!video || !video.streamUrl) {
-                alert("재생할 수 없는 영상입니다.");
-                return;
-            }
-            nowPlaying.textContent = `현재 재생 중: ${video.title}`;
-            mediaPlayer.src = video.streamUrl;
-            mediaPlayer.play();
-        }
-        
-        function deleteSelected(){
-            const checkedIndexes = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => parseInt(cb.dataset.index));
-            if(checkedIndexes.length === 0){
-                alert("삭제할 영상을 선택해주세요.");
-                return;
-            }
-            checkedIndexes.sort((a, b) => b - a).forEach(index => {
-                playlist.splice(index, 1);
-            });
-            savePlaylist();
-            renderPlaylist();
-        }
-
-        function clearAll(){
-            if (confirm("정말로 전체 목록을 삭제하시겠습니까?")) {
-                playlist = [];
-                savePlaylist();
-                renderPlaylist();
-            }
-        }
-
-        function toggleSelectAll(){
-            const isChecked = selectAllCheckbox.checked;
-            document.querySelectorAll('.item-checkbox').forEach(checkbox => {
-                checkbox.checked = isChecked;
-            });
-        }
-        
-        function updateSelectAllCheckboxState(){
-             const allCheckboxes = document.querySelectorAll('.item-checkbox');
-             const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
-             
-             if(allCheckboxes.length === 0){
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-             } else if (checkedCount === allCheckboxes.length) {
-                selectAllCheckbox.checked = true;
-                selectAllCheckbox.indeterminate = false;
-             } else if (checkedCount > 0) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true;
-             } else {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-             }
-        }
-        
-        playlistElement.addEventListener('change', (e) => {
-            if (e.target.classList.contains('item-checkbox')) {
-                updateSelectAllCheckboxState();
-            }
-        });
-
-        function savePlaylist(){
-            localStorage.setItem('premiumPlaylist', JSON.stringify(playlist));
-        }
-
-        function loadPlaylist(){
-            const savedPlaylist = localStorage.getItem('premiumPlaylist');
-            if (savedPlaylist) {
-                playlist = JSON.parse(savedPlaylist);
-            }
-            renderPlaylist();
-        }
-
-        function isValidYouTubeUrl(url){
-            return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url);
-        }
+        function renderPlaylist(){playlistElement.innerHTML='';if(playlist.length===0){playlistElement.innerHTML=`<li style="justify-content:center;color:var(--subtle-text-color);">재생 목록이 비어있습니다.</li>`;}else{playlist.forEach((video,index)=>{const li=document.createElement('li');li.dataset.index=index;if(index===currentPlayingIndex)li.classList.add('playing');li.innerHTML=`<input type="checkbox" class="item-checkbox" data-index="${index}"><img class="thumbnail" src="${video.thumbnail}" alt="앨범 아트"><div class="video-info"><h3 class="title">${video.title}</h3><p class="channel">${video.channel}</p></div>`;li.addEventListener('click',e=>{if(e.target.type!=='checkbox')playVideo(index);});playlistElement.appendChild(li);});}updateSelectAllCheckboxState();}
+        async function addVideo(){const url=urlInput.value.trim();if(!isValidYouTubeUrl(url)){alert("올바른 유튜브 링크를 입력해주세요.");return;}nowPlaying.textContent="음악 정보 불러오는 중...";addBtn.disabled=true;try{const response=await fetch(`${BACKEND_URL}?url=${encodeURIComponent(url)}`);if(!response.ok){const errorData=await response.json();throw new Error(errorData.error||'서버에서 정보를 가져오지 못했습니다.');}const videoData=await response.json();const newVideo={title:videoData.title,channel:videoData.channel,thumbnail:videoData.thumbnail,streamUrl:videoData.streamUrl,};playlist.push(newVideo);savePlaylist();renderPlaylist();}catch(error){console.error(error);alert(`오류: ${error.message}`);}finally{nowPlaying.textContent="재생할 음악을 선택하세요.";addBtn.disabled=false;}}
+        function playVideo(index){const video=playlist[index];if(!video||!video.streamUrl){alert("재생할 수 없는 음악입니다.");return;}nowPlaying.textContent=video.title;nowPlayingChannel.textContent=video.channel;albumArt.src=video.thumbnail;mediaPlayer.src=video.streamUrl;mediaPlayer.play();currentPlayingIndex=index;renderPlaylist();}
+        function playNext(){if(currentPlayingIndex > -1 && currentPlayingIndex < playlist.length - 1){playVideo(currentPlayingIndex+1);}else{nowPlaying.textContent='재생할 음악을 선택하세요.';nowPlayingChannel.textContent='';albumArt.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23333\'%3E%3Cpath d=\'M9.525 5.5A.525.525 0 0 0 9 6.025v11.45a.525.525 0 0 0 .525.525h5a.525.525 0 0 0 .525-.525V6.025a.525.525 0 0 0-.525-.525h-5ZM9.525 4C8.683 4 8 4.683 8 5.525v11.45C8 17.817 8.683 18.5 9.525 18.5h5c.842 0 1.525-.683 1.525-1.525V5.525C16.05 4.683 15.367 4 14.525 4h-5Z\'/%3E%3Cpath d=\'M12.025 16.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z\'/%3E%3C/svg%3E';currentPlayingIndex=-1;renderPlaylist();}}
+        function deleteSelected(){const checkedIndexes=Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb=>parseInt(cb.dataset.index));if(checkedIndexes.length===0){alert("삭제할 음악을 선택해주세요.");return;}checkedIndexes.sort((a,b)=>b-a).forEach(index=>{playlist.splice(index,1)});savePlaylist();renderPlaylist();}
+        function clearAll(){if(confirm("정말로 전체 목록을 삭제하시겠습니까?")){playlist=[];savePlaylist();renderPlaylist();}}
+        function toggleSelectAll(){const isChecked=selectAllCheckbox.checked;document.querySelectorAll('.item-checkbox').forEach(checkbox=>checkbox.checked=isChecked);}
+        function updateSelectAllCheckboxState(){const allCheckboxes=document.querySelectorAll('.item-checkbox'),checkedCount=document.querySelectorAll('.item-checkbox:checked').length;if(allCheckboxes.length===0){selectAllCheckbox.checked=false;selectAllCheckbox.indeterminate=false;}else if(checkedCount===allCheckboxes.length){selectAllCheckbox.checked=true;selectAllCheckbox.indeterminate=false;}else if(checkedCount>0){selectAllCheckbox.checked=false;selectAllCheckbox.indeterminate=true;}else{selectAllCheckbox.checked=false;selectAllCheckbox.indeterminate=false;}}
+        playlistElement.addEventListener('change',e=>{if(e.target.classList.contains('item-checkbox'))updateSelectAllCheckboxState();});function savePlaylist(){localStorage.setItem('premiumPlaylist',JSON.stringify(playlist));}
+        function loadPlaylist(){const savedPlaylist=localStorage.getItem('premiumPlaylist');if(savedPlaylist)playlist=JSON.parse(savedPlaylist);renderPlaylist();}
+        function isValidYouTubeUrl(url){return/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url);}
     </script>
 </body>
 </html>
-
