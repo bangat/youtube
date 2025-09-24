@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>프리미엄 플레이어</title>
+    
+    <!-- 🎨 CSS: 디자인 및 스타일 -->
+    <style>
+        :root{--bg-color:#121212;--surface-color:#1e1e1e;--primary-color:#bb86fc;--secondary-color:#03dac6;--text-color:#e0e0e0;--subtle-text-color:#888;--border-color:#333;--danger-color:#cf6679;}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:var(--bg-color);color:var(--text-color);padding:20px;box-sizing:border-box;}.app-container{width:100%;max-width:480px;margin:0 auto;background-color:var(--surface-color);border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:25px;box-sizing:border-box;overflow:hidden;}header h1{text-align:center;font-size:26px;color:var(--primary-color);margin:0 0 25px 0;}.input-section{display:flex;gap:10px;margin-bottom:25px;}#youtubeUrl{flex-grow:1;background-color:var(--bg-color);border:1px solid var(--border-color);border-radius:12px;padding:14px;font-size:16px;color:var(--text-color);}#youtubeUrl:focus{outline:none;border-color:var(--primary-color);}#addBtn{padding:0 20px;font-size:16px;font-weight:600;border:none;border-radius:12px;cursor:pointer;color:#121212;background:linear-gradient(45deg,var(--primary-color),var(--secondary-color));touch-action:manipulation;}#addBtn:disabled{background:var(--border-color);color:var(--subtle-text-color);cursor:not-allowed;}.player-section{margin-bottom:25px;}#nowPlaying{font-size:14px;color:var(--subtle-text-color);text-align:center;margin-bottom:10px;height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}video{width:100%;border-radius:12px;background-color:#000;}.playlist-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding:0 5px;}.playlist-controls label{display:flex;align-items:center;gap:8px;cursor:pointer;}.control-buttons{display:flex;gap:10px;}.control-buttons button{background:none;border:1px solid var(--border-color);color:var(--subtle-text-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;}.control-buttons button.danger{border-color:var(--danger-color);color:var(--danger-color);}#playlist{list-style:none;padding:0;margin:0;max-height:300px;overflow-y:auto;}#playlist li{display:flex;align-items:center;gap:15px;padding:10px;border-radius:10px;cursor:pointer;transition:background-color .2s;}#playlist li:hover{background-color:rgba(255,255,255,.05);}.thumbnail{width:80px;height:45px;border-radius:6px;object-fit:cover;flex-shrink:0;}.video-info{flex-grow:1;overflow:hidden;}.video-info .title{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 4px 0;}.video-info .channel{font-size:12px;color:var(--subtle-text-color);margin:0;}input[type=checkbox]{appearance:none;width:20px;height:20px;border:2px solid var(--subtle-text-color);border-radius:6px;cursor:pointer;position:relative;}input[type=checkbox]:checked{background-color:var(--primary-color);border-color:var(--primary-color);}input[type=checkbox]:checked::after{content:'✔';color:var(--surface-color);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:14px;}
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1>내 플레이리스트</h1>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <input type="text" id="youtubeUrl" placeholder="유튜브 링크 붙여넣기">
+                <button id="addBtn">추가</button>
+            </div>
+            
+            <div class="player-section">
+                <p id="nowPlaying">재생할 영상을 선택하세요.</p>
+                <video id="mediaPlayer" controls></video>
+            </div>
+            
+            <div class="playlist-section">
+                <div class="playlist-controls">
+                    <label>
+                        <input type="checkbox" id="selectAllCheckbox">
+                        <span>전체 선택</span>
+                    </label>
+                    <div class="control-buttons">
+                        <button id="deleteSelectedBtn">선택 삭제</button>
+                        <button id="clearAllBtn" class="danger">전체 삭제</button>
+                    </div>
+                </div>
+                <ul id="playlist"></ul>
+            </div>
+        </main>
+    </div>
+
+    <!-- 🧠 JavaScript: 백엔드와 통신하는 최종 버전 -->
+    <script>
+        const urlInput = document.getElementById('youtubeUrl');
+        const addBtn = document.getElementById('addBtn');
+        const mediaPlayer = document.getElementById('mediaPlayer');
+        const nowPlaying = document.getElementById('nowPlaying');
+        const playlistElement = document.getElementById('playlist');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        
+        // --- ❗❗❗ 여기에 배포 후 나온 Function URL을 붙여넣으세요 ❗❗❗ ---
+        const BACKEND_URL = "https://us-central1-youtubu-c770d.cloudfunctions.net/getVideoInfo"; 
+        
+        let playlist = [];
+
+        window.addEventListener('load', loadPlaylist); 
+        addBtn.addEventListener('click', addVideo);
+        deleteSelectedBtn.addEventListener('click', deleteSelected);
+        clearAllBtn.addEventListener('click', clearAll);
+        selectAllCheckbox.addEventListener('change', toggleSelectAll);
+
+        function renderPlaylist() {
+            playlistElement.innerHTML = '';
+            if (playlist.length === 0) {
+                playlistElement.innerHTML = `<li style="justify-content:center; color: var(--subtle-text-color);">재생 목록이 비어있습니다.</li>`;
+            } else {
+                playlist.forEach((video, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <input type="checkbox" class="item-checkbox" data-index="${index}">
+                        <img class="thumbnail" src="${video.thumbnail}" alt="Video thumbnail">
+                        <div class="video-info">
+                            <h3 class="title">${video.title}</h3>
+                            <p class="channel">${video.channel}</p>
+                        </div>
+                    `;
+                    li.addEventListener('click', (e) => {
+                        if (e.target.type !== 'checkbox') playVideo(index);
+                    });
+                    playlistElement.appendChild(li);
+                });
+            }
+            updateSelectAllCheckboxState();
+        }
+
+        async function addVideo() {
+            const url = urlInput.value.trim();
+            if (!isValidYouTubeUrl(url)) {
+                alert("올바른 유튜브 링크를 입력해주세요.");
+                return;
+            }
+            if (BACKEND_URL === "YOUR_FUNCTION_URL") {
+                alert("백엔드 URL을 설정해주세요!");
+                return;
+            }
+
+            nowPlaying.textContent = "영상 정보 불러오는 중...";
+            addBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}?url=${encodeURIComponent(url)}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '서버에서 정보를 가져오지 못했습니다.');
+                }
+                const videoData = await response.json();
+
+                const newVideo = {
+                    title: videoData.title,
+                    channel: videoData.channel,
+                    thumbnail: videoData.thumbnail,
+                    streamUrl: videoData.streamUrl,
+                };
+                
+                playlist.push(newVideo);
+                savePlaylist();
+                renderPlaylist();
+                urlInput.value = '';
+
+            } catch (error) {
+                console.error(error);
+                alert(`오류: ${error.message}`);
+            } finally {
+                nowPlaying.textContent = "재생할 영상을 선택하세요.";
+                addBtn.disabled = false;
+            }
+        }
+
+        function playVideo(index) {
+            const video = playlist[index];
+            if (!video || !video.streamUrl) {
+                alert("재생할 수 없는 영상입니다.");
+                return;
+            }
+            nowPlaying.textContent = `현재 재생 중: ${video.title}`;
+            mediaPlayer.src = video.streamUrl;
+            mediaPlayer.play();
+        }
+        
+        function deleteSelected(){const checkedIndexes=Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb=>parseInt(cb.dataset.index));if(checkedIndexes.length===0){alert("삭제할 영상을 선택해주세요.");return}checkedIndexes.sort((a,b)=>b-a).forEach(index=>{playlist.splice(index,1)});savePlaylist();renderPlaylist()}
+        function clearAll(){if(confirm("정말로 전체 목록을 삭제하시겠습니까?")){playlist=[];savePlaylist();renderPlaylist()}}
+        function toggleSelectAll(){const isChecked=selectAllCheckbox.checked;document.querySelectorAll('.item-checkbox').forEach(checkbox=>{checkbox.checked=isChecked})}
+        function updateSelectAllCheckboxState(){const allCheckboxes=document.querySelectorAll('.item-checkbox');const checkedCount=document.querySelectorAll('.item-checkbox:checked').length;if(allCheckboxes.length===0){selectAllCheckbox.checked=false;selectAllCheckbox.indeterminate=false}else if(checkedCount===allCheckboxes.length){selectAllCheckbox.checked=true;selectAllCheckbox.indeterminate=false}else if(checkedCount>0){selectAllCheckbox.checked=false;selectAllCheckbox.indeterminate=true}else{selectAllCheckbox.checked=false;selectAllCheckbox.indeterminate=false}}
+        playlistElement.addEventListener('change',(e)=>{if(e.target.classList.contains('item-checkbox')){updateSelectAllCheckboxState()}});
+        function savePlaylist(){localStorage.setItem('premiumPlaylist',JSON.stringify(playlist))}
+        function loadPlaylist(){const savedPlaylist=localStorage.getItem('premiumPlaylist');if(savedPlaylist){playlist=JSON.parse(savedPlaylist)}renderPlaylist()}
+        function isValidYouTubeUrl(url){return/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url)}
+    </script>
+</body>
+</html>
+
