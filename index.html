@@ -72,7 +72,6 @@
         const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
         
-        // --- ❗❗❗ 여기에 배포 후 나온 Function URL을 붙여넣으세요 ❗❗❗ ---
         const BACKEND_URL = "https://getvideoinfo-jwzyh4xuka-uc.a.run.app"; 
         
         let playlist = [];
@@ -168,7 +167,6 @@
                 alert("삭제할 영상을 선택해주세요.");
                 return;
             }
-            // 인덱스가 큰 것부터 삭제해야 배열이 엉키지 않음
             checkedIndexes.sort((a, b) => b - a).forEach(index => {
                 playlist.splice(index, 1);
             });
@@ -203,7 +201,7 @@
                 selectAllCheckbox.indeterminate = false;
              } else if (checkedCount > 0) {
                 selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true; // 일부만 선택됨 상태
+                selectAllCheckbox.indeterminate = true;
              } else {
                 selectAllCheckbox.checked = false;
                 selectAllCheckbox.indeterminate = false;
