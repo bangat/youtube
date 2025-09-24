@@ -91,7 +91,7 @@
     </script>
     <script>
         const urlInput=document.getElementById('youtubeUrl'),addBtn=document.getElementById('addBtn'),mediaPlayer=document.getElementById('mediaPlayer'),nowPlaying=document.getElementById('nowPlaying'),nowPlayingChannel=document.getElementById('nowPlayingChannel'),albumArt=document.getElementById('albumArt'),playlistElement=document.getElementById('playlist'),selectAllCheckbox=document.getElementById('selectAllCheckbox'),deleteSelectedBtn=document.getElementById('deleteSelectedBtn'),clearAllBtn=document.getElementById('clearAllBtn');
-        const BACKEND_URL = "youtube-xi-khaki.vercel.app"; 
+        const BACKEND_URL = "https://youtube-xi-khaki.vercel.app/api/youtube"; 
         let playlist=[],currentPlayingIndex=-1;
         
         window.addEventListener('load',loadPlaylist);addBtn.addEventListener('click',addVideo);deleteSelectedBtn.addEventListener('click',deleteSelected);clearAllBtn.addEventListener('click',clearAll);selectAllCheckbox.addEventListener('change',toggleSelectAll);
@@ -111,4 +111,5 @@
     </script>
 </body>
 </html>
+
 
