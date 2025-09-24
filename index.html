@@ -22,48 +22,50 @@
             --border-color: #333;
             --danger-color: #cf6679;
         }
+        html {
+            box-sizing: border-box;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 15px;
             display: flex;
             justify-content: center;
-            /* ✨ 화면 잘림 현상 해결: 컨테이너를 위쪽에 정렬 */
-            align-items: flex-start; 
+            align-items: flex-start;
             min-height: 100vh;
         }
         .app-container {
             width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
+            max-width: 500px;
             background-color: var(--surface-color);
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,.3);
-            padding: 25px;
-            box-sizing: border-box;
-            overflow: hidden;
+            padding: 20px;
         }
         header h1 {
             text-align: center;
-            font-size: 26px;
+            font-size: 24px;
             color: var(--primary-color);
-            margin: 0 0 25px 0;
+            margin: 0 0 20px 0;
         }
         .input-section {
             display: flex;
             gap: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         #youtubeUrl {
             flex-grow: 1;
+            min-width: 0; /* flex item이 줄어들 수 있도록 함 */
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 14px;
-            font-size: 16px;
+            padding: 12px;
+            font-size: 14px;
             color: var(--text-color);
         }
         #youtubeUrl:focus {
@@ -71,8 +73,9 @@
             border-color: var(--primary-color);
         }
         #addBtn {
+            flex-shrink: 0; /* 버튼 크기 고정 */
             padding: 0 20px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             border: none;
             border-radius: 12px;
@@ -87,7 +90,7 @@
             cursor: not-allowed;
         }
         .player-section {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         #nowPlaying {
             font-size: 14px;
@@ -103,6 +106,7 @@
             width: 100%;
             border-radius: 12px;
             background-color: #000;
+            aspect-ratio: 16 / 9; /* 비디오 비율 유지 */
         }
         .playlist-controls {
             display: flex;
@@ -110,12 +114,15 @@
             align-items: center;
             margin-bottom: 15px;
             padding: 0 5px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .playlist-controls label {
             display: flex;
             align-items: center;
             gap: 8px;
             cursor: pointer;
+            font-size: 14px;
         }
         .control-buttons {
             display: flex;
@@ -138,7 +145,8 @@
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 300px;
+            max-height: calc(100vh - 550px); /* 화면 크기에 따라 유연하게 높이 조절 */
+            min-height: 100px;
             overflow-y: auto;
         }
         #playlist li {
@@ -185,6 +193,7 @@
             border-radius: 6px;
             cursor: pointer;
             position: relative;
+            flex-shrink: 0;
         }
         input[type=checkbox]:checked {
             background-color: var(--primary-color);
@@ -216,7 +225,7 @@
             
             <div class="player-section">
                 <p id="nowPlaying">재생할 영상을 선택하세요.</p>
-                <video id="mediaPlayer" controls></video>
+                <video id="mediaPlayer" controls controlslist="nodownload" playsinline></video>
             </div>
             
             <div class="playlist-section">
@@ -348,8 +357,7 @@
         }
         
         function deleteSelected(){
-            const checkedIndexes = Array.from(document.querySelectorAll('.item-checkbox:checked'))
-                                       .map(cb => parseInt(cb.dataset.index));
+            const checkedIndexes = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => parseInt(cb.dataset.index));
             if(checkedIndexes.length === 0){
                 alert("삭제할 영상을 선택해주세요.");
                 return;
@@ -404,8 +412,6 @@
         function savePlaylist(){
             localStorage.setItem('premiumPlaylist', JSON.stringify(playlist));
         }
-
-
 
         function loadPlaylist(){
             const savedPlaylist = localStorage.getItem('premiumPlaylist');
