@@ -360,44 +360,103 @@
                 });
 
             } else {
-                // [파일 저장] (Storage 업로드 후, Realtime Database 메타데이터 저장)
                 const file = fileInput.files[0];
-                if (!file) { alert('파일을 선택해주세요.'); return; }
-                
-                const storagePath = `files/${title}_${Date.now()}_${file.name}`;
-                const fileRef = storage.ref(storagePath);
+        if (!file) { alert('파일을 선택해주세요.'); return; }
+        
+        // 이미지 파일인지 확인하여 최적화 로직 적용
+        if (file.type.startsWith('image/')) {
+            dropZoneText.textContent = '이미지 최적화 중...';
+            
+            // FileReader를 사용하여 파일 읽기
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Canvas를 사용하여 이미지 크기 및 품질 조절
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1024; // 최대 너비 (조절 가능)
+                    const MAX_HEIGHT = 768; // 최대 높이 (조절 가능)
+                    let width = img.width;
+                    let height = img.height;
 
-                const uploadTask = fileRef.put(file);
-
-                uploadTask.on('state_changed', 
-                    (snapshot) => {
-                        // 업로드 진행률 표시
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
-                    }, 
-                    (error) => {
-                        alert('파일 업로드 실패: ' + error.message);
-                        dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
-                    },
-                    () => {
-                        // 업로드 성공 후 다운로드 URL을 가져옴
-                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                            const newItem = {
-                                type: 'file',
-                                title,
-                                fileName: file.name,
-                                fileSize: file.size,
-                                isImage: file.type.startsWith('image/'),
-                                fileUrl: downloadURL,
-                                storagePath: storagePath, // 삭제를 위해 Storage 경로 저장
-                                timestamp: new Date().toISOString()
-                            };
-                            
-                            itemsRef.push(newItem).then(() => resetForm());
-                        }).catch(error => alert('URL 가져오기 실패: ' + error.message));
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
                     }
-                );
-            }
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // 이미지를 다시 Blob 형태로 인코딩 (품질 0.75로 조절)
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            alert('이미지 최적화에 실패했습니다.');
+                            dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                            return;
+                        }
+                        // 최적화된 Blob 파일로 업로드 진행
+                        uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
+
+                    }, file.type, 0.75); // MIME 타입과 품질 (0.0 ~ 1.0)
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+        } else {
+            // 이미지 파일이 아니면 바로 업로드
+            uploadFileToFirebase(file, title, file.name, file.type, resetForm);
+        }
+    }
+});
+
+// 파일 업로드 로직을 별도의 함수로 분리하여 재사용성을 높입니다.
+function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
+    const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
+    const fileRef = storage.ref(storagePath);
+
+    const uploadTask = fileRef.put(fileToUpload);
+
+    uploadTask.on('state_changed', 
+        (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
+        }, 
+        (error) => {
+            alert('파일 업로드 실패: ' + error.message);
+            dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+        },
+        () => {
+            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                const newItem = {
+                    type: 'file',
+                    title,
+                    fileName: originalFileName,
+                    fileSize: fileToUpload.size, // 최적화된 파일의 크기
+                    isImage: fileType.startsWith('image/'),
+                    fileUrl: downloadURL,
+                    storagePath: storagePath,
+                    timestamp: new Date().toISOString()
+                };
+                
+                itemsRef.push(newItem).then(() => {
+                    resetFormCallback();
+                }).catch(error => {
+                    alert('DB 저장 실패: ' + error.message);
+                });
+            }).catch(error => alert('URL 가져오기 실패: ' + error.message));
+        }
+    );
+}
         });
 
         // --- [Firebase 연동] 항목 클릭/삭제 리스너 ---
@@ -493,6 +552,7 @@ if ('serviceWorker' in navigator) {
     </script>
 </body>
 </html>
+
 
 
 
