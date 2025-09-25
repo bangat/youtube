@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
     <link rel="manifest" href="/youtube/manifest.json">
-    <title>My Cloud Box - Pro</title>
+    <title>개인 클라우드</title>
     <style>
         /* --- 기본 & 테마 --- */
         :root {
@@ -98,34 +98,97 @@
         #modalBody { flex-grow: 1; overflow: auto; background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; min-height: 0; text-align: center; /* 이미지 가운데 정렬을 위해 추가 */ }
         #modalText { white-space: pre-wrap; word-break: break-all; height: 100%; text-align: left; }
         #modalHtmlPreview { width: 100%; height: 100%; border: none; }
-        /* --- [수정] 이미지 미리보기를 위한 스타일 추가 --- */
+        /* --- 이미지 미리보기를 위한 스타일 추가 --- */
         #modalImagePreview { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
         #modalFileInfo { color: var(--secondary-text); text-align: left; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
         .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
         #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
         
-@media (max-width: 900px) {
-    .app-container { 
-        grid-template-columns: 1fr; 
-        padding: 0; 
-        height: auto; /* height: 100vh; 제거 */
-        min-height: 100vh;
-    }
-    .input-column { 
-        border-right: none;
-    }
-    .list-column { 
-        /* 💡 이 설정을 제거해야 입력창이 클릭 가능해집니다! */
-        height: auto; 
-        overflow-y: initial; 
-    }
-    .list-container {
-        /* 모바일에서 스크롤 문제가 생기면 추가: */
-        max-height: 50vh; 
-        flex-shrink: 0;
-    }
-            .modal-content { width: 100%; height: 100%; border-radius: 0; padding: 16px; }
+        /* --- index.html <style> 태그 내에 추가/수정 --- */
+
+        /* 1. 기본 모달 중앙 정렬 */
+        .modal-overlay { 
+            /* 기존 스타일 유지 */
+            align-items: center; /* 중앙 수직 정렬 보장 */
+            justify-content: center; /* 중앙 수평 정렬 보장 */
+        }
+        .modal-content {
+            /* 기존 스타일 유지 */
+            width: 95%; 
+            max-width: 500px; /* 기본 모달 너비 조정 */
+            height: auto; /* 높이 자동 조절 */
+            max-height: 90%; 
+        }
+
+        /* 2. 커스텀 Alert/Confirm 모달용 스타일 */
+        .custom-alert-content {
+            max-width: 380px;
+            height: auto;
+            padding: 20px;
+            text-align: center;
+        }
+        #customAlertMessage {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .custom-alert-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        /* 확인/취소 버튼 스타일 (기존 modal-btn 재활용) */
+
+        /* 3. 파일 업로드 진행바 스타일 */
+        .drop-zone {
+            position: relative;
+            overflow: hidden; /* 진행바가 넘치지 않도록 */
+        }
+        #upload-progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0; /* 초기 너비 */
+            background-color: var(--accent-color);
+            opacity: 0.3;
+            transition: width 0.3s ease; /* 애니메이션 효과 */
+            z-index: 1; /* dropZoneText보다 뒤에 위치 */
+        }
+        #dropZone-text {
+            position: relative;
+            z-index: 2; /* 텍스트가 진행바 위에 오도록 */
+        }
+        .drop-zone.uploading {
+            border-color: var(--accent-color); /* 업로드 중 테두리 색상 변경 */
+        }
+
+        @media (max-width: 900px) {
+            .app-container { 
+                grid-template-columns: 1fr; 
+                padding: 0; 
+                height: auto;
+                min-height: 100vh;
+            }
+            .input-column { 
+                border-right: none;
+                position: relative; 
+                z-index: 10;
+            }
+            .list-column { 
+                height: auto; 
+                overflow-y: initial; 
+            }
+            .list-container {
+                max-height: 50vh; 
+                flex-shrink: 0;
+            }
+            .modal-content { 
+                width: 100%; 
+                height: 100%; 
+                border-radius: 0; 
+                padding: 16px; 
+            }
         }
     </style>
 </head>
@@ -144,7 +207,8 @@
             </div>
             <div id="fileInput-container">
                 <div class="drop-zone" id="dropZone">
-                    <span id="dropZone-text">여기에 파일을 드래그하거나 클릭하여 선택</span>
+                    <div id="upload-progress-bar"></div>
+                                        <span id="dropZone-text">여기에 파일을 드래그하거나 클릭하여 선택</span>
                     <input type="file" id="fileInput">
                 </div>
             </div>
@@ -202,6 +266,7 @@
 
         const dropZone = document.getElementById('dropZone');
         const dropZoneText = document.getElementById('dropZone-text');
+        const progressBar = document.getElementById('upload-progress-bar');
         const fileInput = document.getElementById('fileInput');
         const tabButtons = document.querySelectorAll('.tab-btn');
         const titleInput = document.getElementById('titleInput');
@@ -223,7 +288,7 @@
         const modalActionBtn = document.getElementById('modalActionBtn');
         
         let currentTab = 'text';
-        let savedItems = []; // Firebase 데이터를 저장할 배열
+        let savedItems = [];
         let currentItemInModal = null;
 
         function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
@@ -237,10 +302,10 @@
                 savedItems = [];
                 if (data) {
                     savedItems = Object.keys(data).map(key => ({
-                        id: key, // Firebase Key를 id로 사용
+                        id: key,
                         ...data[key],
-                        timestamp: new Date(data[key].timestamp) // 문자열을 Date 객체로 변환
-                    })).sort((a, b) => b.timestamp - a.timestamp); // 최신순 정렬
+                        timestamp: new Date(data[key].timestamp)
+                    })).sort((a, b) => b.timestamp - a.timestamp);
                 }
                 renderList();
             }, (error) => {
@@ -288,7 +353,6 @@
             
             modalTitle.textContent = currentItemInModal.title;
             
-            // 모든 미리보기 영역 숨기기
             modalText.style.display = 'none';
             modalHtmlPreview.style.display = 'none';
             modalImagePreview.style.display = 'none';
@@ -301,17 +365,14 @@
                 modalActionBtn.textContent = '전체 복사';
                 modalActionBtn.onclick = () => copyText(currentItemInModal.content);
                 showContentView(); 
-            } else { // type === 'file'
+            } else {
                 modalActionBtn.textContent = '다운로드';
-                // 파일 URL로 이동하여 다운로드/열기
                 modalActionBtn.onclick = () => window.open(currentItemInModal.fileUrl, '_blank'); 
 
                 if (currentItemInModal.isImage) {
-                    // 이미지 파일인 경우: Storage URL을 src에 할당
                     modalImagePreview.style.display = 'block';
                     modalImagePreview.src = currentItemInModal.fileUrl;
                 } else {
-                    // 이미지가 아닌 일반 파일인 경우
                     modalFileInfo.style.display = 'block';
                     modalFileInfo.innerHTML = `<p><strong>파일 이름:</strong> ${currentItemInModal.fileName}</p><p><strong>파일 크기:</strong> ${formatFileSize(currentItemInModal.fileSize)}</p>`;
                 }
@@ -343,10 +404,55 @@
         }
         function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
-        tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-        
-        // --- [Firebase 연동] saveBtn 이벤트 리스너 ---
-        saveBtn.addEventListener('click', () => {
+        // --- 이벤트 리스너 통합 ---
+        function addMobileListeners() {
+            tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); switchTab(e.target.dataset.tab); }, { passive: false });
+            });
+
+            saveBtn.addEventListener('click', handleSave);
+            saveBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleSave(); }, { passive: false });
+
+            listContainer.addEventListener('click', (e) => {
+                const listItem = e.target.closest('.list-item');
+                if (!listItem) return;
+                const id = listItem.dataset.id;
+                const itemToDelete = savedItems.find(item => item.id === id);
+
+                if (e.target.classList.contains('delete-btn')) {
+                    if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
+                        itemsRef.child(id).remove().then(() => {
+                            if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
+                                const fileRef = storage.ref(itemToDelete.storagePath);
+                                fileRef.delete().then(() => {
+                                    console.log('Storage 파일 삭제 성공');
+                                }).catch(error => {
+                                    console.warn('Storage 파일 삭제 실패 (파일이 없거나 권한 문제):', error);
+                                });
+                            }
+                        }).catch(error => {
+                            alert('삭제 실패: ' + error.message);
+                        });
+                    }
+                } else {
+                    openModal(id);
+                }
+            });
+
+            clearAllBtn.addEventListener('click', () => { 
+                if (savedItems.length > 0 && confirm('경고: Realtime Database의 모든 항목이 삭제됩니다. (Storage 파일은 수동으로 정리해야 할 수 있습니다.)')) { 
+                    itemsRef.remove().then(() => {
+                        alert('모든 항목을 삭제했습니다.');
+                    }).catch(error => {
+                        alert('모두 지우기 실패: ' + error.message);
+                    });
+                } 
+            });
+        }
+
+        // handleSave 함수로 로직 분리
+        function handleSave() {
             const title = titleInput.value.trim();
             if (!title) { alert('제목을 입력해주세요.'); return; }
 
@@ -358,7 +464,6 @@
             };
 
             if (currentTab === 'text') {
-                // [텍스트 저장] (Realtime Database)
                 const content = textInput.value.trim();
                 if (!content) { alert('내용을 입력해주세요.'); return; }
                 
@@ -376,144 +481,105 @@
 
             } else {
                 const file = fileInput.files[0];
-        if (!file) { alert('파일을 선택해주세요.'); return; }
-        
-        // 이미지 파일인지 확인하여 최적화 로직 적용
-        if (file.type.startsWith('image/')) {
-            dropZoneText.textContent = '이미지 최적화 중...';
-            
-            // FileReader를 사용하여 파일 읽기
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    // Canvas를 사용하여 이미지 크기 및 품질 조절
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1024; // 최대 너비 (조절 가능)
-                    const MAX_HEIGHT = 768; // 최대 높이 (조절 가능)
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // 이미지를 다시 Blob 형태로 인코딩 (품질 0.75로 조절)
-                    canvas.toBlob((blob) => {
-                        if (!blob) {
-                            alert('이미지 최적화에 실패했습니다.');
-                            dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
-                            return;
-                        }
-                        // 최적화된 Blob 파일로 업로드 진행
-                        uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
-
-                    }, file.type, 0.75); // MIME 타입과 품질 (0.0 ~ 1.0)
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-
-        } else {
-            // 이미지 파일이 아니면 바로 업로드
-            uploadFileToFirebase(file, title, file.name, file.type, resetForm);
-        }
-    }
-});
-
-// 파일 업로드 로직을 별도의 함수로 분리하여 재사용성을 높입니다.
-function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
-    const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
-    const fileRef = storage.ref(storagePath);
-
-    const uploadTask = fileRef.put(fileToUpload);
-
-    uploadTask.on('state_changed', 
-        (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
-        }, 
-        (error) => {
-            alert('파일 업로드 실패: ' + error.message);
-            dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
-        },
-        () => {
-            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                const newItem = {
-                    type: 'file',
-                    title,
-                    fileName: originalFileName,
-                    fileSize: fileToUpload.size, // 최적화된 파일의 크기
-                    isImage: fileType.startsWith('image/'),
-                    fileUrl: downloadURL,
-                    storagePath: storagePath,
-                    timestamp: new Date().toISOString()
-                };
+                if (!file) { alert('파일을 선택해주세요.'); return; }
                 
-                itemsRef.push(newItem).then(() => {
-                    resetFormCallback();
-                }).catch(error => {
-                    alert('DB 저장 실패: ' + error.message);
-                });
-            }).catch(error => alert('URL 가져오기 실패: ' + error.message));
-        }
-    );
-}
-        });
+                if (file.type.startsWith('image/')) {
+                    dropZoneText.textContent = '이미지 최적화 중...';
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 1024;
+                            const MAX_HEIGHT = 768;
+                            let width = img.width;
+                            let height = img.height;
 
-        // --- [Firebase 연동] 항목 클릭/삭제 리스너 ---
-        listContainer.addEventListener('click', (e) => {
-            const listItem = e.target.closest('.list-item');
-            if (!listItem) return;
-            const id = listItem.dataset.id;
-            const itemToDelete = savedItems.find(item => item.id === id);
+                            if (width > height) {
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
+                                }
+                            } else {
+                                if (height > MAX_HEIGHT) {
+                                    width *= MAX_HEIGHT / height;
+                                    height = MAX_HEIGHT;
+                                }
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
 
-            if (e.target.classList.contains('delete-btn')) {
-                if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
-                    // 1. Realtime Database 항목 삭제
-                    itemsRef.child(id).remove().then(() => {
-                        // 2. 파일 타입이면 Storage 파일도 삭제 시도
-                        if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
-                            const fileRef = storage.ref(itemToDelete.storagePath);
-                            fileRef.delete().then(() => {
-                                console.log('Storage 파일 삭제 성공');
-                            }).catch(error => {
-                                console.warn('Storage 파일 삭제 실패 (파일이 없거나 권한 문제):', error);
-                            });
-                        }
-                    }).catch(error => {
-                        alert('삭제 실패: ' + error.message);
-                    });
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            canvas.toBlob((blob) => {
+                                if (!blob) {
+                                    alert('이미지 최적화에 실패했습니다.');
+                                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                                    return;
+                                }
+                                uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
+                            }, file.type, 0.75);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+
+                } else {
+                    uploadFileToFirebase(file, title, file.name, file.type, resetForm);
                 }
-            } else {
-                openModal(id);
             }
-        });
-        
-        // --- [Firebase 연동] 모두 지우기 리스너 ---
-        clearAllBtn.addEventListener('click', () => { 
-            if (savedItems.length > 0 && confirm('경고: Realtime Database의 모든 항목이 삭제됩니다. (Storage 파일은 수동으로 정리해야 할 수 있습니다.)')) { 
-                // DB 항목만 삭제 (Storage 대량 삭제는 Cloud Function 권장)
-                itemsRef.remove().then(() => {
-                    alert('모든 항목을 삭제했습니다.');
-                }).catch(error => {
-                    alert('모두 지우기 실패: ' + error.message);
-                });
-            } 
-        });
+        }
+
+        function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
+            const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
+            const fileRef = storage.ref(storagePath);
+
+            const uploadTask = fileRef.put(fileToUpload);
+
+            dropZone.classList.add('uploading');
+            progressBar.style.width = '0%';
+
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
+                    progressBar.style.width = `${progress}%`;
+                }, 
+                (error) => {
+                    alert('파일 업로드 실패: ' + error.message);
+                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                    dropZone.classList.remove('uploading');
+                    progressBar.style.width = '0%';
+                },
+                () => {
+                    progressBar.style.width = '100%';
+                    dropZone.classList.remove('uploading');
+                    dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
+
+                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                        const newItem = {
+                            type: 'file',
+                            title,
+                            fileName: originalFileName,
+                            fileSize: fileToUpload.size,
+                            isImage: fileType.startsWith('image/'),
+                            fileUrl: downloadURL,
+                            storagePath: storagePath,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        itemsRef.push(newItem).then(() => {
+                            progressBar.style.width = '0%';
+                            resetFormCallback();
+                        }).catch(error => {
+                            alert('DB 저장 실패: ' + error.message);
+                        });
+                    }).catch(error => alert('URL 가져오기 실패: ' + error.message));
+                }
+            );
+        }
         
         modalClose.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
@@ -546,29 +612,22 @@ function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, r
             }
         });
 
-        // 앱 시작 시 Firebase에서 데이터 로드
+        // 앱 시작 시 이벤트 리스너 등록 및 데이터 로드
+        addMobileListeners();
         loadItemsFromFirebase(); 
 
-// PWA: 서비스 워커 등록
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        // 리포지토리 이름을 포함하여 경로와 Scope를 정확히 지정합니다.
-        // GitHub Pages 프로젝트 페이지 구조에 필수적입니다.
-        navigator.serviceWorker.register('/youtube/service-worker.js', { scope: '/youtube/' })
-            .then(registration => {
-                console.log('ServiceWorker registration successful with scope: ', registration.scope);
-            })
-            .catch(error => {
-                // 이전에 'A bad HTTP response code (404)' 오류가 났던 지점입니다.
-                console.error('ServiceWorker registration failed: ', error);
+        // PWA: 서비스 워커 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/youtube/service-worker.js', { scope: '/youtube/' })
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('ServiceWorker registration failed: ', error);
+                    });
             });
-    });
-}
+        }
     </script>
 </body>
 </html>
-
-
-
-
-
