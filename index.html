@@ -65,29 +65,30 @@
         #runHtmlBtn { width: 100%; padding: 12px; background-color: #e02c4f; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         #runHtmlBtn:hover { background-color: #c72543; }
         
-        .drop-zone { 
-            position: relative; 
-            border: 2px dashed var(--border-color); 
-            border-radius: 8px; 
-            padding: 30px; 
-            text-align: center; 
-            color: var(--secondary-text); 
-            cursor: pointer; 
-            transition: background-color 0.2s, border-color 0.2s; 
-            background-color: var(--surface-color);
-            overflow: hidden; 
-        }
-        .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
-        #fileInput { display: none; }
+/* --- 입력 섹션 --- */
+.drop-zone { 
+    position: relative; 
+    border: 2px dashed var(--border-color); 
+    border-radius: 8px; 
+    padding: 30px; 
+    text-align: center; 
+    color: var(--secondary-text); 
+    cursor: pointer; 
+    transition: background-color 0.2s, border-color 0.2s; 
+    background-color: var(--surface-color);
+    overflow: hidden; /* 이 속성을 추가하여 내용이 넘치는 것을 숨깁니다 */
+}
+.drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
+#fileInput { display: none; }
         
-        /* 파일명 길어짐 방지 */
-        #dropZone-text {
-            display: inline-block;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+/* 파일명 길어짐 방지: PC와 모바일 모두에 적용 */
+#dropZone-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis; /* 넘치는 텍스트를 ...으로 표시 */
+    white-space: nowrap; /* 텍스트를 한 줄에만 표시 */
+}
 
         #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
         #saveBtn:hover { background-color: #1868cd; }
@@ -921,3 +922,4 @@
     </script>
 </body>
 </html>
+
