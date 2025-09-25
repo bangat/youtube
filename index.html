@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
     <link rel="manifest" href="/youtube/manifest.json">
-    <title>최클라우드Pro</title>
+    <title>Clould Pro</title>
     <style>
         /* --- 기본 & 테마 --- */
         :root {
@@ -62,11 +62,21 @@
         #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; }
         
         /* HTML 뷰어 전용 스타일 */
-        .html-viewer-actions { display: flex; gap: 10px; margin-bottom: 15px; }
         #runHtmlBtn { width: 100%; padding: 12px; background-color: #e02c4f; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         #runHtmlBtn:hover { background-color: #c72543; }
         
-        .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); }
+        .drop-zone { 
+            position: relative; 
+            border: 2px dashed var(--border-color); 
+            border-radius: 8px; 
+            padding: 30px; 
+            text-align: center; 
+            color: var(--secondary-text); 
+            cursor: pointer; 
+            transition: background-color 0.2s, border-color 0.2s; 
+            background-color: var(--surface-color);
+            overflow: hidden; 
+        }
         .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
         #fileInput { display: none; }
         
@@ -80,15 +90,12 @@
         }
 
         #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
-
         #saveBtn:hover { background-color: #1868cd; }
-
-/* ✅ 추가된 부분: 버튼 비활성화 시 스타일 */
-#saveBtn:disabled {
-    background-color: #e0e0e0;
-    color: #a0a0a0;
-    cursor: not-allowed;
-}
+        #saveBtn:disabled {
+            background-color: #e0e0e0;
+            color: #a0a0a0;
+            cursor: not-allowed;
+        }
 
         /* --- 목록 섹션 --- */
         .list-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
@@ -105,7 +112,8 @@
         }
         .list-item {
             display: flex;
-            flex-direction: column;
+            align-items: center; /* 아이콘과 텍스트를 수직 중앙 정렬 */
+            gap: 15px;
             padding: 15px;
             border-radius: 8px;
             cursor: pointer;
@@ -116,27 +124,29 @@
         }
         .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
         
-        /* 헤더 부분 (아이콘 + 날짜) */
-        .item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+        /* 아이콘, 제목, 파일명, 날짜, 삭제 버튼을 모두 재배치 */
+        .item-icon { 
+            font-size: 24px; 
+            position: relative; 
+            flex-shrink: 0; 
         }
-        .item-icon { font-size: 24px; position: relative; flex-shrink: 0; }
-        .item-icon .html-badge { position: absolute; bottom: -5px; right: -8px; background-color: #e02c4f; color: white; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
-        
-        .item-date {
-            font-size: 12px;
-            color: var(--secondary-text);
+        .item-icon .html-badge { 
+            position: absolute; 
+            bottom: -5px; 
+            right: -8px; 
+            background-color: #e02c4f; 
+            color: white; 
+            font-size: 10px; 
+            font-weight: bold; 
+            padding: 2px 4px; 
+            border-radius: 4px; 
         }
         
-        /* 상세 정보 부분 (제목 + 미리보기) */
         .item-details {
             display: flex;
             flex-direction: column;
-            gap: 4px;
             overflow: hidden;
+            flex-grow: 1;
         }
         .item-title { 
             font-weight: 600; 
@@ -153,7 +163,28 @@
             text-overflow: ellipsis; 
             line-height: 1.2;
         }
-        .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); }
+        
+        .item-date {
+            font-size: 12px;
+            color: var(--secondary-text);
+            position: absolute; /* 날짜 위치를 삭제 버튼 옆으로 이동 */
+            top: 15px;
+            right: 50px;
+        }
+        
+        .delete-btn { 
+            background: none; 
+            border: none; 
+            font-size: 24px; 
+            color: var(--secondary-text); 
+            cursor: pointer; 
+            transition: color 0.2s; 
+            position: absolute; 
+            right: 15px; 
+            top: 15px; 
+            padding: 0;
+            margin: 0;
+        }
         .delete-btn:hover { color: #e02c4f; }
         
         /* --- 모달 --- */
@@ -216,79 +247,66 @@
         @media (max-width: 900px) {
             .app-container {
                 grid-template-columns: 1fr;
-                padding: 0;
-                height: auto;
+                width: 100%;
                 min-height: 100vh;
-                width: 100%;
             }
-            .input-column {
-                border-right: none;
-                position: relative;
-                z-index: 10;
-                min-height: auto;
+            .input-column, .list-column {
                 padding: 16px;
             }
-            .list-column {
-                height: auto;
-                overflow-y: initial;
-                padding: 16px;
-            }
-            .list-container {
-                max-height: none;
-                flex-shrink: 0;
-            }
-            .modal-content {
-                width: 100%;
-                height: 100%;
-                border-radius: 0;
-                padding: 16px;
-            }
-            #htmlInput-container {
-                flex-grow: 1;
-                display: flex;
-            }
-            #htmlInput {
-                min-height: 250px;
-            }
+            /* 파일 목록 레이아웃 재조정 */
             .list-item { 
                 padding: 15px;
                 display: flex;
-                flex-direction: column;
-                align-items: flex-start;
+                flex-direction: row; 
+                align-items: center;
+                position: relative;
             }
             .item-header {
-                width: 100%;
-                justify-content: space-between;
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: column;
                 align-items: center;
-                margin-bottom: 8px;
-            }
-            .item-icon { margin-right: 0; }
-            .item-date {
-                font-size: 11px;
-                position: static;
             }
             .item-details {
-                width: 100%;
-                margin-top: 0;
+                flex-grow: 1;
+                overflow: hidden;
+                padding-right: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .item-icon { margin-bottom: 4px; }
+            .item-date {
+                font-size: 10px;
+                color: var(--secondary-text);
+                position: static;
             }
             .item-title {
                 font-size: 15px;
-                padding-right: 0;
-                width: 100%;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .item-preview {
                 font-size: 13px;
-                width: 100%;
+                color: var(--secondary-text);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
-            .delete-btn { right: 15px; top: 15px; transform: none; }
+            .delete-btn {
+                position: absolute;
+                top: 50%;
+                right: 15px;
+                transform: translateY(-50%);
+                font-size: 20px;
+            }
+            .modal-content {
+                width: 100%;
+                border-radius: 0;
+            }
         }
-
-        /* --- Custom 모달용 스타일 --- */
-        .modal-overlay { align-items: center; justify-content: center; }
-        .modal-content { width: 95%; max-width: 500px; height: auto; max-height: 90%; }
-        .custom-alert-content { max-width: 380px; height: auto; padding: 20px; text-align: center; }
-        #customAlertMessage { font-size: 16px; margin-bottom: 20px; }
-        .custom-alert-actions { display: flex; justify-content: center; gap: 10px; }
         
         /* --- 진행바 스타일 --- */
         .drop-zone { position: relative; overflow: hidden; }
@@ -304,7 +322,6 @@
 
     <main class="app-container">
         <section class="input-column">
-            <h2>클라우드Pro</h2>
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
                 <button class="tab-btn" data-tab="file">파일</button>
@@ -314,19 +331,19 @@
             <button id="runHtmlBtn" class="input-field">▶ 코드 실행</button>
             
             <div id="textInput-container">
-                <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요..."></textarea>
+                <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
             </div>
             
             <div id="fileInput-container">
                 <div class="drop-zone" id="dropZone">
                     <div id="upload-progress-bar"></div>
-                    <span id="dropZone-text">여기에 파일을 드래그하거나 클릭하여 선택</span>
+                    <span id="dropZone-text">드래그 또는 클릭</span>
                     <input type="file" id="fileInput">
                 </div>
             </div>
             
             <div id="htmlInput-container">
-                <textarea id="htmlInput" class="input-field" placeholder="여기에 HTML 코드를 입력하세요..."></textarea>
+                <textarea id="htmlInput" class="input-field" placeholder="HTML 코드를 입력하세요"></textarea>
             </div>
 
             <button id="saveBtn" disabled>저장하기</button>
@@ -506,12 +523,9 @@
                 itemEl.className = 'list-item';
                 itemEl.dataset.id = item.id;
                 itemEl.innerHTML = `
-                    <div class="item-header">
-                        <div class="item-icon">
-                            ${icon}
-                            ${isHtmlItem || isHtmlViewerItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
-                        </div>
-                        <div class="item-date">${formatTimestamp(item.timestamp)}</div>
+                    <div class="item-icon">
+                        ${icon}
+                        ${isHtmlItem || isHtmlViewerItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
                     </div>
                     <div class="item-details">
                         <div class="item-title">${item.title}</div>
@@ -519,6 +533,7 @@
                             ? `<div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div>`
                             : `<div class="item-preview">${textPreview}</div>`
                         }
+                        <div class="item-date">${formatTimestamp(item.timestamp)}</div>
                     </div>
                     <button class="delete-btn">&times;</button>
                 `;
@@ -533,18 +548,20 @@
             textInputContainer.style.display = 'none';
             fileInputContainer.style.display = 'none';
             htmlInputContainer.style.display = 'none';
-            titleInput.style.display = 'block';
+            titleInput.style.display = 'none';
             runHtmlBtn.style.display = 'none';
             
             if (tab === 'text') {
                 textInputContainer.style.display = 'block';
+                titleInput.style.display = 'block';
             } else if (tab === 'file') {
                 fileInputContainer.style.display = 'block';
+                titleInput.style.display = 'block';
             } else if (tab === 'html') {
                 htmlInputContainer.style.display = 'flex';
-                titleInput.style.display = 'none';
                 runHtmlBtn.style.display = 'block';
             }
+            updateSaveButtonState();
         }
         
         function runHtml() {
@@ -577,7 +594,15 @@
                 showContentView();
             } else { // type === 'file'
                 modalActionBtn.textContent = '다운로드';
-                modalActionBtn.onclick = () => window.open(currentItemInModal.fileUrl, '_blank'); 
+                modalActionBtn.onclick = () => {
+                    const link = document.createElement('a');
+                    link.href = currentItemInModal.fileUrl;
+                    const fileExtension = currentItemInModal.fileName.split('.').pop();
+                    link.download = `${currentItemInModal.title}.${fileExtension}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }; 
 
                 if (currentItemInModal.isImage) {
                     modalImagePreview.style.display = 'block';
@@ -641,35 +666,34 @@
 
         function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
-        // 저장 버튼 상태를 업데이트하는 함수
-function updateSaveButtonState() {
-    let isDisabled = true;
-    const title = titleInput.value.trim();
+        function updateSaveButtonState() {
+            let isDisabled = true;
+            const title = titleInput.value.trim();
 
-    if (currentTab === 'text') {
-        const content = textInput.value.trim();
-        if (title && content) {
-            isDisabled = false;
+            if (currentTab === 'text') {
+                const content = textInput.value.trim();
+                if (title && content) {
+                    isDisabled = false;
+                }
+            } else if (currentTab === 'file') {
+                const file = fileInput.files[0];
+                if (title && file) {
+                    isDisabled = false;
+                }
+            } else if (currentTab === 'html') {
+                const content = htmlInput.value.trim();
+                if (content) {
+                    isDisabled = false;
+                }
+            }
+            saveBtn.disabled = isDisabled;
         }
-    } else if (currentTab === 'file') {
-        const file = fileInput.files[0];
-        if (title && file) {
-            isDisabled = false;
-        }
-    } else if (currentTab === 'html') {
-        const content = htmlInput.value.trim();
-        // HTML 탭은 제목을 나중에 받으므로 내용만 확인
-        if (content) {
-            isDisabled = false;
-        }
-    }
-
-    saveBtn.disabled = isDisabled;
-}
         
         function addEventListeners() {
             tabButtons.forEach(btn => {
-                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+                btn.addEventListener('click', () => {
+                    switchTab(btn.dataset.tab);
+                });
             });
 
             saveBtn.addEventListener('click', handleSave);
@@ -711,6 +735,28 @@ function updateSaveButtonState() {
                     });
                 });
             });
+
+            titleInput.addEventListener('input', updateSaveButtonState);
+            textInput.addEventListener('input', updateSaveButtonState);
+            htmlInput.addEventListener('input', updateSaveButtonState);
+            fileInput.addEventListener('change', () => {
+                updateSaveButtonState();
+                if (fileInput.files.length > 0) {
+                    dropZoneText.textContent = fileInput.files[0].name;
+                } else {
+                    dropZoneText.textContent = '드래그 또는 클릭';
+                }
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    dropZoneText.textContent = files[0].name;
+                }
+                updateSaveButtonState();
+            });
         }
 
         function handleSave() {
@@ -720,7 +766,8 @@ function updateSaveButtonState() {
                 textInput.value = '';
                 htmlInput.value = '';
                 fileInput.value = '';
-                dropZoneText.textContent = '파일을 드래그하거나 클릭하여 선택';
+                dropZoneText.textContent = '드래그 또는 클릭';
+                updateSaveButtonState();
             };
 
             if (currentTab === 'html') {
@@ -764,7 +811,7 @@ function updateSaveButtonState() {
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
                             canvas.toBlob((blob) => {
-                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '파일을 드래그하거나 클릭하여 선택'; return; }
+                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '드래그 또는 클릭'; return; }
                                 uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
                             }, file.type, 0.75);
                         };
@@ -798,14 +845,14 @@ function updateSaveButtonState() {
                 },
                 (error) => {
                     showAlert('파일 업로드 실패: ' + error.message);
-                    dropZoneText.textContent = '파일을 드래그 하거나 클릭하여 선택';
+                    dropZoneText.textContent = '드래그 또는 클릭';
                     dropZone.classList.remove('uploading');
                     progressBar.style.width = '0%';
                 },
                 () => {
                     progressBar.style.width = '100%';
                     dropZone.classList.remove('uploading');
-                    dropZoneText.textContent = '업로드 완료!';
+                    dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
                     uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                         const newItem = {
                             type: 'file',
@@ -853,37 +900,9 @@ function updateSaveButtonState() {
             if (fileInput.files.length > 0) {
                 dropZoneText.textContent = fileInput.files[0].name;
             } else {
-                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                dropZoneText.textContent = '드래그 또는 클릭';
             }
         });
-
-        // titleInput의 내용이 바뀔 때마다 버튼 상태 업데이트
-titleInput.addEventListener('input', updateSaveButtonState);
-// textInput의 내용이 바뀔 때마다 버튼 상태 업데이트
-textInput.addEventListener('input', updateSaveButtonState);
-// fileInput의 파일이 선택되면 버튼 상태 업데이트
-fileInput.addEventListener('change', () => {
-    updateSaveButtonState();
-    if (fileInput.files.length > 0) {
-        dropZoneText.textContent = fileInput.files[0].name;
-    } else {
-        dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
-    }
-});
-// htmlInput의 내용이 바뀔 때마다 버튼 상태 업데이트
-htmlInput.addEventListener('input', updateSaveButtonState);
-
-// 드래그앤드롭 이벤트 리스너에도 추가
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        fileInput.files = files;
-        dropZoneText.textContent = files[0].name;
-    }
-    updateSaveButtonState(); // 드롭 시 상태 업데이트
-});
 
         addEventListeners();
         loadItemsFromFirebase();
@@ -902,4 +921,3 @@ dropZone.addEventListener('drop', (e) => {
     </script>
 </body>
 </html>
-
