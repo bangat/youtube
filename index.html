@@ -105,11 +105,26 @@
         .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
         #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
         
-        @media (max-width: 900px) {
-            .app-container { grid-template-columns: 1fr; padding: 0; }
-            .input-column, .list-column { border-radius: 0; }
-            .list-column { height: 100vh; }
-            .list-container { max-height: none; }
+@media (max-width: 900px) {
+    .app-container { 
+        grid-template-columns: 1fr; 
+        padding: 0; 
+        height: auto; /* height: 100vh; 제거 */
+        min-height: 100vh;
+    }
+    .input-column { 
+        border-right: none;
+    }
+    .list-column { 
+        /* 💡 이 설정을 제거해야 입력창이 클릭 가능해집니다! */
+        height: auto; 
+        overflow-y: initial; 
+    }
+    .list-container {
+        /* 모바일에서 스크롤 문제가 생기면 추가: */
+        max-height: 50vh; 
+        flex-shrink: 0;
+    }
             .modal-content { width: 100%; height: 100%; border-radius: 0; padding: 16px; }
         }
     </style>
@@ -552,6 +567,7 @@ if ('serviceWorker' in navigator) {
     </script>
 </body>
 </html>
+
 
 
 
