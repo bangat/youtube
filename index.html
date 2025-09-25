@@ -324,7 +324,6 @@
 
     <main class="app-container">
         <section class="input-column">
-            <h2>최클라우드Pro</h2>
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
                 <button class="tab-btn" data-tab="file">파일</button>
@@ -761,7 +760,7 @@
                 if (fileInput.files.length > 0) {
                     dropZoneText.textContent = fileInput.files[0].name;
                 } else {
-                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                    dropZoneText.textContent = '드래그 또는 클릭';
                 }
             });
             dropZone.addEventListener('drop', (e) => {
@@ -783,7 +782,7 @@
                 textInput.value = '';
                 htmlInput.value = '';
                 fileInput.value = '';
-                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                dropZoneText.textContent = '드래그 또는 클릭';
                 updateSaveButtonState();
             };
 
@@ -828,7 +827,7 @@
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
                             canvas.toBlob((blob) => {
-                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택'; return; }
+                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '드래그 또는 클릭'; return; }
                                 uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
                             }, file.type, 0.75);
                         };
@@ -862,7 +861,7 @@
                 },
                 (error) => {
                     showAlert('파일 업로드 실패: ' + error.message);
-                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                    dropZoneText.textContent = '드래그 또는 클릭';
                     dropZone.classList.remove('uploading');
                     progressBar.style.width = '0%';
                 },
@@ -917,7 +916,7 @@
             if (fileInput.files.length > 0) {
                 dropZoneText.textContent = fileInput.files[0].name;
             } else {
-                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                dropZoneText.textContent = '드래그 또는 클릭';
             }
         });
 
@@ -938,3 +937,4 @@
     </script>
 </body>
 </html>
+
