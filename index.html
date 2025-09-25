@@ -160,7 +160,29 @@
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+
     <script>
+        // 1. Firebase 설정 초기화
+        const firebaseConfig = {
+          apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
+          authDomain: "youtubu-c770d.firebaseapp.com",
+          projectId: "youtubu-c770d",
+          storageBucket: "youtubu-c770d.firebasestorage.app",
+          messagingSenderId: "727943010727",
+          appId: "1:727943010727:web:44ce6a65c1887026523e82",
+          measurementId: "G-82SBN9ZWZQ"
+        };
+        
+        // Firebase 앱 초기화 및 서비스 인스턴스 설정
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const itemsRef = database.ref('items'); 
+        const storage = firebase.storage(); 
+
         const dropZone = document.getElementById('dropZone');
         const dropZoneText = document.getElementById('dropZone-text');
         const fileInput = document.getElementById('fileInput');
@@ -178,31 +200,47 @@
         const modalBody = document.getElementById('modalBody');
         const modalText = document.getElementById('modalText');
         const modalFileInfo = document.getElementById('modalFileInfo');
-        const modalHtmlPreview = document.getElementById('modalHtmlPreview'); // [수정]
-        const modalImagePreview = document.getElementById('modalImagePreview'); // [추가]
+        const modalHtmlPreview = document.getElementById('modalHtmlPreview'); 
+        const modalImagePreview = document.getElementById('modalImagePreview'); 
         const modalToggleViewBtn = document.getElementById('modalToggleViewBtn');
         const modalActionBtn = document.getElementById('modalActionBtn');
         
         let currentTab = 'text';
-        let savedItems = [];
-        let nextId = 0;
+        let savedItems = []; // Firebase 데이터를 저장할 배열
         let currentItemInModal = null;
 
         function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
         function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
         function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
 
+        // Firebase에서 데이터 로드 (실시간 리스너)
+        function loadItemsFromFirebase() {
+            itemsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                savedItems = [];
+                if (data) {
+                    savedItems = Object.keys(data).map(key => ({
+                        id: key, // Firebase Key를 id로 사용
+                        ...data[key],
+                        timestamp: new Date(data[key].timestamp) // 문자열을 Date 객체로 변환
+                    })).sort((a, b) => b.timestamp - a.timestamp); // 최신순 정렬
+                }
+                renderList();
+            }, (error) => {
+                console.error("Firebase 데이터 로드 오류:", error);
+            });
+        }
+
         function renderList() {
             listContainer.innerHTML = '';
             savedItems.forEach(item => {
                 const isHtmlItem = item.type === 'text' && isHtml(item.content);
-                // --- [수정] 파일 타입에 따른 아이콘 변경 ---
-                let icon = '📄'; // 기본: 텍스트
+                let icon = '📄'; 
                 if (item.type === 'file') {
-                    icon = item.isImage ? '🖼️' : '📁'; // 이미지면 이미지 아이콘, 아니면 폴더 아이콘
+                    icon = item.isImage ? '🖼️' : '📁'; 
                 }
                 const preview = item.type === 'text' 
-                    ? item.content.substring(0, 40).replace(/\n/g, ' ') + '...'
+                    ? item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')
                     : `${item.fileName} (${formatFileSize(item.fileSize)})`;
                 const itemEl = document.createElement('div');
                 itemEl.className = 'list-item';
@@ -227,7 +265,6 @@
             fileInputContainer.style.display = tab === 'file' ? 'block' : 'none';
         }
 
-        // --- [수정] openModal 함수 전체 수정 ---
         function openModal(id) {
             currentItemInModal = savedItems.find(i => i.id === id);
             if (!currentItemInModal) return;
@@ -246,15 +283,16 @@
                 modalToggleViewBtn.style.display = isHtmlItem ? 'inline-block' : 'none';
                 modalActionBtn.textContent = '전체 복사';
                 modalActionBtn.onclick = () => copyText(currentItemInModal.content);
-                showContentView(); // 텍스트 뷰를 기본으로 표시
+                showContentView(); 
             } else { // type === 'file'
                 modalActionBtn.textContent = '다운로드';
-                modalActionBtn.onclick = () => alert(`'${currentItemInModal.fileName}' 다운로드 (백엔드 연동 필요)`);
+                // 파일 URL로 이동하여 다운로드/열기
+                modalActionBtn.onclick = () => window.open(currentItemInModal.fileUrl, '_blank'); 
 
                 if (currentItemInModal.isImage) {
-                    // 이미지 파일인 경우
+                    // 이미지 파일인 경우: Storage URL을 src에 할당
                     modalImagePreview.style.display = 'block';
-                    modalImagePreview.src = currentItemInModal.fileData; // 저장된 Data URL을 src에 할당
+                    modalImagePreview.src = currentItemInModal.fileUrl;
                 } else {
                     // 이미지가 아닌 일반 파일인 경우
                     modalFileInfo.style.display = 'block';
@@ -283,14 +321,14 @@
         function closeModal() {
             modal.style.display = 'none';
             modalHtmlPreview.srcdoc = '';
-            modalImagePreview.src = ''; // [추가] 모달 닫을 때 이미지 소스 초기화
+            modalImagePreview.src = ''; 
             currentItemInModal = null;
         }
         function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
         tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
         
-        // --- [수정] saveBtn 이벤트 리스너 수정 ---
+        // --- [Firebase 연동] saveBtn 이벤트 리스너 ---
         saveBtn.addEventListener('click', () => {
             const title = titleInput.value.trim();
             if (!title) { alert('제목을 입력해주세요.'); return; }
@@ -303,67 +341,103 @@
             };
 
             if (currentTab === 'text') {
+                // [텍스트 저장] (Realtime Database)
                 const content = textInput.value.trim();
                 if (!content) { alert('내용을 입력해주세요.'); return; }
-                const newItem = { id: nextId++, type: 'text', title, content, timestamp: new Date() };
-                savedItems.unshift(newItem);
-                renderList();
-                resetForm();
+                
+                const newItem = {
+                    type: 'text',
+                    title,
+                    content,
+                    timestamp: new Date().toISOString()
+                };
+                itemsRef.push(newItem).then(() => {
+                    resetForm();
+                }).catch(error => {
+                    alert('저장 실패: ' + error.message);
+                });
+
             } else {
+                // [파일 저장] (Storage 업로드 후, Realtime Database 메타데이터 저장)
                 const file = fileInput.files[0];
                 if (!file) { alert('파일을 선택해주세요.'); return; }
+                
+                const storagePath = `files/${title}_${Date.now()}_${file.name}`;
+                const fileRef = storage.ref(storagePath);
 
-                // 파일이 이미지 타입인지 확인
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const newItem = { 
-                            id: nextId++, 
-                            type: 'file', 
-                            title, 
-                            fileName: file.name, 
-                            fileSize: file.size, 
-                            isImage: true, 
-                            fileData: e.target.result, // 파일 데이터를 Data URL 형태로 저장
-                            timestamp: new Date() 
-                        };
-                        savedItems.unshift(newItem);
-                        renderList();
-                        resetForm();
-                    };
-                    reader.readAsDataURL(file); // 파일을 Data URL로 읽기 시작
-                } else {
-                    // 이미지가 아닌 경우 기존 로직 수행
-                    const newItem = { 
-                        id: nextId++, 
-                        type: 'file', 
-                        title, 
-                        fileName: file.name, 
-                        fileSize: file.size, 
-                        isImage: false,
-                        fileUrl: '#', 
-                        timestamp: new Date() 
-                    };
-                    savedItems.unshift(newItem);
-                    renderList();
-                    resetForm();
-                }
+                const uploadTask = fileRef.put(file);
+
+                uploadTask.on('state_changed', 
+                    (snapshot) => {
+                        // 업로드 진행률 표시
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
+                    }, 
+                    (error) => {
+                        alert('파일 업로드 실패: ' + error.message);
+                        dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                    },
+                    () => {
+                        // 업로드 성공 후 다운로드 URL을 가져옴
+                        uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                            const newItem = {
+                                type: 'file',
+                                title,
+                                fileName: file.name,
+                                fileSize: file.size,
+                                isImage: file.type.startsWith('image/'),
+                                fileUrl: downloadURL,
+                                storagePath: storagePath, // 삭제를 위해 Storage 경로 저장
+                                timestamp: new Date().toISOString()
+                            };
+                            
+                            itemsRef.push(newItem).then(() => resetForm());
+                        }).catch(error => alert('URL 가져오기 실패: ' + error.message));
+                    }
+                );
             }
         });
 
+        // --- [Firebase 연동] 항목 클릭/삭제 리스너 ---
         listContainer.addEventListener('click', (e) => {
             const listItem = e.target.closest('.list-item');
             if (!listItem) return;
-            const id = Number(listItem.dataset.id);
+            const id = listItem.dataset.id;
+            const itemToDelete = savedItems.find(item => item.id === id);
+
             if (e.target.classList.contains('delete-btn')) {
-                savedItems = savedItems.filter(item => item.id !== id);
-                renderList();
+                if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
+                    // 1. Realtime Database 항목 삭제
+                    itemsRef.child(id).remove().then(() => {
+                        // 2. 파일 타입이면 Storage 파일도 삭제 시도
+                        if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
+                            const fileRef = storage.ref(itemToDelete.storagePath);
+                            fileRef.delete().then(() => {
+                                console.log('Storage 파일 삭제 성공');
+                            }).catch(error => {
+                                console.warn('Storage 파일 삭제 실패 (파일이 없거나 권한 문제):', error);
+                            });
+                        }
+                    }).catch(error => {
+                        alert('삭제 실패: ' + error.message);
+                    });
+                }
             } else {
                 openModal(id);
             }
         });
         
-        clearAllBtn.addEventListener('click', () => { if (savedItems.length > 0 && confirm('정말로 모든 항목을 삭제하시겠습니까?')) { savedItems = []; renderList(); } });
+        // --- [Firebase 연동] 모두 지우기 리스너 ---
+        clearAllBtn.addEventListener('click', () => { 
+            if (savedItems.length > 0 && confirm('경고: Realtime Database의 모든 항목이 삭제됩니다. (Storage 파일은 수동으로 정리해야 할 수 있습니다.)')) { 
+                // DB 항목만 삭제 (Storage 대량 삭제는 Cloud Function 권장)
+                itemsRef.remove().then(() => {
+                    alert('모든 항목을 삭제했습니다.');
+                }).catch(error => {
+                    alert('모두 지우기 실패: ' + error.message);
+                });
+            } 
+        });
         
         modalClose.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
@@ -396,7 +470,8 @@
             }
         });
 
-        renderList();
+        // 앱 시작 시 Firebase에서 데이터 로드
+        loadItemsFromFirebase(); 
     </script>
 </body>
 </html>
