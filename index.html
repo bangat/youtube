@@ -596,14 +596,19 @@
             } else { // type === 'file'
                 modalActionBtn.textContent = '다운로드';
                 modalActionBtn.onclick = () => {
-                    const link = document.createElement('a');
-                    link.href = currentItemInModal.fileUrl;
-                    const fileExtension = currentItemInModal.fileName.split('.').pop();
-                    link.download = `${currentItemInModal.title}.${fileExtension}`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }; 
+    // 다운로드 링크 생성
+    const link = document.createElement('a');
+    link.href = currentItemInModal.fileUrl;
+    
+    // 파일명 설정
+    const fileExtension = currentItemInModal.fileName.split('.').pop();
+    link.download = `${currentItemInModal.title}.${fileExtension}`;
+
+    // 다운로드 실행
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
                 if (currentItemInModal.isImage) {
                     modalImagePreview.style.display = 'block';
@@ -922,4 +927,5 @@
     </script>
 </body>
 </html>
+
 
