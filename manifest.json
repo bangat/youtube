@@ -7,13 +7,18 @@
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#1b74e4",
-    "icons": [
-        {
-            // 아이콘 경로도 리포지토리 경로를 기준으로 지정
-            "src": "/youtube/icons/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        // ... 나머지 아이콘
-    ]
+"icons": [
+    {
+        "src": "/youtube/icons/icon-192x192.png", // 안드로이드의 일반적인 사용 크기
+        "sizes": "192x192",
+        "type": "image/png"
+    },
+    {
+        "src": "/youtube/icons/icon-512x512.png", // 스플래시 화면 및 고해상도 크기
+        "sizes": "512x512",
+        "type": "image/png"
+    }
+    // 더 완벽한 호환성을 원하면 여기에 다른 크기를 추가할 수 있습니다.
+]
 }
+
