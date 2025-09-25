@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
     <link rel="manifest" href="/youtube/manifest.json">
-    <title>개인 클라우드</title>
+    <title>최윤서 클라우드</title>
     <style>
         /* --- 기본 & 테마 --- */
         :root {
@@ -25,7 +25,7 @@
         /* --- 레이아웃 --- */
         .app-container {
             display: grid;
-            grid-template-columns: 360px 1fr; /* 사이드바 너비 고정 */
+            grid-template-columns: 360px 1fr;
             width: 100vw;
             height: 100vh;
         }
@@ -49,15 +49,25 @@
         h2 { font-size: 20px; margin-bottom: 20px; }
 
         /* --- 입력 섹션 --- */
-        .tab-buttons { display: flex; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
-        .tab-btn { flex: 1; padding: 12px; background: none; border: none; cursor: pointer; font-size: 16px; font-weight: 600; color: var(--secondary-text); border-bottom: 3px solid transparent; transition: background-color 0.2s; }
+        /* 탭 디자인 수정 */
+        .tab-buttons { display: flex; margin-bottom: 20px; background-color: var(--surface-color); border-radius: 12px; padding: 6px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); }
+        .tab-btn { flex: 1; padding: 12px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--secondary-text); border-radius: 8px; transition: background-color 0.2s, box-shadow 0.2s; }
         .tab-btn:hover { background-color: rgba(0,0,0,0.03); }
-        .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .tab-btn.active { color: var(--accent-color); background-color: var(--bg-color); box-shadow: 0 1px 3px var(--shadow-color); }
+        
         .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
         #textInput { min-height: 150px; resize: vertical; }
+        #htmlInput { min-height: calc(100vh - 200px); flex-grow: 1; resize: none; border-radius: 8px 8px 0 0; }
         
         #fileInput-container { display: none; }
-        .drop-zone { border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); }
+        #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; }
+        
+        /* HTML 뷰어 전용 스타일 */
+        .html-viewer-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+        #runHtmlBtn { width: 100%; padding: 12px; background-color: #e02c4f; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        #runHtmlBtn:hover { background-color: #c72543; }
+        
+        .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); }
         .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
         #fileInput { display: none; }
 
@@ -95,74 +105,49 @@
         #modalTitle { font-size: 20px; }
         .modal-close-btn { font-size: 14px; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--secondary-text); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
         .modal-close-btn:hover { background-color: #e4e6e9; }
-        #modalBody { flex-grow: 1; overflow: auto; background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; min-height: 0; text-align: center; /* 이미지 가운데 정렬을 위해 추가 */ }
+        #modalBody { flex-grow: 1; overflow: auto; background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; min-height: 0; text-align: center; }
         #modalText { white-space: pre-wrap; word-break: break-all; height: 100%; text-align: left; }
         #modalHtmlPreview { width: 100%; height: 100%; border: none; }
-        /* --- 이미지 미리보기를 위한 스타일 추가 --- */
         #modalImagePreview { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
         #modalFileInfo { color: var(--secondary-text); text-align: left; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
         .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
         #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
         
-        /* --- index.html <style> 태그 내에 추가/수정 --- */
-
-        /* 1. 기본 모달 중앙 정렬 */
-        .modal-overlay { 
-            /* 기존 스타일 유지 */
-            align-items: center; /* 중앙 수직 정렬 보장 */
-            justify-content: center; /* 중앙 수평 정렬 보장 */
+        /* --- HTML 미리보기 전용 스타일 --- */
+        #htmlPreviewModal .modal-content {
+            max-width: 100%;
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            padding: 0;
         }
-        .modal-content {
-            /* 기존 스타일 유지 */
-            width: 95%; 
-            max-width: 500px; /* 기본 모달 너비 조정 */
-            height: auto; /* 높이 자동 조절 */
-            max-height: 90%; 
+        #htmlPreviewModal .modal-header {
+            padding: 16px;
+            margin: 0;
+            border-bottom: 1px solid var(--border-color);
         }
-
-        /* 2. 커스텀 Alert/Confirm 모달용 스타일 */
-        .custom-alert-content {
-            max-width: 380px;
-            height: auto;
-            padding: 20px;
+        #htmlPreviewModal .modal-body {
+            padding: 0;
+            background: #fff;
+            flex-grow: 1;
+        }
+        #htmlPreviewModal .modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* --- 커스텀 Confirm 모달 전용 스타일 --- */
+        #confirmModal .modal-content {
+            max-width: 400px;
+            padding: 24px;
             text-align: center;
         }
-        #customAlertMessage {
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-        .custom-alert-actions {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        /* 확인/취소 버튼 스타일 (기존 modal-btn 재활용) */
-
-        /* 3. 파일 업로드 진행바 스타일 */
-        .drop-zone {
-            position: relative;
-            overflow: hidden; /* 진행바가 넘치지 않도록 */
-        }
-        #upload-progress-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 0; /* 초기 너비 */
-            background-color: var(--accent-color);
-            opacity: 0.3;
-            transition: width 0.3s ease; /* 애니메이션 효과 */
-            z-index: 1; /* dropZoneText보다 뒤에 위치 */
-        }
-        #dropZone-text {
-            position: relative;
-            z-index: 2; /* 텍스트가 진행바 위에 오도록 */
-        }
-        .drop-zone.uploading {
-            border-color: var(--accent-color); /* 업로드 중 테두리 색상 변경 */
-        }
-
+        #confirmModal h3 { margin-bottom: 20px; }
+        #confirmModal .modal-actions { justify-content: center; }
+        
+        /* --- 모바일 반응형 --- */
         @media (max-width: 900px) {
             .app-container { 
                 grid-template-columns: 1fr; 
@@ -190,6 +175,22 @@
                 padding: 16px; 
             }
         }
+
+        /* --- Custom 모달용 스타일 (기존 코드 유지) --- */
+        .modal-overlay { align-items: center; justify-content: center; }
+        .modal-content { width: 95%; max-width: 500px; height: auto; max-height: 90%; }
+        .custom-alert-content { max-width: 380px; height: auto; padding: 20px; text-align: center; }
+        #customAlertMessage { font-size: 16px; margin-bottom: 20px; }
+        .custom-alert-actions { display: flex; justify-content: center; gap: 10px; }
+        
+        /* --- 진행바 스타일 (기존 코드 유지) --- */
+        .drop-zone { position: relative; overflow: hidden; }
+        #upload-progress-bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background-color: var(--accent-color); opacity: 0.3; transition: width 0.3s ease; z-index: 1; }
+        #dropZone-text { position: relative; z-index: 2; }
+        .drop-zone.uploading { border-color: var(--accent-color); }
+
+        #titleInput { display: block; }
+        #runHtmlBtn { display: none; }
     </style>
 </head>
 <body>
@@ -200,20 +201,30 @@
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
                 <button class="tab-btn" data-tab="file">파일</button>
+                <button class="tab-btn" data-tab="html">HTML 뷰어</button>
             </div>
             <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
+            <button id="runHtmlBtn" class="input-field">▶ 코드 실행</button>
+            
             <div id="textInput-container">
                 <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요..."></textarea>
             </div>
+            
             <div id="fileInput-container">
                 <div class="drop-zone" id="dropZone">
                     <div id="upload-progress-bar"></div>
-                                        <span id="dropZone-text">여기에 파일을 드래그하거나 클릭하여 선택</span>
+                    <span id="dropZone-text">여기에 파일을 드래그하거나 클릭하여 선택</span>
                     <input type="file" id="fileInput">
                 </div>
             </div>
+            
+            <div id="htmlInput-container">
+                <textarea id="htmlInput" class="input-field" placeholder="여기에 HTML 코드를 입력하세요..."></textarea>
+            </div>
+
             <button id="saveBtn">저장하기</button>
         </section>
+        
         <section class="list-column">
             <div class="list-header">
                 <h2>저장소</h2>
@@ -222,6 +233,7 @@
             <div id="listContainer" class="list-container"></div>
         </section>
     </main>
+
     <div id="modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -241,13 +253,32 @@
         </div>
     </div>
 
+    <div id="htmlPreviewModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-close-btn">닫기</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="htmlPreview" title="HTML Preview"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>정말로 이 항목을 삭제하시겠습니까?</h3>
+            <div class="modal-actions">
+                <button id="confirmCancelBtn" class="modal-btn">취소</button>
+                <button id="confirmOkBtn" class="modal-btn" style="background-color: #e02c4f; color: white; border-color: #e02c4f;">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
-
     <script>
-        // 1. Firebase 설정 초기화
         const firebaseConfig = {
           apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
           authDomain: "youtubu-c770d.firebaseapp.com",
@@ -258,21 +289,22 @@
           measurementId: "G-82SBN9ZWZQ"
         };
         
-        // Firebase 앱 초기화 및 서비스 인스턴스 설정
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const itemsRef = database.ref('items'); 
-        const storage = firebase.storage(); 
+        const itemsRef = database.ref('items');
+        const storage = firebase.storage();
 
-        const dropZone = document.getElementById('dropZone');
-        const dropZoneText = document.getElementById('dropZone-text');
-        const progressBar = document.getElementById('upload-progress-bar');
-        const fileInput = document.getElementById('fileInput');
-        const tabButtons = document.querySelectorAll('.tab-btn');
         const titleInput = document.getElementById('titleInput');
+        const runHtmlBtn = document.getElementById('runHtmlBtn');
         const textInputContainer = document.getElementById('textInput-container');
         const fileInputContainer = document.getElementById('fileInput-container');
+        const htmlInputContainer = document.getElementById('htmlInput-container');
         const textInput = document.getElementById('textInput');
+        const fileInput = document.getElementById('fileInput');
+        const htmlInput = document.getElementById('htmlInput');
+        const htmlPreviewModal = document.getElementById('htmlPreviewModal');
+        const htmlPreview = document.getElementById('htmlPreview');
+        const tabButtons = document.querySelectorAll('.tab-btn');
         const saveBtn = document.getElementById('saveBtn');
         const listContainer = document.getElementById('listContainer');
         const clearAllBtn = document.getElementById('clearAllBtn');
@@ -282,20 +314,27 @@
         const modalBody = document.getElementById('modalBody');
         const modalText = document.getElementById('modalText');
         const modalFileInfo = document.getElementById('modalFileInfo');
-        const modalHtmlPreview = document.getElementById('modalHtmlPreview'); 
-        const modalImagePreview = document.getElementById('modalImagePreview'); 
+        const modalHtmlPreview = document.getElementById('modalHtmlPreview');
+        const modalImagePreview = document.getElementById('modalImagePreview');
         const modalToggleViewBtn = document.getElementById('modalToggleViewBtn');
         const modalActionBtn = document.getElementById('modalActionBtn');
-        
+        const dropZone = document.getElementById('dropZone');
+        const dropZoneText = document.getElementById('dropZone-text');
+        const progressBar = document.getElementById('upload-progress-bar');
+
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmOkBtn = document.getElementById('confirmOkBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
         let currentTab = 'text';
         let savedItems = [];
         let currentItemInModal = null;
+        let pendingDeletionId = null;
 
         function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
         function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
         function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
 
-        // Firebase에서 데이터 로드 (실시간 리스너)
         function loadItemsFromFirebase() {
             itemsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
@@ -317,20 +356,26 @@
             listContainer.innerHTML = '';
             savedItems.forEach(item => {
                 const isHtmlItem = item.type === 'text' && isHtml(item.content);
-                let icon = '📄'; 
+                const isHtmlViewerItem = item.type === 'html';
+                
+                let icon = '📄';
                 if (item.type === 'file') {
-                    icon = item.isImage ? '🖼️' : '📁'; 
+                    icon = item.isImage ? '🖼️' : '📁';
+                } else if (isHtmlViewerItem) {
+                    icon = '💻';
                 }
-                const preview = item.type === 'text' 
+                
+                const preview = item.type === 'text' || item.type === 'html'
                     ? item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')
                     : `${item.fileName} (${formatFileSize(item.fileSize)})`;
+                
                 const itemEl = document.createElement('div');
                 itemEl.className = 'list-item';
                 itemEl.dataset.id = item.id;
                 itemEl.innerHTML = `
                     <div class="item-icon">
                         ${icon}
-                        ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
+                        ${isHtmlItem || isHtmlViewerItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
                     </div>
                     <div class="item-info"> <div class="item-title">${item.title}</div> <div class="item-preview">${preview}</div> </div>
                     <div class="item-timestamp">${formatTimestamp(item.timestamp)}</div>
@@ -343,8 +388,32 @@
         function switchTab(tab) {
             currentTab = tab;
             tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-            textInputContainer.style.display = tab === 'text' ? 'block' : 'none';
-            fileInputContainer.style.display = tab === 'file' ? 'block' : 'none';
+            
+            textInputContainer.style.display = 'none';
+            fileInputContainer.style.display = 'none';
+            htmlInputContainer.style.display = 'none';
+            titleInput.style.display = 'block';
+            runHtmlBtn.style.display = 'none';
+            
+            if (tab === 'text') {
+                textInputContainer.style.display = 'block';
+            } else if (tab === 'file') {
+                fileInputContainer.style.display = 'block';
+            } else if (tab === 'html') {
+                htmlInputContainer.style.display = 'flex';
+                titleInput.style.display = 'none';
+                runHtmlBtn.style.display = 'block';
+            }
+        }
+        
+        function runHtml() {
+            const code = htmlInput.value;
+            if (!code.trim()) {
+                alert("실행할 HTML 코드를 입력하세요.");
+                return;
+            }
+            htmlPreview.srcdoc = code;
+            htmlPreviewModal.style.display = 'flex';
         }
 
         function openModal(id) {
@@ -359,13 +428,13 @@
             modalFileInfo.style.display = 'none';
             modalToggleViewBtn.style.display = 'none';
 
-            if (currentItemInModal.type === 'text') {
-                const isHtmlItem = isHtml(currentItemInModal.content);
-                modalToggleViewBtn.style.display = isHtmlItem ? 'inline-block' : 'none';
+            if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
+                const isHtmlItem = currentItemInModal.type === 'html' || isHtml(currentItemInModal.content);
+                modalToggleViewBtn.style.display = 'inline-block';
                 modalActionBtn.textContent = '전체 복사';
                 modalActionBtn.onclick = () => copyText(currentItemInModal.content);
-                showContentView(); 
-            } else {
+                showContentView();
+            } else { // type === 'file'
                 modalActionBtn.textContent = '다운로드';
                 modalActionBtn.onclick = () => window.open(currentItemInModal.fileUrl, '_blank'); 
 
@@ -381,7 +450,7 @@
         }
 
         function showContentView() {
-            if (!currentItemInModal || currentItemInModal.type !== 'text') return;
+            if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
             modalText.textContent = currentItemInModal.content;
             modalText.style.display = 'block';
             modalHtmlPreview.style.display = 'none';
@@ -389,7 +458,7 @@
         }
 
         function showPreviewView() {
-            if (!currentItemInModal || currentItemInModal.type !== 'text') return;
+            if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
             modalText.style.display = 'none';
             modalHtmlPreview.style.display = 'block';
             modalHtmlPreview.srcdoc = currentItemInModal.content;
@@ -399,29 +468,55 @@
         function closeModal() {
             modal.style.display = 'none';
             modalHtmlPreview.srcdoc = '';
-            modalImagePreview.src = ''; 
+            modalImagePreview.src = '';
             currentItemInModal = null;
         }
+
+        function closeHtmlPreviewModal() {
+            htmlPreviewModal.style.display = 'none';
+        }
+
+        function showConfirmModal(message, onConfirm) {
+            const confirmMessage = confirmModal.querySelector('h3');
+            confirmMessage.textContent = message;
+            confirmModal.style.display = 'flex';
+
+            const handleConfirm = () => {
+                onConfirm();
+                confirmModal.style.display = 'none';
+                confirmOkBtn.removeEventListener('click', handleConfirm);
+                confirmCancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            const handleCancel = () => {
+                confirmModal.style.display = 'none';
+                confirmOkBtn.removeEventListener('click', handleConfirm);
+                confirmCancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            confirmOkBtn.addEventListener('click', handleConfirm);
+            confirmCancelBtn.addEventListener('click', handleCancel);
+        }
+
         function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
-        // --- 이벤트 리스너 통합 ---
-        function addMobileListeners() {
+        function addEventListeners() {
             tabButtons.forEach(btn => {
                 btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-                btn.addEventListener('touchstart', (e) => { e.preventDefault(); switchTab(e.target.dataset.tab); }, { passive: false });
             });
 
             saveBtn.addEventListener('click', handleSave);
-            saveBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleSave(); }, { passive: false });
-
+            runHtmlBtn.addEventListener('click', runHtml);
+            htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+            
             listContainer.addEventListener('click', (e) => {
                 const listItem = e.target.closest('.list-item');
                 if (!listItem) return;
                 const id = listItem.dataset.id;
-                const itemToDelete = savedItems.find(item => item.id === id);
-
+                
                 if (e.target.classList.contains('delete-btn')) {
-                    if (confirm('정말로 이 항목을 삭제하시겠습니까?')) {
+                    showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+                        const itemToDelete = savedItems.find(item => item.id === id);
                         itemsRef.child(id).remove().then(() => {
                             if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
                                 const fileRef = storage.ref(itemToDelete.storagePath);
@@ -434,119 +529,106 @@
                         }).catch(error => {
                             alert('삭제 실패: ' + error.message);
                         });
-                    }
+                    });
                 } else {
                     openModal(id);
                 }
             });
 
             clearAllBtn.addEventListener('click', () => { 
-                if (savedItems.length > 0 && confirm('경고: Realtime Database의 모든 항목이 삭제됩니다. (Storage 파일은 수동으로 정리해야 할 수 있습니다.)')) { 
+                showConfirmModal('경고: Realtime Database의 모든 항목이 삭제됩니다. 계속하시겠습니까?', () => {
                     itemsRef.remove().then(() => {
                         alert('모든 항목을 삭제했습니다.');
                     }).catch(error => {
                         alert('모두 지우기 실패: ' + error.message);
                     });
-                } 
+                });
             });
         }
 
-        // handleSave 함수로 로직 분리
         function handleSave() {
-            const title = titleInput.value.trim();
-            if (!title) { alert('제목을 입력해주세요.'); return; }
-
+            let title = titleInput.value.trim();
             const resetForm = () => {
                 titleInput.value = '';
                 textInput.value = '';
+                htmlInput.value = '';
                 fileInput.value = '';
                 dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
             };
 
+            if (currentTab === 'html') {
+                title = prompt("저장할 이름을 입력하세요.");
+                if (!title) {
+                    alert('저장할 이름이 입력되지 않았습니다.');
+                    return;
+                }
+            } else {
+                if (!title) {
+                    alert('제목을 입력해주세요.');
+                    return;
+                }
+            }
+            
+            let newItem;
             if (currentTab === 'text') {
                 const content = textInput.value.trim();
                 if (!content) { alert('내용을 입력해주세요.'); return; }
-                
-                const newItem = {
-                    type: 'text',
-                    title,
-                    content,
-                    timestamp: new Date().toISOString()
-                };
-                itemsRef.push(newItem).then(() => {
-                    resetForm();
-                }).catch(error => {
-                    alert('저장 실패: ' + error.message);
-                });
-
+                newItem = { type: 'text', title, content, timestamp: new Date().toISOString() };
+            } else if (currentTab === 'html') {
+                const content = htmlInput.value.trim();
+                if (!content) { alert('HTML 코드를 입력해주세요.'); return; }
+                newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
             } else {
                 const file = fileInput.files[0];
                 if (!file) { alert('파일을 선택해주세요.'); return; }
                 
                 if (file.type.startsWith('image/')) {
                     dropZoneText.textContent = '이미지 최적화 중...';
-                    
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 1024;
-                            const MAX_HEIGHT = 768;
-                            let width = img.width;
-                            let height = img.height;
-
-                            if (width > height) {
-                                if (width > MAX_WIDTH) {
-                                    height *= MAX_WIDTH / width;
-                                    width = MAX_WIDTH;
-                                }
-                            } else {
-                                if (height > MAX_HEIGHT) {
-                                    width *= MAX_HEIGHT / height;
-                                    height = MAX_HEIGHT;
-                                }
-                            }
-                            canvas.width = width;
-                            canvas.height = height;
-
+                            const MAX_WIDTH = 1024; const MAX_HEIGHT = 768;
+                            let width = img.width; let height = img.height;
+                            if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
+                            else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                            canvas.width = width; canvas.height = height;
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
-
                             canvas.toBlob((blob) => {
-                                if (!blob) {
-                                    alert('이미지 최적화에 실패했습니다.');
-                                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
-                                    return;
-                                }
+                                if (!blob) { alert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택'; return; }
                                 uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
                             }, file.type, 0.75);
                         };
                         img.src = e.target.result;
                     };
                     reader.readAsDataURL(file);
-
                 } else {
                     uploadFileToFirebase(file, title, file.name, file.type, resetForm);
                 }
+                return;
             }
+
+            itemsRef.push(newItem).then(() => {
+                resetForm();
+            }).catch(error => {
+                alert('저장 실패: ' + error.message);
+            });
         }
 
         function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
             const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
             const fileRef = storage.ref(storagePath);
-
             const uploadTask = fileRef.put(fileToUpload);
-
             dropZone.classList.add('uploading');
             progressBar.style.width = '0%';
-
-            uploadTask.on('state_changed', 
+            uploadTask.on('state_changed',
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
                     progressBar.style.width = `${progress}%`;
-                }, 
+                },
                 (error) => {
                     alert('파일 업로드 실패: ' + error.message);
                     dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
@@ -557,7 +639,6 @@
                     progressBar.style.width = '100%';
                     dropZone.classList.remove('uploading');
                     dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
-
                     uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                         const newItem = {
                             type: 'file',
@@ -569,18 +650,15 @@
                             storagePath: storagePath,
                             timestamp: new Date().toISOString()
                         };
-                        
                         itemsRef.push(newItem).then(() => {
                             progressBar.style.width = '0%';
                             resetFormCallback();
-                        }).catch(error => {
-                            alert('DB 저장 실패: ' + error.message);
-                        });
+                        }).catch(error => { alert('DB 저장 실패: ' + error.message); });
                     }).catch(error => alert('URL 가져오기 실패: ' + error.message));
                 }
             );
         }
-        
+
         modalClose.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         
@@ -612,11 +690,9 @@
             }
         });
 
-        // 앱 시작 시 이벤트 리스너 등록 및 데이터 로드
-        addMobileListeners();
-        loadItemsFromFirebase(); 
+        addEventListeners();
+        loadItemsFromFirebase();
 
-        // PWA: 서비스 워커 등록
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/youtube/service-worker.js', { scope: '/youtube/' })
