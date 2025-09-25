@@ -1,218 +1,402 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>내 뮤직 플레이어</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e1e1e">
-<link rel="apple-touch-icon" href="icons/icon-192x192.png">
-<style>
-/* --- 기존 CSS 그대로 --- */
-:root{--bg-color:#121212;--surface-color:#1e1e1e;--primary-color:#bb86fc;--secondary-color:#03dac6;--text-color:#e0e0e0;--subtle-text-color:#888;--border-color:#333;--danger-color:#cf6679;}
-html{box-sizing:border-box;}*,*:before,*:after{box-sizing:inherit;}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:var(--bg-color);color:var(--text-color);padding:15px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;}
-.app-container{width:100%;max-width:500px;background-color:var(--surface-color);border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:20px;overflow:hidden;}
-header h1{text-align:center;font-size:24px;color:var(--primary-color);margin:0 0 20px 0;}
-.input-section{display:flex;gap:10px;margin-bottom:20px;}
-#youtubeUrl{flex-grow:1;min-width:0;background-color:var(--bg-color);border:1px solid var(--border-color);border-radius:12px;padding:12px;font-size:14px;color:var(--text-color);}
-#youtubeUrl:focus{outline:none;border-color:var(--primary-color);}
-#addBtn{flex-shrink:0;padding:0 20px;font-size:14px;font-weight:600;border:none;border-radius:12px;cursor:pointer;color:#121212;background:linear-gradient(45deg,var(--primary-color),var(--secondary-color));touch-action:manipulation;}
-#addBtn:disabled{background:var(--border-color);color:var(--subtle-text-color);cursor:not-allowed;}
-.player-section { margin-bottom: 20px; text-align: center; }
-.album-art-section { width: 100%; max-width: 250px; margin: 0 auto 15px auto; aspect-ratio:1/1; background-color:#000; border-radius:12px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.2); }
-#albumArt { width: 100%; height: 100%; object-fit:cover; }
-#nowPlaying { font-size:16px; font-weight:500; color: var(--text-color); margin-bottom:5px; height:22px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#nowPlayingChannel { font-size:14px; color: var(--subtle-text-color); height:20px; margin-bottom:15px; }
-audio { width: 100%; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cloud Box - Pro</title>
+    <style>
+        /* --- 기본 & 테마 --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --surface-color: #ffffff;
+            --sidebar-color: #f7f8fa;
+            --primary-text: #050505;
+            --secondary-text: #65676b;
+            --accent-color: #1b74e4;
+            --border-color: #dddfe2;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
 
-.playlist-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding:0 5px;flex-wrap:wrap;gap:10px;}
-.playlist-controls label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;}
-.control-buttons{display:flex;gap:10px;}
-.control-buttons button{background:none;border:1px solid var(--border-color);color:var(--subtle-text-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;}
-.control-buttons button.danger{border-color:var(--danger-color);color:var(--danger-color);}
-#playlist{list-style:none;padding:0;margin:0;max-height:calc(100vh - 600px);min-height:100px;overflow-y:auto;}
-#playlist li{display:flex;align-items:center;gap:15px;padding:10px;border-radius:10px;cursor:pointer;transition:background-color .2s;}
-#playlist li.playing { background-color: rgba(187, 134, 252, 0.1); }
-#playlist li:hover{background-color:rgba(255,255,255,.05);}
-.thumbnail{width:50px;height:50px;border-radius:6px;object-fit:cover;flex-shrink:0;}
-.video-info{flex-grow:1;overflow:hidden;}
-.video-info .title{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 4px 0;}
-.video-info .channel{font-size:12px;color:var(--subtle-text-color);margin:0;}
-input[type=checkbox]{appearance:none;-webkit-appearance:none;width:20px;height:20px;border:2px solid var(--subtle-text-color);border-radius:6px;cursor:pointer;position:relative;flex-shrink:0;}
-input[type=checkbox]:checked{background-color:var(--primary-color);border-color:var(--primary-color);}
-input[type=checkbox]:checked::after{content:'✔';color:var(--surface-color);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:14px;}
-</style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--primary-text); }
+
+        /* --- 레이아웃 --- */
+        .app-container {
+            display: grid;
+            grid-template-columns: 360px 1fr; /* 사이드바 너비 고정 */
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .input-column {
+            background-color: var(--sidebar-color);
+            padding: 24px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-column {
+            background-color: var(--bg-color);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: hidden;
+        }
+        
+        h2 { font-size: 20px; margin-bottom: 20px; }
+
+        /* --- 입력 섹션 --- */
+        .tab-buttons { display: flex; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .tab-btn { flex: 1; padding: 12px; background: none; border: none; cursor: pointer; font-size: 16px; font-weight: 600; color: var(--secondary-text); border-bottom: 3px solid transparent; transition: background-color 0.2s; }
+        .tab-btn:hover { background-color: rgba(0,0,0,0.03); }
+        .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
+        #textInput { min-height: 150px; resize: vertical; }
+        
+        #fileInput-container { display: none; }
+        .drop-zone { border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); }
+        .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
+        #fileInput { display: none; }
+
+        #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
+        #saveBtn:hover { background-color: #1868cd; }
+
+        /* --- 목록 섹션 --- */
+        .list-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        #clearAllBtn { background: none; border: none; color: var(--secondary-text); cursor: pointer; font-weight: 600; }
+        #clearAllBtn:hover { color: #e02c4f; }
+        .list-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 10px;
+        }
+        .list-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 8px; cursor: pointer; transition: box-shadow 0.2s, border-color 0.2s; background-color: var(--surface-color); box-shadow: 0 1px 2px var(--shadow-color); }
+        .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
+        .item-icon { font-size: 24px; position: relative; }
+        .item-icon .html-badge { position: absolute; bottom: -5px; right: -8px; background-color: #e02c4f; color: white; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
+        .item-info { flex-grow: 1; overflow: hidden; }
+        .item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-preview { font-size: 14px; color: var(--secondary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-timestamp { font-size: 12px; color: var(--secondary-text); white-space: nowrap; }
+        .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; }
+        .delete-btn:hover { color: #e02c4f; }
+        
+        /* --- 모달 --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: var(--surface-color); padding: 24px; border-radius: 12px; width: 95%; max-width: 900px; height: 90%; display: flex; flex-direction: column; position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
+        #modalTitle { font-size: 20px; }
+        .modal-close-btn { font-size: 14px; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--secondary-text); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .modal-close-btn:hover { background-color: #e4e6e9; }
+        #modalBody { flex-grow: 1; overflow: auto; background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; min-height: 0; text-align: center; /* 이미지 가운데 정렬을 위해 추가 */ }
+        #modalText { white-space: pre-wrap; word-break: break-all; height: 100%; text-align: left; }
+        #modalHtmlPreview { width: 100%; height: 100%; border: none; }
+        /* --- [수정] 이미지 미리보기를 위한 스타일 추가 --- */
+        #modalImagePreview { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+        #modalFileInfo { color: var(--secondary-text); text-align: left; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+        .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+        
+        @media (max-width: 900px) {
+            .app-container { grid-template-columns: 1fr; padding: 0; }
+            .input-column, .list-column { border-radius: 0; }
+            .list-column { height: 100vh; }
+            .list-container { max-height: none; }
+            .modal-content { width: 100%; height: 100%; border-radius: 0; padding: 16px; }
+        }
+    </style>
 </head>
 <body>
-<div class="app-container">
-    <header><h1>내 뮤직 플레이어</h1></header>
-    <main>
-        <div class="input-section">
-            <input type="text" id="youtubeUrl" placeholder="유튜브 링크 붙여넣기">
-            <button id="addBtn">추가</button>
-        </div>
-        <div class="player-section">
-            <div class="album-art-section">
-                <img id="albumArt" src="" alt="앨범 아트">
+
+    <main class="app-container">
+        <section class="input-column">
+            <h2>내 저장공간</h2>
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="text">텍스트</button>
+                <button class="tab-btn" data-tab="file">파일</button>
             </div>
-            <p id="nowPlaying">재생할 음악을 선택하세요.</p>
-            <p id="nowPlayingChannel"></p>
-            <audio id="mediaPlayer" controls controlslist="nodownload" crossOrigin="anonymous"></audio>
-        </div>
-        <div class="playlist-section">
-            <div class="playlist-controls">
-                <label><input type="checkbox" id="selectAllCheckbox"><span>전체 선택</span></label>
-                <div class="control-buttons">
-                    <button id="deleteSelectedBtn">선택 삭제</button>
-                    <button id="clearAllBtn" class="danger">전체 삭제</button>
+            <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
+            <div id="textInput-container">
+                <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요..."></textarea>
+            </div>
+            <div id="fileInput-container">
+                <div class="drop-zone" id="dropZone">
+                    <span id="dropZone-text">여기에 파일을 드래그하거나 클릭하여 선택</span>
+                    <input type="file" id="fileInput">
                 </div>
             </div>
-            <ul id="playlist"></ul>
-        </div>
-    </main>
-</div>
-
-<script>
-if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>{
-        navigator.serviceWorker.register('/sw.js')
-        .then(reg=>console.log('서비스 워커 등록 성공:',reg))
-        .catch(err=>console.log('서비스 워커 등록 실패:',err));
-    });
-}
-</script>
-
-<script>
-/* ○○○○○ music-player.js 시작 ○○○○○ */
-const urlInput=document.getElementById('youtubeUrl'),
-      addBtn=document.getElementById('addBtn'),
-      mediaPlayer=document.getElementById('mediaPlayer'),
-      nowPlaying=document.getElementById('nowPlaying'),
-      nowPlayingChannel=document.getElementById('nowPlayingChannel'),
-      albumArt=document.getElementById('albumArt'),
-      playlistElement=document.getElementById('playlist'),
-      selectAllCheckbox=document.getElementById('selectAllCheckbox'),
-      deleteSelectedBtn=document.getElementById('deleteSelectedBtn'),
-      clearAllBtn=document.getElementById('clearAllBtn');
-
-const BACKEND_URL = "https://youtube-xi-khaki.vercel.app/api/youtube";
-
-let playlist=[], currentPlayingIndex=-1;
-
-window.addEventListener('load', loadPlaylist);
-addBtn.addEventListener('click', addVideo);
-deleteSelectedBtn.addEventListener('click', deleteSelected);
-clearAllBtn.addEventListener('click', clearAll);
-selectAllCheckbox.addEventListener('change', toggleSelectAll);
-mediaPlayer.addEventListener('ended', playNext);
-
-function loadPlaylist(){
-    const data = localStorage.getItem('playlist');
-    if(data) playlist = JSON.parse(data);
-    renderPlaylist();
-}
-
-function savePlaylist(){
-    localStorage.setItem('playlist', JSON.stringify(playlist));
-}
-
-function renderPlaylist(){
-    playlistElement.innerHTML='';
-    if(playlist.length===0){
-        playlistElement.innerHTML=`<li style="justify-content:center;color:var(--subtle-text-color);">재생 목록이 비어있습니다.</li>`;
-        selectAllCheckbox.checked=false;
-        selectAllCheckbox.indeterminate=false;
-        return;
-    }
-    playlist.forEach((video,index)=>{
-        const li=document.createElement('li');
-        if(index===currentPlayingIndex) li.classList.add('playing');
-        li.innerHTML=`
-            <input type="checkbox" data-index="${index}">
-            <img src="${video.thumbnail}" class="thumbnail">
-            <div class="video-info">
-                <p class="title">${video.title}</p>
-                <p class="channel">${video.channel}</p>
+            <button id="saveBtn">저장하기</button>
+        </section>
+        <section class="list-column">
+            <div class="list-header">
+                <h2>저장소</h2>
+                <button id="clearAllBtn">모두 지우기</button>
             </div>
-        `;
-        li.addEventListener('click',(e)=>{
-            if(e.target.tagName!=='INPUT') playVideo(index);
+            <div id="listContainer" class="list-container"></div>
+        </section>
+    </main>
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle"></h3>
+                <button class="modal-close-btn">닫기</button>
+            </div>
+            <div id="modalBody">
+                <pre id="modalText"></pre>
+                <iframe id="modalHtmlPreview"></iframe>
+                <img id="modalImagePreview" />
+                <div id="modalFileInfo"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" id="modalToggleViewBtn">미리보기</button>
+                <button class="modal-btn" id="modalActionBtn"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const dropZoneText = document.getElementById('dropZone-text');
+        const fileInput = document.getElementById('fileInput');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const titleInput = document.getElementById('titleInput');
+        const textInputContainer = document.getElementById('textInput-container');
+        const fileInputContainer = document.getElementById('fileInput-container');
+        const textInput = document.getElementById('textInput');
+        const saveBtn = document.getElementById('saveBtn');
+        const listContainer = document.getElementById('listContainer');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const modal = document.getElementById('modal');
+        const modalClose = document.querySelector('.modal-close-btn');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalText = document.getElementById('modalText');
+        const modalFileInfo = document.getElementById('modalFileInfo');
+        const modalHtmlPreview = document.getElementById('modalHtmlPreview'); // [수정]
+        const modalImagePreview = document.getElementById('modalImagePreview'); // [추가]
+        const modalToggleViewBtn = document.getElementById('modalToggleViewBtn');
+        const modalActionBtn = document.getElementById('modalActionBtn');
+        
+        let currentTab = 'text';
+        let savedItems = [];
+        let nextId = 0;
+        let currentItemInModal = null;
+
+        function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
+        function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
+        function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
+
+        function renderList() {
+            listContainer.innerHTML = '';
+            savedItems.forEach(item => {
+                const isHtmlItem = item.type === 'text' && isHtml(item.content);
+                // --- [수정] 파일 타입에 따른 아이콘 변경 ---
+                let icon = '📄'; // 기본: 텍스트
+                if (item.type === 'file') {
+                    icon = item.isImage ? '🖼️' : '📁'; // 이미지면 이미지 아이콘, 아니면 폴더 아이콘
+                }
+                const preview = item.type === 'text' 
+                    ? item.content.substring(0, 40).replace(/\n/g, ' ') + '...'
+                    : `${item.fileName} (${formatFileSize(item.fileSize)})`;
+                const itemEl = document.createElement('div');
+                itemEl.className = 'list-item';
+                itemEl.dataset.id = item.id;
+                itemEl.innerHTML = `
+                    <div class="item-icon">
+                        ${icon}
+                        ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
+                    </div>
+                    <div class="item-info"> <div class="item-title">${item.title}</div> <div class="item-preview">${preview}</div> </div>
+                    <div class="item-timestamp">${formatTimestamp(item.timestamp)}</div>
+                    <button class="delete-btn">&times;</button>
+                `;
+                listContainer.appendChild(itemEl);
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+            textInputContainer.style.display = tab === 'text' ? 'block' : 'none';
+            fileInputContainer.style.display = tab === 'file' ? 'block' : 'none';
+        }
+
+        // --- [수정] openModal 함수 전체 수정 ---
+        function openModal(id) {
+            currentItemInModal = savedItems.find(i => i.id === id);
+            if (!currentItemInModal) return;
+            
+            modalTitle.textContent = currentItemInModal.title;
+            
+            // 모든 미리보기 영역 숨기기
+            modalText.style.display = 'none';
+            modalHtmlPreview.style.display = 'none';
+            modalImagePreview.style.display = 'none';
+            modalFileInfo.style.display = 'none';
+            modalToggleViewBtn.style.display = 'none';
+
+            if (currentItemInModal.type === 'text') {
+                const isHtmlItem = isHtml(currentItemInModal.content);
+                modalToggleViewBtn.style.display = isHtmlItem ? 'inline-block' : 'none';
+                modalActionBtn.textContent = '전체 복사';
+                modalActionBtn.onclick = () => copyText(currentItemInModal.content);
+                showContentView(); // 텍스트 뷰를 기본으로 표시
+            } else { // type === 'file'
+                modalActionBtn.textContent = '다운로드';
+                modalActionBtn.onclick = () => alert(`'${currentItemInModal.fileName}' 다운로드 (백엔드 연동 필요)`);
+
+                if (currentItemInModal.isImage) {
+                    // 이미지 파일인 경우
+                    modalImagePreview.style.display = 'block';
+                    modalImagePreview.src = currentItemInModal.fileData; // 저장된 Data URL을 src에 할당
+                } else {
+                    // 이미지가 아닌 일반 파일인 경우
+                    modalFileInfo.style.display = 'block';
+                    modalFileInfo.innerHTML = `<p><strong>파일 이름:</strong> ${currentItemInModal.fileName}</p><p><strong>파일 크기:</strong> ${formatFileSize(currentItemInModal.fileSize)}</p>`;
+                }
+            }
+            modal.style.display = 'flex';
+        }
+
+        function showContentView() {
+            if (!currentItemInModal || currentItemInModal.type !== 'text') return;
+            modalText.textContent = currentItemInModal.content;
+            modalText.style.display = 'block';
+            modalHtmlPreview.style.display = 'none';
+            modalToggleViewBtn.textContent = '미리보기';
+        }
+
+        function showPreviewView() {
+            if (!currentItemInModal || currentItemInModal.type !== 'text') return;
+            modalText.style.display = 'none';
+            modalHtmlPreview.style.display = 'block';
+            modalHtmlPreview.srcdoc = currentItemInModal.content;
+            modalToggleViewBtn.textContent = '내용 보기';
+        }
+        
+        function closeModal() {
+            modal.style.display = 'none';
+            modalHtmlPreview.srcdoc = '';
+            modalImagePreview.src = ''; // [추가] 모달 닫을 때 이미지 소스 초기화
+            currentItemInModal = null;
+        }
+        function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
+
+        tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        
+        // --- [수정] saveBtn 이벤트 리스너 수정 ---
+        saveBtn.addEventListener('click', () => {
+            const title = titleInput.value.trim();
+            if (!title) { alert('제목을 입력해주세요.'); return; }
+
+            const resetForm = () => {
+                titleInput.value = '';
+                textInput.value = '';
+                fileInput.value = '';
+                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+            };
+
+            if (currentTab === 'text') {
+                const content = textInput.value.trim();
+                if (!content) { alert('내용을 입력해주세요.'); return; }
+                const newItem = { id: nextId++, type: 'text', title, content, timestamp: new Date() };
+                savedItems.unshift(newItem);
+                renderList();
+                resetForm();
+            } else {
+                const file = fileInput.files[0];
+                if (!file) { alert('파일을 선택해주세요.'); return; }
+
+                // 파일이 이미지 타입인지 확인
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const newItem = { 
+                            id: nextId++, 
+                            type: 'file', 
+                            title, 
+                            fileName: file.name, 
+                            fileSize: file.size, 
+                            isImage: true, 
+                            fileData: e.target.result, // 파일 데이터를 Data URL 형태로 저장
+                            timestamp: new Date() 
+                        };
+                        savedItems.unshift(newItem);
+                        renderList();
+                        resetForm();
+                    };
+                    reader.readAsDataURL(file); // 파일을 Data URL로 읽기 시작
+                } else {
+                    // 이미지가 아닌 경우 기존 로직 수행
+                    const newItem = { 
+                        id: nextId++, 
+                        type: 'file', 
+                        title, 
+                        fileName: file.name, 
+                        fileSize: file.size, 
+                        isImage: false,
+                        fileUrl: '#', 
+                        timestamp: new Date() 
+                    };
+                    savedItems.unshift(newItem);
+                    renderList();
+                    resetForm();
+                }
+            }
         });
-        playlistElement.appendChild(li);
-    });
-    updateSelectAllCheckbox();
-}
 
-async function addVideo(){
-    const url = urlInput.value.trim();
-    if(!url) return alert("URL을 입력하세요.");
-    addBtn.disabled = true;
-    try{
-        const res = await fetch(`${BACKEND_URL}?url=${encodeURIComponent(url)}`);
-        if(!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        playlist.push(data);
-        savePlaylist();
-        renderPlaylist();
-        if(currentPlayingIndex===-1) playVideo(playlist.length-1);
-        urlInput.value='';
-    }catch(err){
-        console.error(err);
-        alert("비디오 정보를 가져오는데 실패했습니다.");
-    }finally{
-        addBtn.disabled=false;
-    }
-}
+        listContainer.addEventListener('click', (e) => {
+            const listItem = e.target.closest('.list-item');
+            if (!listItem) return;
+            const id = Number(listItem.dataset.id);
+            if (e.target.classList.contains('delete-btn')) {
+                savedItems = savedItems.filter(item => item.id !== id);
+                renderList();
+            } else {
+                openModal(id);
+            }
+        });
+        
+        clearAllBtn.addEventListener('click', () => { if (savedItems.length > 0 && confirm('정말로 모든 항목을 삭제하시겠습니까?')) { savedItems = []; renderList(); } });
+        
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        
+        modalToggleViewBtn.addEventListener('click', () => {
+            if (modalToggleViewBtn.textContent === '미리보기') {
+                showPreviewView();
+            } else {
+                showContentView();
+            }
+        });
 
-function playVideo(index){
-    const video = playlist[index];
-    if(!video) return;
-    mediaPlayer.src = video.streamUrl;
-    mediaPlayer.play();
-    nowPlaying.textContent = video.title;
-    nowPlayingChannel.textContent = video.channel;
-    albumArt.src = video.thumbnail;
-    currentPlayingIndex=index;
-    renderPlaylist();
-}
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                dropZoneText.textContent = files[0].name;
+            }
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                dropZoneText.textContent = fileInput.files[0].name;
+            } else {
+                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+            }
+        });
 
-function playNext(){
-    if(currentPlayingIndex+1 < playlist.length){
-        playVideo(currentPlayingIndex+1);
-    }
-}
-
-function deleteSelected(){
-    const checked = Array.from(playlistElement.querySelectorAll('input[type=checkbox]:checked'))
-                        .map(input=>parseInt(input.dataset.index));
-    playlist = playlist.filter((_,i)=>!checked.includes(i));
-    if(currentPlayingIndex>=playlist.length) currentPlayingIndex=-1;
-    savePlaylist();
-    renderPlaylist();
-}
-
-function clearAll(){
-    if(confirm("정말 전체 삭제하시겠습니까?")){
-        playlist=[];
-        currentPlayingIndex=-1;
-        savePlaylist();
-        renderPlaylist();
-    }
-}
-
-function toggleSelectAll(){
-    const checked = selectAllCheckbox.checked;
-    playlistElement.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=checked);
-}
-
-function updateSelectAllCheckbox(){
-    const all = playlistElement.querySelectorAll('input[type=checkbox]');
-    const checked = playlistElement.querySelectorAll('input[type=checkbox]:checked');
-    selectAllCheckbox.checked = all.length===checked.length && all.length>0;
-    selectAllCheckbox.indeterminate = checked.length>0 && checked.length<all.length;
-}
-/* ○○○○○ music-player.js 종료 ○○○○○ */
-</script>
+        renderList();
+    </script>
 </body>
 </html>
