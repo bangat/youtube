@@ -80,7 +80,15 @@
         }
 
         #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
+
         #saveBtn:hover { background-color: #1868cd; }
+
+/* ✅ 추가된 부분: 버튼 비활성화 시 스타일 */
+#saveBtn:disabled {
+    background-color: #e0e0e0;
+    color: #a0a0a0;
+    cursor: not-allowed;
+}
 
         /* --- 목록 섹션 --- */
         .list-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
@@ -296,7 +304,7 @@
 
     <main class="app-container">
         <section class="input-column">
-            <h2>내 저장공간</h2>
+            <h2>클라우드Pro</h2>
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
                 <button class="tab-btn" data-tab="file">파일</button>
@@ -321,12 +329,12 @@
                 <textarea id="htmlInput" class="input-field" placeholder="여기에 HTML 코드를 입력하세요..."></textarea>
             </div>
 
-            <button id="saveBtn">저장하기</button>
+            <button id="saveBtn" disabled>저장하기</button>
         </section>
         
         <section class="list-column">
             <div class="list-header">
-                <h2>저장소</h2>
+                <h2>내 저장공간</h2>
                 <button id="clearAllBtn">모두 지우기</button>
             </div>
             <div id="listContainer" class="list-container"></div>
@@ -633,6 +641,32 @@
 
         function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
+        // 저장 버튼 상태를 업데이트하는 함수
+function updateSaveButtonState() {
+    let isDisabled = true;
+    const title = titleInput.value.trim();
+
+    if (currentTab === 'text') {
+        const content = textInput.value.trim();
+        if (title && content) {
+            isDisabled = false;
+        }
+    } else if (currentTab === 'file') {
+        const file = fileInput.files[0];
+        if (title && file) {
+            isDisabled = false;
+        }
+    } else if (currentTab === 'html') {
+        const content = htmlInput.value.trim();
+        // HTML 탭은 제목을 나중에 받으므로 내용만 확인
+        if (content) {
+            isDisabled = false;
+        }
+    }
+
+    saveBtn.disabled = isDisabled;
+}
+        
         function addEventListeners() {
             tabButtons.forEach(btn => {
                 btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -823,6 +857,34 @@
             }
         });
 
+        // titleInput의 내용이 바뀔 때마다 버튼 상태 업데이트
+titleInput.addEventListener('input', updateSaveButtonState);
+// textInput의 내용이 바뀔 때마다 버튼 상태 업데이트
+textInput.addEventListener('input', updateSaveButtonState);
+// fileInput의 파일이 선택되면 버튼 상태 업데이트
+fileInput.addEventListener('change', () => {
+    updateSaveButtonState();
+    if (fileInput.files.length > 0) {
+        dropZoneText.textContent = fileInput.files[0].name;
+    } else {
+        dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+    }
+});
+// htmlInput의 내용이 바뀔 때마다 버튼 상태 업데이트
+htmlInput.addEventListener('input', updateSaveButtonState);
+
+// 드래그앤드롭 이벤트 리스너에도 추가
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        dropZoneText.textContent = files[0].name;
+    }
+    updateSaveButtonState(); // 드롭 시 상태 업데이트
+});
+
         addEventListeners();
         loadItemsFromFirebase();
 
@@ -840,3 +902,4 @@
     </script>
 </body>
 </html>
+
