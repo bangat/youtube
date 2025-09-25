@@ -529,7 +529,7 @@
                 }
                 
                 const fileNamePreview = item.type === 'file' 
-                    ? item.fileName.length > 20 ? item.fileName.substring(0, 20) + '...' : item.fileName
+                    ? item.fileName.length > 10 ? item.fileName.substring(0, 10) + '...' : item.fileName
                     : '';
 
                 const textPreview = item.type === 'text' || item.type === 'html'
@@ -937,4 +937,5 @@
     </script>
 </body>
 </html>
+
 
