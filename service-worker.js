@@ -1,12 +1,14 @@
 const CACHE_NAME = 'cloudbox-cache-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/manifest.json',
-    // Firebase CDN 스크립트는 온라인에서 가져오는 것이 일반적이지만,
-    // 필수적인 PWA 자산을 여기에 추가할 수 있습니다.
-    // 'styles.css', // CSS가 HTML 내부에 있어 생략
-    // 'scripts.js'  // JS가 HTML 내부에 있어 생략
+    // ⚠️ 1. 리포지토리 이름을 포함한 시작 URL로 수정
+    '/youtube/', 
+    // ⚠️ 2. 파일 경로도 리포지토리 이름을 포함하여 수정
+    '/youtube/index.html',
+    '/youtube/manifest.json',
+    // 아이콘도 반드시 경로를 정확히 지정해야 합니다.
+    '/youtube/icons/icon-192x192.png',
+    '/youtube/icons/icon-512x512.png'
+    // 만약 icons 폴더가 없다면, 이 두 줄을 제거하거나 폴더를 만드세요.
 ];
 
 // 설치 이벤트: 서비스 워커를 설치하고 파일들을 캐시에 저장
@@ -74,4 +76,5 @@ self.addEventListener('activate', event => {
         })
     );
     return self.clients.claim();
+
 });
