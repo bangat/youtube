@@ -65,30 +65,29 @@
         #runHtmlBtn { width: 100%; padding: 12px; background-color: #e02c4f; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         #runHtmlBtn:hover { background-color: #c72543; }
         
-/* --- 입력 섹션 --- */
-.drop-zone { 
-    position: relative; 
-    border: 2px dashed var(--border-color); 
-    border-radius: 8px; 
-    padding: 30px; 
-    text-align: center; 
-    color: var(--secondary-text); 
-    cursor: pointer; 
-    transition: background-color 0.2s, border-color 0.2s; 
-    background-color: var(--surface-color);
-    overflow: hidden; /* 이 속성을 추가하여 내용이 넘치는 것을 숨깁니다 */
-}
-.drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
-#fileInput { display: none; }
+        .drop-zone { 
+            position: relative; 
+            border: 2px dashed var(--border-color); 
+            border-radius: 8px; 
+            padding: 30px; 
+            text-align: center; 
+            color: var(--secondary-text); 
+            cursor: pointer; 
+            transition: background-color 0.2s, border-color 0.2s; 
+            background-color: var(--surface-color);
+            overflow: hidden; 
+        }
+        .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
+        #fileInput { display: none; }
         
-/* 파일명 길어짐 방지: PC와 모바일 모두에 적용 */
-#dropZone-text {
-    display: inline-block;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis; /* 넘치는 텍스트를 ...으로 표시 */
-    white-space: nowrap; /* 텍스트를 한 줄에만 표시 */
-}
+        /* 파일명 길어짐 방지 */
+        #dropZone-text {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis; 
+            white-space: nowrap; 
+        }
 
         #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
         #saveBtn:hover { background-color: #1868cd; }
@@ -113,7 +112,7 @@
         }
         .list-item {
             display: flex;
-            align-items: center; /* 아이콘과 텍스트를 수직 중앙 정렬 */
+            align-items: center; 
             gap: 15px;
             padding: 15px;
             border-radius: 8px;
@@ -168,7 +167,7 @@
         .item-date {
             font-size: 12px;
             color: var(--secondary-text);
-            position: absolute; /* 날짜 위치를 삭제 버튼 옆으로 이동 */
+            position: absolute;
             top: 15px;
             right: 50px;
         }
@@ -276,11 +275,12 @@
                 flex-direction: column;
                 justify-content: center;
             }
-            .item-icon { margin-bottom: 4px; }
+            .item-icon { margin-right: 15px; } /* 아이콘과 제목 사이 간격 */
             .item-date {
                 font-size: 10px;
                 color: var(--secondary-text);
                 position: static;
+                margin-top: 4px;
             }
             .item-title {
                 font-size: 15px;
@@ -303,9 +303,10 @@
                 transform: translateY(-50%);
                 font-size: 20px;
             }
-            .modal-content {
-                width: 100%;
-                border-radius: 0;
+            .modal-content { width: 100%; border-radius: 0; }
+            /* 드래그 영역 텍스트 재조정 */
+            #dropZone-text {
+                padding: 0 10px;
             }
         }
         
@@ -323,6 +324,7 @@
 
     <main class="app-container">
         <section class="input-column">
+            <h2>최클라우드Pro</h2>
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
                 <button class="tab-btn" data-tab="file">파일</button>
@@ -507,9 +509,24 @@
                 
                 let icon = '📄';
                 if (item.type === 'file') {
-                    icon = item.isImage ? '🖼️' : '📁';
+                    const fileExtension = item.fileName.split('.').pop().toLowerCase();
+                    if (['png', 'jpg', 'jpeg', 'gif', 'svg'].includes(fileExtension)) {
+                        icon = '🖼️';
+                    } else if (['mp4', 'mov', 'avi'].includes(fileExtension)) {
+                        icon = '🎬';
+                    } else if (['txt', 'log', 'md'].includes(fileExtension)) {
+                        icon = '📄';
+                    } else if (['zip', 'rar', '7z'].includes(fileExtension)) {
+                        icon = '📦';
+                    } else if (['pdf'].includes(fileExtension)) {
+                        icon = '📄'; // PDF도 텍스트 아이콘
+                    } else {
+                        icon = '📁';
+                    }
                 } else if (isHtmlViewerItem) {
                     icon = '💻';
+                } else if (isHtmlItem) {
+                    icon = '📝';
                 }
                 
                 const fileNamePreview = item.type === 'file' 
@@ -523,25 +540,34 @@
                 const itemEl = document.createElement('div');
                 itemEl.className = 'list-item';
                 itemEl.dataset.id = item.id;
+                
+                let itemContentHTML = '';
+                if (item.type === 'text' || item.type === 'html') {
+                    itemContentHTML = `<div class="item-details">
+                                            <div class="item-title">${item.title}</div>
+                                            <div class="item-preview">${textPreview}</div>
+                                        </div>`;
+                } else if (item.type === 'file') {
+                    itemContentHTML = `<div class="item-details">
+                                            <div class="item-title">${item.title}</div>
+                                            <div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div>
+                                        </div>`;
+                }
+                
                 itemEl.innerHTML = `
                     <div class="item-icon">
                         ${icon}
                         ${isHtmlItem || isHtmlViewerItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
                     </div>
-                    <div class="item-details">
-                        <div class="item-title">${item.title}</div>
-                        ${item.type === 'file' 
-                            ? `<div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div>`
-                            : `<div class="item-preview">${textPreview}</div>`
-                        }
-                        <div class="item-date">${formatTimestamp(item.timestamp)}</div>
-                    </div>
+                    ${itemContentHTML}
+                    <div class="item-date">${formatTimestamp(item.timestamp)}</div>
                     <button class="delete-btn">&times;</button>
                 `;
                 listContainer.appendChild(itemEl);
             });
         }
-
+        
+        // 새로운 탭 전환 로직
         function switchTab(tab) {
             currentTab = tab;
             tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
@@ -593,34 +619,19 @@
                 modalActionBtn.textContent = '전체 복사';
                 modalActionBtn.onclick = () => copyText(currentItemInModal.content);
                 showContentView();
-            } else { // type === 'file'
-                modalActionBtn.textContent = '다운로드';
-                modalActionBtn.onclick = () => {
-    // 다운로드 링크 생성
-    const link = document.createElement('a');
-    link.href = currentItemInModal.fileUrl;
-    
-    // 파일명 설정
-    const fileExtension = currentItemInModal.fileName.split('.').pop();
-    link.download = `${currentItemInModal.title}.${fileExtension}`;
-
-    // 다운로드 실행
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
-                if (currentItemInModal.isImage) {
-                    modalImagePreview.style.display = 'block';
-                    modalImagePreview.src = currentItemInModal.fileUrl;
-                } else {
-                    modalFileInfo.style.display = 'block';
-                    modalFileInfo.innerHTML = `<p><strong>파일 이름:</strong> ${currentItemInModal.fileName}</p><p><strong>파일 크기:</strong> ${formatFileSize(currentItemInModal.fileSize)}</p>`;
-                }
+                modal.style.display = 'flex';
+            } else if (currentItemInModal.type === 'file') {
+                // 다운로드 로직을 직접 실행
+                const link = document.createElement('a');
+                link.href = currentItemInModal.fileUrl;
+                const fileExtension = currentItemInModal.fileName.split('.').pop();
+                link.download = `${currentItemInModal.title}.${fileExtension}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
-            modal.style.display = 'flex';
         }
-
+        
         function showContentView() {
             if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
             modalText.textContent = currentItemInModal.content;
@@ -750,7 +761,7 @@
                 if (fileInput.files.length > 0) {
                     dropZoneText.textContent = fileInput.files[0].name;
                 } else {
-                    dropZoneText.textContent = '드래그 또는 클릭';
+                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
                 }
             });
             dropZone.addEventListener('drop', (e) => {
@@ -772,7 +783,7 @@
                 textInput.value = '';
                 htmlInput.value = '';
                 fileInput.value = '';
-                dropZoneText.textContent = '드래그 또는 클릭';
+                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
                 updateSaveButtonState();
             };
 
@@ -817,7 +828,7 @@
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
                             canvas.toBlob((blob) => {
-                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '드래그 또는 클릭'; return; }
+                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택'; return; }
                                 uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
                             }, file.type, 0.75);
                         };
@@ -851,7 +862,7 @@
                 },
                 (error) => {
                     showAlert('파일 업로드 실패: ' + error.message);
-                    dropZoneText.textContent = '드래그 또는 클릭';
+                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
                     dropZone.classList.remove('uploading');
                     progressBar.style.width = '0%';
                 },
@@ -906,7 +917,7 @@
             if (fileInput.files.length > 0) {
                 dropZoneText.textContent = fileInput.files[0].name;
             } else {
-                dropZoneText.textContent = '드래그 또는 클릭';
+                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
             }
         });
 
@@ -927,5 +938,3 @@
     </script>
 </body>
 </html>
-
-
