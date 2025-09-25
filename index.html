@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
     <link rel="manifest" href="/youtube/manifest.json">
-    <title>My Cloud Box - Pro</title>
+    <title>최클라우드Pro</title>
     <style>
         /* --- 기본 & 테마 --- */
         :root {
@@ -49,7 +49,6 @@
         h2 { font-size: 20px; margin-bottom: 20px; }
 
         /* --- 입력 섹션 --- */
-        /* 탭 디자인 수정 */
         .tab-buttons { display: flex; margin-bottom: 20px; background-color: var(--surface-color); border-radius: 12px; padding: 6px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); }
         .tab-btn { flex: 1; padding: 12px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--secondary-text); border-radius: 8px; transition: background-color 0.2s, box-shadow 0.2s; }
         .tab-btn:hover { background-color: rgba(0,0,0,0.03); }
@@ -70,6 +69,15 @@
         .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); }
         .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
         #fileInput { display: none; }
+        
+        /* 파일명 길어짐 방지 */
+        #dropZone-text {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
         #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
         #saveBtn:hover { background-color: #1868cd; }
@@ -87,46 +95,56 @@
             flex-grow: 1;
             padding-right: 10px;
         }
-        .list-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            padding: 15px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            transition: box-shadow 0.2s, border-color 0.2s; 
-            background-color: var(--surface-color); 
+        .list-item {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            background-color: var(--surface-color);
             box-shadow: 0 1px 2px var(--shadow-color);
             position: relative;
         }
         .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
+        
+        /* 헤더 부분 (아이콘 + 날짜) */
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
         .item-icon { font-size: 24px; position: relative; flex-shrink: 0; }
         .item-icon .html-badge { position: absolute; bottom: -5px; right: -8px; background-color: #e02c4f; color: white; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
-        .item-info { 
-            flex-grow: 1; 
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            /* 모바일에서 줄바꿈이 되도록 변경 */
-            white-space: normal; 
-        }
+        
         .item-date {
             font-size: 12px;
             color: var(--secondary-text);
-            position: absolute; /* 절대 위치 지정 */
-            top: 15px;
-            right: 50px;
+        }
+        
+        /* 상세 정보 부분 (제목 + 미리보기) */
+        .item-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
         }
         .item-title { 
             font-weight: 600; 
             white-space: nowrap; 
             overflow: hidden; 
-            text-overflow: ellipsis; 
-            margin-bottom: 4px;
-            /* 날짜가 겹치지 않도록 공간 확보 */
-            padding-right: 60px;
+            text-overflow: ellipsis;
+            line-height: 1.2;
         }
-        .item-preview { font-size: 14px; color: var(--secondary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-preview { 
+            font-size: 14px; 
+            color: var(--secondary-text); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            line-height: 1.2;
+        }
         .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); }
         .delete-btn:hover { color: #e02c4f; }
         
@@ -170,14 +188,21 @@
             border: none;
         }
         
-        /* --- 커스텀 Confirm 모달 전용 스타일 --- */
-        #confirmModal .modal-content {
+        /* --- 커스텀 Confirm & Alert 모달 전용 스타일 --- */
+        #confirmModal, #alertModal {
+            align-items: center;
+            justify-content: center;
+        }
+        #confirmModal .modal-content, #alertModal .modal-content {
             max-width: 400px;
             padding: 24px;
             text-align: center;
+            border-radius: 12px;
         }
-        #confirmModal h3 { margin-bottom: 20px; }
-        #confirmModal .modal-actions { justify-content: center; }
+        #confirmModal h3, #alertModal h3 { margin-bottom: 20px; }
+        #confirmModal .modal-actions, #alertModal .modal-actions { justify-content: center; }
+        #alertModal .modal-actions { display: flex; justify-content: center; }
+        #alertModal .modal-btn { background-color: var(--accent-color); color: white; }
         
         /* --- 모바일 반응형 --- */
         @media (max-width: 900px) {
@@ -217,40 +242,47 @@
             #htmlInput {
                 min-height: 250px;
             }
-            /* 모바일에서 날짜 위치와 폰트 크기 조정 */
             .list-item { 
-                padding: 15px 15px 15px 15px; 
-                flex-wrap: wrap; /* 모바일에서만 줄바꿈 허용 */
+                padding: 15px;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
             }
-            .item-info { 
-                padding-right: 0;
-                width: calc(100% - 40px); /* 아이콘 크기 제외 */
+            .item-header {
+                width: 100%;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
             }
+            .item-icon { margin-right: 0; }
             .item-date {
                 font-size: 11px;
-                top: 15px;
-                right: 50px;
+                position: static;
+            }
+            .item-details {
+                width: 100%;
+                margin-top: 0;
             }
             .item-title {
-                margin-bottom: 2px;
                 font-size: 15px;
-                width: 100%; /* 제목이 한 줄을 전부 차지하도록 */
+                padding-right: 0;
+                width: 100%;
             }
             .item-preview {
                 font-size: 13px;
                 width: 100%;
             }
-            .delete-btn { right: 15px; }
+            .delete-btn { right: 15px; top: 15px; transform: none; }
         }
 
-        /* --- Custom 모달용 스타일 (기존 코드 유지) --- */
+        /* --- Custom 모달용 스타일 --- */
         .modal-overlay { align-items: center; justify-content: center; }
         .modal-content { width: 95%; max-width: 500px; height: auto; max-height: 90%; }
         .custom-alert-content { max-width: 380px; height: auto; padding: 20px; text-align: center; }
         #customAlertMessage { font-size: 16px; margin-bottom: 20px; }
         .custom-alert-actions { display: flex; justify-content: center; gap: 10px; }
         
-        /* --- 진행바 스타일 (기존 코드 유지) --- */
+        /* --- 진행바 스타일 --- */
         .drop-zone { position: relative; overflow: hidden; }
         #upload-progress-bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background-color: var(--accent-color); opacity: 0.3; transition: width 0.3s ease; z-index: 1; }
         #dropZone-text { position: relative; z-index: 2; }
@@ -341,6 +373,15 @@
         </div>
     </div>
 
+    <div id="alertModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="alertMessage"></h3>
+            <div class="modal-actions">
+                <button id="alertOkBtn" class="modal-btn">확인</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
@@ -393,10 +434,23 @@
         const confirmOkBtn = document.getElementById('confirmOkBtn');
         const confirmCancelBtn = document.getElementById('confirmCancelBtn');
 
+        const alertModal = document.getElementById('alertModal');
+        const alertMessage = document.getElementById('alertMessage');
+        const alertOkBtn = document.getElementById('alertOkBtn');
+
         let currentTab = 'text';
         let savedItems = [];
         let currentItemInModal = null;
         let pendingDeletionId = null;
+
+        // 커스텀 alert 함수
+        function showAlert(message) {
+            alertMessage.textContent = message;
+            alertModal.style.display = 'flex';
+            alertOkBtn.onclick = () => {
+                alertModal.style.display = 'none';
+            };
+        }
 
         function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
         function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
@@ -432,22 +486,31 @@
                     icon = '💻';
                 }
                 
-                const preview = item.type === 'text' || item.type === 'html'
+                const fileNamePreview = item.type === 'file' 
+                    ? item.fileName.length > 20 ? item.fileName.substring(0, 20) + '...' : item.fileName
+                    : '';
+
+                const textPreview = item.type === 'text' || item.type === 'html'
                     ? item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')
-                    : `${item.fileName} (${formatFileSize(item.fileSize)})`;
+                    : '';
                 
                 const itemEl = document.createElement('div');
                 itemEl.className = 'list-item';
                 itemEl.dataset.id = item.id;
                 itemEl.innerHTML = `
-                    <div class="item-icon">
-                        ${icon}
-                        ${isHtmlItem || isHtmlViewerItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
-                    </div>
-                    <div class="item-info">
+                    <div class="item-header">
+                        <div class="item-icon">
+                            ${icon}
+                            ${isHtmlItem || isHtmlViewerItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
+                        </div>
                         <div class="item-date">${formatTimestamp(item.timestamp)}</div>
+                    </div>
+                    <div class="item-details">
                         <div class="item-title">${item.title}</div>
-                        <div class="item-preview">${preview}</div>
+                        ${item.type === 'file' 
+                            ? `<div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div>`
+                            : `<div class="item-preview">${textPreview}</div>`
+                        }
                     </div>
                     <button class="delete-btn">&times;</button>
                 `;
@@ -479,7 +542,7 @@
         function runHtml() {
             const code = htmlInput.value;
             if (!code.trim()) {
-                alert("실행할 HTML 코드를 입력하세요.");
+                showAlert("실행할 HTML 코드를 입력하세요.");
                 return;
             }
             htmlPreview.srcdoc = code;
@@ -597,7 +660,7 @@
                                 });
                             }
                         }).catch(error => {
-                            alert('삭제 실패: ' + error.message);
+                            showAlert('삭제 실패: ' + error.message);
                         });
                     });
                 } else {
@@ -606,11 +669,11 @@
             });
 
             clearAllBtn.addEventListener('click', () => { 
-                showConfirmModal('경고: Realtime Database의 모든 항목이 삭제됩니다. 계속하시겠습니까?', () => {
+                showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => {
                     itemsRef.remove().then(() => {
-                        alert('모든 항목을 삭제했습니다.');
+                        showAlert('모든 항목을 삭제했습니다.');
                     }).catch(error => {
-                        alert('모두 지우기 실패: ' + error.message);
+                        showAlert('모두 지우기 실패: ' + error.message);
                     });
                 });
             });
@@ -623,18 +686,18 @@
                 textInput.value = '';
                 htmlInput.value = '';
                 fileInput.value = '';
-                dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                dropZoneText.textContent = '파일을 드래그하거나 클릭하여 선택';
             };
 
             if (currentTab === 'html') {
                 title = prompt("저장할 이름을 입력하세요.");
                 if (!title) {
-                    alert('저장할 이름이 입력되지 않았습니다.');
+                    showAlert('저장할 이름이 입력되지 않았습니다.');
                     return;
                 }
             } else {
                 if (!title) {
-                    alert('제목을 입력해주세요.');
+                    showAlert('제목을 입력해주세요.');
                     return;
                 }
             }
@@ -642,15 +705,15 @@
             let newItem;
             if (currentTab === 'text') {
                 const content = textInput.value.trim();
-                if (!content) { alert('내용을 입력해주세요.'); return; }
+                if (!content) { showAlert('내용을 입력해주세요.'); return; }
                 newItem = { type: 'text', title, content, timestamp: new Date().toISOString() };
             } else if (currentTab === 'html') {
                 const content = htmlInput.value.trim();
-                if (!content) { alert('HTML 코드를 입력해주세요.'); return; }
+                if (!content) { showAlert('HTML 코드를 입력해주세요.'); return; }
                 newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
             } else {
                 const file = fileInput.files[0];
-                if (!file) { alert('파일을 선택해주세요.'); return; }
+                if (!file) { showAlert('파일을 선택해주세요.'); return; }
                 
                 if (file.type.startsWith('image/')) {
                     dropZoneText.textContent = '이미지 최적화 중...';
@@ -667,7 +730,7 @@
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
                             canvas.toBlob((blob) => {
-                                if (!blob) { alert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택'; return; }
+                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '파일을 드래그하거나 클릭하여 선택'; return; }
                                 uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
                             }, file.type, 0.75);
                         };
@@ -683,7 +746,7 @@
             itemsRef.push(newItem).then(() => {
                 resetForm();
             }).catch(error => {
-                alert('저장 실패: ' + error.message);
+                showAlert('저장 실패: ' + error.message);
             });
         }
 
@@ -700,15 +763,15 @@
                     progressBar.style.width = `${progress}%`;
                 },
                 (error) => {
-                    alert('파일 업로드 실패: ' + error.message);
-                    dropZoneText.textContent = '여기에 파일을 드래그하거나 클릭하여 선택';
+                    showAlert('파일 업로드 실패: ' + error.message);
+                    dropZoneText.textContent = '파일을 드래그 하거나 클릭하여 선택';
                     dropZone.classList.remove('uploading');
                     progressBar.style.width = '0%';
                 },
                 () => {
                     progressBar.style.width = '100%';
                     dropZone.classList.remove('uploading');
-                    dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
+                    dropZoneText.textContent = '업로드 완료!';
                     uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                         const newItem = {
                             type: 'file',
@@ -723,8 +786,8 @@
                         itemsRef.push(newItem).then(() => {
                             progressBar.style.width = '0%';
                             resetFormCallback();
-                        }).catch(error => { alert('DB 저장 실패: ' + error.message); });
-                    }).catch(error => alert('URL 가져오기 실패: ' + error.message));
+                        }).catch(error => { showAlert('DB 저장 실패: ' + error.message); });
+                    }).catch(error => showAlert('URL 가져오기 실패: ' + error.message));
                 }
             );
         }
