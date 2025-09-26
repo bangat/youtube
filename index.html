@@ -237,6 +237,7 @@
             padding: 24px;
             text-align: center;
             border-radius: 12px;
+    height: auto;
         }
         #confirmModal h3, #alertModal h3 { margin-bottom: 20px; }
         #confirmModal .modal-actions, #alertModal .modal-actions { justify-content: center; }
@@ -413,496 +414,369 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
-    <script>
-        const firebaseConfig = {
-          apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
-          authDomain: "youtubu-c770d.firebaseapp.com",
-          projectId: "youtubu-c770d",
-          storageBucket: "youtubu-c770d.firebasestorage.app",
-          messagingSenderId: "727943010727",
-          appId: "1:727943010727:web:44ce6a65c1887026523e82",
-          measurementId: "G-82SBN9ZWZQ"
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
+      authDomain: "youtubu-c770d.firebaseapp.com",
+      projectId: "youtubu-c770d",
+      storageBucket: "youtubu-c770d.firebasestorage.app",
+      messagingSenderId: "727943010727",
+      appId: "1:727943010727:web:44ce6a65c1887026523e82",
+      measurementId: "G-82SBN9ZWZQ"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const itemsRef = database.ref('items');
+    const storage = firebase.storage();
+
+    // (기존과 동일한 변수 선언)
+    const titleInput = document.getElementById('titleInput');
+    const runHtmlBtn = document.getElementById('runHtmlBtn');
+    const textInputContainer = document.getElementById('textInput-container');
+    const fileInputContainer = document.getElementById('fileInput-container');
+    const htmlInputContainer = document.getElementById('htmlInput-container');
+    const textInput = document.getElementById('textInput');
+    const fileInput = document.getElementById('fileInput');
+    const htmlInput = document.getElementById('htmlInput');
+    const htmlPreviewModal = document.getElementById('htmlPreviewModal');
+    const htmlPreview = document.getElementById('htmlPreview');
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const saveBtn = document.getElementById('saveBtn');
+    const listContainer = document.getElementById('listContainer');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const modal = document.getElementById('modal');
+    const modalClose = document.querySelector('.modal-close-btn');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalText = document.getElementById('modalText');
+    const modalFileInfo = document.getElementById('modalFileInfo');
+    const modalHtmlPreview = document.getElementById('modalHtmlPreview');
+    const modalImagePreview = document.getElementById('modalImagePreview');
+    const modalToggleViewBtn = document.getElementById('modalToggleViewBtn');
+    const modalActionBtn = document.getElementById('modalActionBtn');
+    const dropZone = document.getElementById('dropZone');
+    const dropZoneText = document.getElementById('dropZone-text');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmOkBtn = document.getElementById('confirmOkBtn');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    const alertModal = document.getElementById('alertModal');
+    const alertMessage = document.getElementById('alertMessage');
+    const alertOkBtn = document.getElementById('alertOkBtn');
+
+    let currentTab = 'text';
+    let savedItems = [];
+    let currentItemInModal = null;
+
+    // (기존 함수들 - showAlert, formatTimestamp, formatFileSize, isHtml)
+    function showAlert(message) {
+        alertMessage.textContent = message;
+        alertModal.style.display = 'flex';
+        alertOkBtn.onclick = () => {
+            alertModal.style.display = 'none';
         };
-        
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const itemsRef = database.ref('items');
-        const storage = firebase.storage();
+    }
+    function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
+    function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
+    function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
 
-        const titleInput = document.getElementById('titleInput');
-        const runHtmlBtn = document.getElementById('runHtmlBtn');
-        const textInputContainer = document.getElementById('textInput-container');
-        const fileInputContainer = document.getElementById('fileInput-container');
-        const htmlInputContainer = document.getElementById('htmlInput-container');
-        const textInput = document.getElementById('textInput');
-        const fileInput = document.getElementById('fileInput');
-        const htmlInput = document.getElementById('htmlInput');
-        const htmlPreviewModal = document.getElementById('htmlPreviewModal');
-        const htmlPreview = document.getElementById('htmlPreview');
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const saveBtn = document.getElementById('saveBtn');
-        const listContainer = document.getElementById('listContainer');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-        const modal = document.getElementById('modal');
-        const modalClose = document.querySelector('.modal-close-btn');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalBody = document.getElementById('modalBody');
-        const modalText = document.getElementById('modalText');
-        const modalFileInfo = document.getElementById('modalFileInfo');
-        const modalHtmlPreview = document.getElementById('modalHtmlPreview');
-        const modalImagePreview = document.getElementById('modalImagePreview');
-        const modalToggleViewBtn = document.getElementById('modalToggleViewBtn');
-        const modalActionBtn = document.getElementById('modalActionBtn');
-        const dropZone = document.getElementById('dropZone');
-        const dropZoneText = document.getElementById('dropZone-text');
-        const progressBar = document.getElementById('upload-progress-bar');
-
-        const confirmModal = document.getElementById('confirmModal');
-        const confirmOkBtn = document.getElementById('confirmOkBtn');
-        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-
-        const alertModal = document.getElementById('alertModal');
-        const alertMessage = document.getElementById('alertMessage');
-        const alertOkBtn = document.getElementById('alertOkBtn');
-
-        let currentTab = 'text';
-        let savedItems = [];
-        let currentItemInModal = null;
-        let pendingDeletionId = null;
-
-        // 커스텀 alert 함수
-        function showAlert(message) {
-            alertMessage.textContent = message;
-            alertModal.style.display = 'flex';
-            alertOkBtn.onclick = () => {
-                alertModal.style.display = 'none';
-            };
+    // ✨ [추가] 아이템 종류에 따라 아이콘을 반환하는 함수
+    function getIconForItem(item) {
+        if (item.type === 'file') {
+            if (item.isImage) return '🖼️';
+            const fileExtension = item.fileName.split('.').pop().toLowerCase();
+            if (['mp4', 'mov', 'avi'].includes(fileExtension)) return '🎬';
+            if (['txt', 'log', 'md', 'pdf'].includes(fileExtension)) return '📄';
+            if (['zip', 'rar', '7z'].includes(fileExtension)) return '📦';
+            return '📁';
         }
+        if (item.type === 'html' || (item.type === 'text' && isHtml(item.content))) return '💻';
+        return '📝';
+    }
+    
+    // ✨ [추가] 파일 다운로드 로직을 별도 함수로 분리
+    function downloadFile(item) {
+        if (!item || !item.fileUrl) return;
+        const link = document.createElement('a');
+        link.href = item.fileUrl;
+        const fileExtension = item.fileName.split('.').pop();
+        link.download = `${item.title}.${fileExtension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
-        function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
-        function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
-        function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
+    function loadItemsFromFirebase() {
+        itemsRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            savedItems = [];
+            if (data) {
+                savedItems = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key],
+                    timestamp: new Date(data[key].timestamp)
+                })).sort((a, b) => b.timestamp - a.timestamp);
+            }
+            renderList();
+        }, (error) => {
+            console.error("Firebase 데이터 로드 오류:", error);
+        });
+    }
 
-        function loadItemsFromFirebase() {
-            itemsRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                savedItems = [];
-                if (data) {
-                    savedItems = Object.keys(data).map(key => ({
-                        id: key,
-                        ...data[key],
-                        timestamp: new Date(data[key].timestamp)
-                    })).sort((a, b) => b.timestamp - a.timestamp);
-                }
-                renderList();
-            }, (error) => {
-                console.error("Firebase 데이터 로드 오류:", error);
-            });
-        }
+    function renderList() {
+        listContainer.innerHTML = '';
+        savedItems.forEach(item => {
+            const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
+            const icon = getIconForItem(item); // ✨ 아이콘 가져오기 함수 사용
+            
+            const fileNamePreview = item.type === 'file' 
+                ? item.fileName.length > 10 ? item.fileName.substring(0, 10) + '...' : item.fileName 
+                : '';
+            
+            const textPreview = item.type === 'text' || item.type === 'html' 
+                ? item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '') 
+                : '';
 
-        function renderList() {
-            listContainer.innerHTML = '';
-            savedItems.forEach(item => {
-                const isHtmlItem = item.type === 'text' && isHtml(item.content);
-                const isHtmlViewerItem = item.type === 'html';
-                
-                let icon = '📄';
-                if (item.type === 'file') {
-                    const fileExtension = item.fileName.split('.').pop().toLowerCase();
-                    if (['png', 'jpg', 'jpeg', 'gif', 'svg'].includes(fileExtension)) {
-                        icon = '🖼️';
-                    } else if (['mp4', 'mov', 'avi'].includes(fileExtension)) {
-                        icon = '🎬';
-                    } else if (['txt', 'log', 'md'].includes(fileExtension)) {
-                        icon = '📄';
-                    } else if (['zip', 'rar', '7z'].includes(fileExtension)) {
-                        icon = '📦';
-                    } else if (['pdf'].includes(fileExtension)) {
-                        icon = '📄'; // PDF도 텍스트 아이콘
-                    } else {
-                        icon = '📁';
-                    }
-                } else if (isHtmlViewerItem) {
-                    icon = '💻';
-                } else if (isHtmlItem) {
-                    icon = '📝';
-                }
-                
-                const fileNamePreview = item.type === 'file' 
-                    ? item.fileName.length > 10 ? item.fileName.substring(0, 10) + '...' : item.fileName
-                    : '';
+            const itemEl = document.createElement('div');
+            itemEl.className = 'list-item';
+            itemEl.dataset.id = item.id;
+            
+            let itemContentHTML = '';
+            if (item.type === 'text' || item.type === 'html') {
+                itemContentHTML = `<div class="item-details">
+                                        <div class="item-title">${item.title}</div>
+                                        <div class="item-preview">${textPreview}</div>
+                                    </div>`;
+            } else if (item.type === 'file') {
+                itemContentHTML = `<div class="item-details">
+                                        <div class="item-title">${item.title}</div>
+                                        <div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div>
+                                    </div>`;
+            }
+            
+            itemEl.innerHTML = `
+                <div class="item-icon">
+                    ${icon}
+                    ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
+                </div>
+                ${itemContentHTML}
+                <div class="item-date">${formatTimestamp(item.timestamp)}</div>
+                <button class="delete-btn">&times;</button>
+            `;
+            listContainer.appendChild(itemEl);
+        });
+    }
+    
+    // ✨ [변경] openModal 함수: 파일 클릭 시 바로 다운로드하지 않고 모달을 열도록 수정
+    function openModal(id) {
+        currentItemInModal = savedItems.find(i => i.id === id);
+        if (!currentItemInModal) return;
 
-                const textPreview = item.type === 'text' || item.type === 'html'
-                    ? item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')
-                    : '';
-                
-                const itemEl = document.createElement('div');
-                itemEl.className = 'list-item';
-                itemEl.dataset.id = item.id;
-                
-                let itemContentHTML = '';
-                if (item.type === 'text' || item.type === 'html') {
-                    itemContentHTML = `<div class="item-details">
-                                            <div class="item-title">${item.title}</div>
-                                            <div class="item-preview">${textPreview}</div>
-                                        </div>`;
-                } else if (item.type === 'file') {
-                    itemContentHTML = `<div class="item-details">
-                                            <div class="item-title">${item.title}</div>
-                                            <div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div>
-                                        </div>`;
-                }
-                
-                itemEl.innerHTML = `
-                    <div class="item-icon">
-                        ${icon}
-                        ${isHtmlItem || isHtmlViewerItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
-                    </div>
-                    ${itemContentHTML}
-                    <div class="item-date">${formatTimestamp(item.timestamp)}</div>
-                    <button class="delete-btn">&times;</button>
+        modalTitle.textContent = currentItemInModal.title;
+
+        // 모든 미리보기 영역 초기화
+        modalText.style.display = 'none';
+        modalHtmlPreview.style.display = 'none';
+        modalImagePreview.style.display = 'none';
+        modalFileInfo.style.display = 'none';
+        modalToggleViewBtn.style.display = 'none';
+        modalActionBtn.style.display = 'inline-block';
+
+        if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
+            modalToggleViewBtn.style.display = 'inline-block';
+            modalActionBtn.textContent = '전체 복사';
+            modalActionBtn.onclick = () => copyText(currentItemInModal.content);
+            showContentView();
+        } else if (currentItemInModal.type === 'file') {
+            modalToggleViewBtn.style.display = 'none'; // 파일은 미리보기/내용보기 토글 없음
+            modalActionBtn.textContent = '다운로드';
+            modalActionBtn.onclick = () => downloadFile(currentItemInModal);
+
+            if (currentItemInModal.isImage) {
+                // 이미지 파일이면 이미지 미리보기
+                modalImagePreview.src = currentItemInModal.fileUrl;
+                modalImagePreview.style.display = 'block';
+            } else {
+                // 이미지가 아니면 파일 정보 표시
+                modalFileInfo.innerHTML = `
+                    <div style="font-size: 5rem; line-height: 1;">${getIconForItem(currentItemInModal)}</div>
+                    <p style="font-weight: 600; margin-top: 1rem;">${currentItemInModal.fileName}</p>
+                    <p style="color: var(--secondary-text);">${formatFileSize(currentItemInModal.fileSize)}</p>
                 `;
-                listContainer.appendChild(itemEl);
+                modalFileInfo.style.display = 'block';
+            }
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    // (이하 나머지 코드는 기존과 동일)
+    function switchTab(tab) {
+        currentTab = tab;
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        
+        textInputContainer.style.display = 'none';
+        fileInputContainer.style.display = 'none';
+        htmlInputContainer.style.display = 'none';
+        titleInput.style.display = 'none';
+        runHtmlBtn.style.display = 'none';
+        
+        if (tab === 'text') {
+            textInputContainer.style.display = 'block';
+            titleInput.style.display = 'block';
+        } else if (tab === 'file') {
+            fileInputContainer.style.display = 'block';
+            titleInput.style.display = 'block';
+        } else if (tab === 'html') {
+            htmlInputContainer.style.display = 'flex';
+            runHtmlBtn.style.display = 'block';
+        }
+        updateSaveButtonState();
+    }
+
+    function runHtml() {
+        const code = htmlInput.value;
+        if (!code.trim()) {
+            showAlert("실행할 HTML 코드를 입력하세요.");
+            return;
+        }
+        htmlPreview.srcdoc = code;
+        htmlPreviewModal.style.display = 'flex';
+    }
+
+    function showContentView() {
+        if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
+        modalText.textContent = currentItemInModal.content;
+        modalText.style.display = 'block';
+        modalHtmlPreview.style.display = 'none';
+        modalToggleViewBtn.textContent = '미리보기';
+    }
+
+    function showPreviewView() {
+        if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
+        modalText.style.display = 'none';
+        modalHtmlPreview.style.display = 'block';
+        modalHtmlPreview.srcdoc = currentItemInModal.content;
+        modalToggleViewBtn.textContent = '내용 보기';
+    }
+    
+    function closeModal() {
+        modal.style.display = 'none';
+        modalHtmlPreview.srcdoc = '';
+        modalImagePreview.src = '';
+        currentItemInModal = null;
+    }
+
+    function closeHtmlPreviewModal() {
+        htmlPreviewModal.style.display = 'none';
+    }
+
+    function showConfirmModal(message, onConfirm) {
+        const confirmMessage = confirmModal.querySelector('h3');
+        confirmMessage.textContent = message;
+        confirmModal.style.display = 'flex';
+
+        const handleConfirm = () => {
+            onConfirm();
+            confirmModal.style.display = 'none';
+            confirmOkBtn.removeEventListener('click', handleConfirm);
+            confirmCancelBtn.removeEventListener('click', handleCancel);
+        };
+
+        const handleCancel = () => {
+            confirmModal.style.display = 'none';
+            confirmOkBtn.removeEventListener('click', handleConfirm);
+            confirmCancelBtn.removeEventListener('click', handleCancel);
+        };
+
+        confirmOkBtn.addEventListener('click', handleConfirm);
+        confirmCancelBtn.addEventListener('click', handleCancel);
+    }
+
+    function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
+
+    function updateSaveButtonState() {
+        let isDisabled = true;
+        const title = titleInput.value.trim();
+
+        if (currentTab === 'text') {
+            const content = textInput.value.trim();
+            if (title && content) {
+                isDisabled = false;
+            }
+        } else if (currentTab === 'file') {
+            const file = fileInput.files[0];
+            if (title && file) {
+                isDisabled = false;
+            }
+        } else if (currentTab === 'html') {
+            const content = htmlInput.value.trim();
+            if (content) {
+                isDisabled = false;
+            }
+        }
+        saveBtn.disabled = isDisabled;
+    }
+    
+    function addEventListeners() {
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                switchTab(btn.dataset.tab);
             });
-        }
+        });
+
+        saveBtn.addEventListener('click', handleSave);
+        runHtmlBtn.addEventListener('click', runHtml);
+        htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
         
-        // 새로운 탭 전환 로직
-        function switchTab(tab) {
-            currentTab = tab;
-            tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        listContainer.addEventListener('click', (e) => {
+            const listItem = e.target.closest('.list-item');
+            if (!listItem) return;
+            const id = listItem.dataset.id;
             
-            textInputContainer.style.display = 'none';
-            fileInputContainer.style.display = 'none';
-            htmlInputContainer.style.display = 'none';
-            titleInput.style.display = 'none';
-            runHtmlBtn.style.display = 'none';
-            
-            if (tab === 'text') {
-                textInputContainer.style.display = 'block';
-                titleInput.style.display = 'block';
-            } else if (tab === 'file') {
-                fileInputContainer.style.display = 'block';
-                titleInput.style.display = 'block';
-            } else if (tab === 'html') {
-                htmlInputContainer.style.display = 'flex';
-                runHtmlBtn.style.display = 'block';
-            }
-            updateSaveButtonState();
-        }
-        
-        function runHtml() {
-            const code = htmlInput.value;
-            if (!code.trim()) {
-                showAlert("실행할 HTML 코드를 입력하세요.");
-                return;
-            }
-            htmlPreview.srcdoc = code;
-            htmlPreviewModal.style.display = 'flex';
-        }
-
-        function openModal(id) {
-            currentItemInModal = savedItems.find(i => i.id === id);
-            if (!currentItemInModal) return;
-            
-            modalTitle.textContent = currentItemInModal.title;
-            
-            modalText.style.display = 'none';
-            modalHtmlPreview.style.display = 'none';
-            modalImagePreview.style.display = 'none';
-            modalFileInfo.style.display = 'none';
-            modalToggleViewBtn.style.display = 'none';
-
-            if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
-                const isHtmlItem = currentItemInModal.type === 'html' || isHtml(currentItemInModal.content);
-                modalToggleViewBtn.style.display = 'inline-block';
-                modalActionBtn.textContent = '전체 복사';
-                modalActionBtn.onclick = () => copyText(currentItemInModal.content);
-                showContentView();
-                modal.style.display = 'flex';
-            } else if (currentItemInModal.type === 'file') {
-                // 다운로드 로직을 직접 실행
-                const link = document.createElement('a');
-                link.href = currentItemInModal.fileUrl;
-                const fileExtension = currentItemInModal.fileName.split('.').pop();
-                link.download = `${currentItemInModal.title}.${fileExtension}`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
-        
-        function showContentView() {
-            if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
-            modalText.textContent = currentItemInModal.content;
-            modalText.style.display = 'block';
-            modalHtmlPreview.style.display = 'none';
-            modalToggleViewBtn.textContent = '미리보기';
-        }
-
-        function showPreviewView() {
-            if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
-            modalText.style.display = 'none';
-            modalHtmlPreview.style.display = 'block';
-            modalHtmlPreview.srcdoc = currentItemInModal.content;
-            modalToggleViewBtn.textContent = '내용 보기';
-        }
-        
-        function closeModal() {
-            modal.style.display = 'none';
-            modalHtmlPreview.srcdoc = '';
-            modalImagePreview.src = '';
-            currentItemInModal = null;
-        }
-
-        function closeHtmlPreviewModal() {
-            htmlPreviewModal.style.display = 'none';
-        }
-
-        function showConfirmModal(message, onConfirm) {
-            const confirmMessage = confirmModal.querySelector('h3');
-            confirmMessage.textContent = message;
-            confirmModal.style.display = 'flex';
-
-            const handleConfirm = () => {
-                onConfirm();
-                confirmModal.style.display = 'none';
-                confirmOkBtn.removeEventListener('click', handleConfirm);
-                confirmCancelBtn.removeEventListener('click', handleCancel);
-            };
-
-            const handleCancel = () => {
-                confirmModal.style.display = 'none';
-                confirmOkBtn.removeEventListener('click', handleConfirm);
-                confirmCancelBtn.removeEventListener('click', handleCancel);
-            };
-
-            confirmOkBtn.addEventListener('click', handleConfirm);
-            confirmCancelBtn.addEventListener('click', handleCancel);
-        }
-
-        function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
-
-        function updateSaveButtonState() {
-            let isDisabled = true;
-            const title = titleInput.value.trim();
-
-            if (currentTab === 'text') {
-                const content = textInput.value.trim();
-                if (title && content) {
-                    isDisabled = false;
-                }
-            } else if (currentTab === 'file') {
-                const file = fileInput.files[0];
-                if (title && file) {
-                    isDisabled = false;
-                }
-            } else if (currentTab === 'html') {
-                const content = htmlInput.value.trim();
-                if (content) {
-                    isDisabled = false;
-                }
-            }
-            saveBtn.disabled = isDisabled;
-        }
-        
-        function addEventListeners() {
-            tabButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    switchTab(btn.dataset.tab);
-                });
-            });
-
-            saveBtn.addEventListener('click', handleSave);
-            runHtmlBtn.addEventListener('click', runHtml);
-            htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
-            
-            listContainer.addEventListener('click', (e) => {
-                const listItem = e.target.closest('.list-item');
-                if (!listItem) return;
-                const id = listItem.dataset.id;
-                
-                if (e.target.classList.contains('delete-btn')) {
-                    showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-                        const itemToDelete = savedItems.find(item => item.id === id);
-                        itemsRef.child(id).remove().then(() => {
-                            if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
-                                const fileRef = storage.ref(itemToDelete.storagePath);
-                                fileRef.delete().then(() => {
-                                    console.log('Storage 파일 삭제 성공');
-                                }).catch(error => {
-                                    console.warn('Storage 파일 삭제 실패 (파일이 없거나 권한 문제):', error);
-                                });
-                            }
-                        }).catch(error => {
-                            showAlert('삭제 실패: ' + error.message);
-                        });
-                    });
-                } else {
-                    openModal(id);
-                }
-            });
-
-            clearAllBtn.addEventListener('click', () => { 
-                showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => {
-                    itemsRef.remove().then(() => {
-                        showAlert('모든 항목을 삭제했습니다.');
+            if (e.target.classList.contains('delete-btn')) {
+                showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+                    const itemToDelete = savedItems.find(item => item.id === id);
+                    itemsRef.child(id).remove().then(() => {
+                        if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
+                            const fileRef = storage.ref(itemToDelete.storagePath);
+                            fileRef.delete().then(() => {
+                                console.log('Storage 파일 삭제 성공');
+                            }).catch(error => {
+                                console.warn('Storage 파일 삭제 실패 (파일이 없거나 권한 문제):', error);
+                            });
+                        }
                     }).catch(error => {
-                        showAlert('모두 지우기 실패: ' + error.message);
+                        showAlert('삭제 실패: ' + error.message);
                     });
                 });
-            });
-
-            titleInput.addEventListener('input', updateSaveButtonState);
-            textInput.addEventListener('input', updateSaveButtonState);
-            htmlInput.addEventListener('input', updateSaveButtonState);
-            fileInput.addEventListener('change', () => {
-                updateSaveButtonState();
-                if (fileInput.files.length > 0) {
-                    dropZoneText.textContent = fileInput.files[0].name;
-                } else {
-                    dropZoneText.textContent = '드래그 또는 클릭';
-                }
-            });
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    fileInput.files = files;
-                    dropZoneText.textContent = files[0].name;
-                }
-                updateSaveButtonState();
-            });
-        }
-
-        function handleSave() {
-            let title = titleInput.value.trim();
-            const resetForm = () => {
-                titleInput.value = '';
-                textInput.value = '';
-                htmlInput.value = '';
-                fileInput.value = '';
-                dropZoneText.textContent = '드래그 또는 클릭';
-                updateSaveButtonState();
-            };
-
-            if (currentTab === 'html') {
-                title = prompt("저장할 이름을 입력하세요.");
-                if (!title) {
-                    showAlert('저장할 이름이 입력되지 않았습니다.');
-                    return;
-                }
             } else {
-                if (!title) {
-                    showAlert('제목을 입력해주세요.');
-                    return;
-                }
-            }
-            
-            let newItem;
-            if (currentTab === 'text') {
-                const content = textInput.value.trim();
-                if (!content) { showAlert('내용을 입력해주세요.'); return; }
-                newItem = { type: 'text', title, content, timestamp: new Date().toISOString() };
-            } else if (currentTab === 'html') {
-                const content = htmlInput.value.trim();
-                if (!content) { showAlert('HTML 코드를 입력해주세요.'); return; }
-                newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
-            } else {
-                const file = fileInput.files[0];
-                if (!file) { showAlert('파일을 선택해주세요.'); return; }
-                
-                if (file.type.startsWith('image/')) {
-                    dropZoneText.textContent = '이미지 최적화 중...';
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const MAX_WIDTH = 1024; const MAX_HEIGHT = 768;
-                            let width = img.width; let height = img.height;
-                            if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
-                            else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                            canvas.width = width; canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            canvas.toBlob((blob) => {
-                                if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '드래그 또는 클릭'; return; }
-                                uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
-                            }, file.type, 0.75);
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    uploadFileToFirebase(file, title, file.name, file.type, resetForm);
-                }
-                return;
-            }
-
-            itemsRef.push(newItem).then(() => {
-                resetForm();
-            }).catch(error => {
-                showAlert('저장 실패: ' + error.message);
-            });
-        }
-
-        function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
-            const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
-            const fileRef = storage.ref(storagePath);
-            const uploadTask = fileRef.put(fileToUpload);
-            dropZone.classList.add('uploading');
-            progressBar.style.width = '0%';
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
-                    progressBar.style.width = `${progress}%`;
-                },
-                (error) => {
-                    showAlert('파일 업로드 실패: ' + error.message);
-                    dropZoneText.textContent = '드래그 또는 클릭';
-                    dropZone.classList.remove('uploading');
-                    progressBar.style.width = '0%';
-                },
-                () => {
-                    progressBar.style.width = '100%';
-                    dropZone.classList.remove('uploading');
-                    dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
-                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                        const newItem = {
-                            type: 'file',
-                            title,
-                            fileName: originalFileName,
-                            fileSize: fileToUpload.size,
-                            isImage: fileType.startsWith('image/'),
-                            fileUrl: downloadURL,
-                            storagePath: storagePath,
-                            timestamp: new Date().toISOString()
-                        };
-                        itemsRef.push(newItem).then(() => {
-                            progressBar.style.width = '0%';
-                            resetFormCallback();
-                        }).catch(error => { showAlert('DB 저장 실패: ' + error.message); });
-                    }).catch(error => showAlert('URL 가져오기 실패: ' + error.message));
-                }
-            );
-        }
-
-        modalClose.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-        
-        modalToggleViewBtn.addEventListener('click', () => {
-            if (modalToggleViewBtn.textContent === '미리보기') {
-                showPreviewView();
-            } else {
-                showContentView();
+                openModal(id);
             }
         });
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        clearAllBtn.addEventListener('click', () => { 
+            showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => {
+                itemsRef.remove().then(() => {
+                    showAlert('모든 항목을 삭제했습니다.');
+                }).catch(error => {
+                    showAlert('모두 지우기 실패: ' + error.message);
+                });
+            });
+        });
+
+        titleInput.addEventListener('input', updateSaveButtonState);
+        textInput.addEventListener('input', updateSaveButtonState);
+        htmlInput.addEventListener('input', updateSaveButtonState);
+        fileInput.addEventListener('change', () => {
+            updateSaveButtonState();
+            if (fileInput.files.length > 0) {
+                dropZoneText.textContent = fileInput.files[0].name;
+            } else {
+                dropZoneText.textContent = '드래그 또는 클릭';
+            }
+        });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
@@ -911,30 +785,170 @@
                 fileInput.files = files;
                 dropZoneText.textContent = files[0].name;
             }
+            updateSaveButtonState();
         });
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                dropZoneText.textContent = fileInput.files[0].name;
-            } else {
-                dropZoneText.textContent = '드래그 또는 클릭';
+    }
+
+    function handleSave() {
+        let title = titleInput.value.trim();
+        const resetForm = () => {
+            titleInput.value = '';
+            textInput.value = '';
+            htmlInput.value = '';
+            fileInput.value = '';
+            dropZoneText.textContent = '드래그 또는 클릭';
+            updateSaveButtonState();
+        };
+
+        if (currentTab === 'html') {
+            title = prompt("저장할 이름을 입력하세요.");
+            if (!title) {
+                showAlert('저장할 이름이 입력되지 않았습니다.');
+                return;
             }
-        });
-
-        addEventListeners();
-        loadItemsFromFirebase();
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/youtube/service-worker.js', { scope: '/youtube/' })
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('ServiceWorker registration failed: ', error);
-                    });
-            });
+        } else {
+            if (!title) {
+                showAlert('제목을 입력해주세요.');
+                return;
+            }
         }
-    </script>
+        
+        let newItem;
+        if (currentTab === 'text') {
+            const content = textInput.value.trim();
+            if (!content) { showAlert('내용을 입력해주세요.'); return; }
+            newItem = { type: 'text', title, content, timestamp: new Date().toISOString() };
+        } else if (currentTab === 'html') {
+            const content = htmlInput.value.trim();
+            if (!content) { showAlert('HTML 코드를 입력해주세요.'); return; }
+            newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
+        } else {
+            const file = fileInput.files[0];
+            if (!file) { showAlert('파일을 선택해주세요.'); return; }
+            
+            if (file.type.startsWith('image/')) {
+                dropZoneText.textContent = '이미지 최적화 중...';
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1024; const MAX_HEIGHT = 768;
+                        let width = img.width; let height = img.height;
+                        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
+                        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => {
+                            if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '드래그 또는 클릭'; return; }
+                            uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
+                        }, file.type, 0.75);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadFileToFirebase(file, title, file.name, file.type, resetForm);
+            }
+            return;
+        }
+
+        itemsRef.push(newItem).then(() => {
+            resetForm();
+        }).catch(error => {
+            showAlert('저장 실패: ' + error.message);
+        });
+    }
+
+    function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
+        const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
+        const fileRef = storage.ref(storagePath);
+        const uploadTask = fileRef.put(fileToUpload);
+        dropZone.classList.add('uploading');
+        progressBar.style.width = '0%';
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                dropZoneText.textContent = `업로드 중: ${Math.round(progress)}%`;
+                progressBar.style.width = `${progress}%`;
+            },
+            (error) => {
+                showAlert('파일 업로드 실패: ' + error.message);
+                dropZoneText.textContent = '드래그 또는 클릭';
+                dropZone.classList.remove('uploading');
+                progressBar.style.width = '0%';
+            },
+            () => {
+                progressBar.style.width = '100%';
+                dropZone.classList.remove('uploading');
+                dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
+                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    const newItem = {
+                        type: 'file',
+                        title,
+                        fileName: originalFileName,
+                        fileSize: fileToUpload.size,
+                        isImage: fileType.startsWith('image/'),
+                        fileUrl: downloadURL,
+                        storagePath: storagePath,
+                        timestamp: new Date().toISOString()
+                    };
+                    itemsRef.push(newItem).then(() => {
+                        progressBar.style.width = '0%';
+                        resetFormCallback();
+                    }).catch(error => { showAlert('DB 저장 실패: ' + error.message); });
+                }).catch(error => showAlert('URL 가져오기 실패: ' + error.message));
+            }
+        );
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    
+    modalToggleViewBtn.addEventListener('click', () => {
+        if (modalToggleViewBtn.textContent === '미리보기') {
+            showPreviewView();
+        } else {
+            showContentView();
+        }
+    });
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            dropZoneText.textContent = files[0].name;
+        }
+    });
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            dropZoneText.textContent = fileInput.files[0].name;
+        } else {
+            dropZoneText.textContent = '드래그 또는 클릭';
+        }
+    });
+
+    addEventListeners();
+    loadItemsFromFirebase();
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/youtube/service-worker.js', { scope: '/youtube/' })
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(error => {
+                    console.error('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
+</script>
 </body>
 </html>
 
