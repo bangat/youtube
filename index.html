@@ -495,17 +495,41 @@
         return '📝';
     }
     
-    // ✨ [추가] 파일 다운로드 로직을 별도 함수로 분리
-    function downloadFile(item) {
-        if (!item || !item.fileUrl) return;
+   // ✨ [수정] Blob을 이용한 강제 다운로드 함수
+async function downloadFile(item) {
+    if (!item || !item.fileUrl) return;
+
+    const originalButtonText = modalActionBtn.textContent;
+    modalActionBtn.disabled = true;
+    modalActionBtn.textContent = '준비 중...';
+
+    try {
+        // fetch로 파일 데이터를 먼저 가져옵니다.
+        const response = await fetch(item.fileUrl); 
+        const blob = await response.blob();
+
+        // 가져온 데이터로 임시 로컬 URL을 만듭니다.
+        const blobUrl = window.URL.createObjectURL(blob);
+
         const link = document.createElement('a');
-        link.href = item.fileUrl;
+        link.href = blobUrl; // <-- 임시 로컬 주소를 링크
         const fileExtension = item.fileName.split('.').pop();
         link.download = `${item.title}.${fileExtension}`;
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        window.URL.revokeObjectURL(blobUrl);
+
+    } catch (error) {
+        console.error('Download failed:', error);
+        showAlert('파일을 다운로드하는 중 오류가 발생했습니다.');
+    } finally {
+        modalActionBtn.disabled = false;
+        modalActionBtn.textContent = originalButtonText;
     }
+}
 
     function loadItemsFromFirebase() {
         itemsRef.on('value', (snapshot) => {
