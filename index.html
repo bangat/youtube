@@ -319,6 +319,29 @@
 
         #titleInput { display: block; }
         #runHtmlBtn { display: none; }
+
+/* --- 목록 탭 필터 스타일 --- */
+.list-filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.list-filter-tab {
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    border-bottom: 3px solid transparent;
+}
+.list-filter-tab.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
     </style>
 </head>
 <body>
@@ -354,10 +377,18 @@
         
         <section class="list-column">
             <div class="list-header">
-                <h2>내 저장공간</h2>
-                <button id="clearAllBtn">모두 지우기</button>
-            </div>
-            <div id="listContainer" class="list-container"></div>
+    <h2>내 저장공간</h2>
+    <button id="clearAllBtn">모두 지우기</button>
+</div>
+
+<div class="list-filter-tabs">
+    <button class="list-filter-tab active" data-filter="all">전체</button>
+    <button class="list-filter-tab" data-filter="document">문서</button>
+    <button class="list-filter-tab" data-filter="photo">사진</button>
+    <button class="list-filter-tab" data-filter="music">음악</button>
+</div>
+
+<div id="listContainer" class="list-container"></div>
         </section>
     </main>
 
@@ -414,7 +445,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
-  <script>
+<script>
     const firebaseConfig = {
       apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
       authDomain: "youtubu-c770d.firebaseapp.com",
@@ -430,7 +461,7 @@
     const itemsRef = database.ref('items');
     const storage = firebase.storage();
 
-    // (기존과 동일한 변수 선언)
+    // --- DOM Elements ---
     const titleInput = document.getElementById('titleInput');
     const runHtmlBtn = document.getElementById('runHtmlBtn');
     const textInputContainer = document.getElementById('textInput-container');
@@ -446,7 +477,7 @@
     const listContainer = document.getElementById('listContainer');
     const clearAllBtn = document.getElementById('clearAllBtn');
     const modal = document.getElementById('modal');
-    const modalClose = document.querySelector('.modal-close-btn');
+    const modalClose = modal.querySelector('.modal-close-btn');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
     const modalText = document.getElementById('modalText');
@@ -464,12 +495,15 @@
     const alertModal = document.getElementById('alertModal');
     const alertMessage = document.getElementById('alertMessage');
     const alertOkBtn = document.getElementById('alertOkBtn');
+    const listFilterTabs = document.querySelectorAll('.list-filter-tab');
 
+    // --- State Variables ---
     let currentTab = 'text';
     let savedItems = [];
     let currentItemInModal = null;
+    let currentListFilter = 'all';
 
-    // (기존 함수들 - showAlert, formatTimestamp, formatFileSize, isHtml)
+    // --- Utility Functions ---
     function showAlert(message) {
         alertMessage.textContent = message;
         alertModal.style.display = 'flex';
@@ -481,196 +515,148 @@
     function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
     function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
 
-    // ✨ [추가] 아이템 종류에 따라 아이콘을 반환하는 함수
-    function getIconForItem(item) {
-        if (item.type === 'file') {
-            if (item.isImage) return '🖼️';
-            const fileExtension = item.fileName.split('.').pop().toLowerCase();
-            if (['mp4', 'mov', 'avi'].includes(fileExtension)) return '🎬';
-            if (['txt', 'log', 'md', 'pdf'].includes(fileExtension)) return '📄';
-            if (['zip', 'rar', '7z'].includes(fileExtension)) return '📦';
-            return '📁';
+    function getCategoryForItem(item) {
+        if (item.type === 'text' || item.type === 'html') {
+            return 'document';
         }
-        if (item.type === 'html' || (item.type === 'text' && isHtml(item.content))) return '💻';
-        return '📝';
+        if (item.type === 'file') {
+            if (item.isImage) {
+                return 'photo';
+            }
+            const extension = item.fileName.split('.').pop().toLowerCase();
+            const musicExtensions = ['mp3', 'wav', 'm4a', 'ogg', 'flac'];
+            const docExtensions = ['pdf', 'txt', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'hwp'];
+            if (musicExtensions.includes(extension)) return 'music';
+            if (docExtensions.includes(extension)) return 'document';
+        }
+        return 'document';
     }
     
-   // ✨ [수정] Blob을 이용한 강제 다운로드 함수
-async function downloadFile(item) {
-    if (!item || !item.fileUrl) return;
-
-    const originalButtonText = modalActionBtn.textContent;
-    modalActionBtn.disabled = true;
-    modalActionBtn.textContent = '준비 중...';
-
-    try {
-        // fetch로 파일 데이터를 먼저 가져옵니다.
-        const response = await fetch(item.fileUrl); 
-        const blob = await response.blob();
-
-        // 가져온 데이터로 임시 로컬 URL을 만듭니다.
-        const blobUrl = window.URL.createObjectURL(blob);
-
-        const link = document.createElement('a');
-        link.href = blobUrl; // <-- 임시 로컬 주소를 링크
-        const fileExtension = item.fileName.split('.').pop();
-        link.download = `${item.title}.${fileExtension}`;
+    function getIconForItem(item) {
+        const category = item.category || getCategoryForItem(item);
+        if (category === 'photo') return '🖼️';
+        if (category === 'music') return '🎵';
         
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        window.URL.revokeObjectURL(blobUrl);
-
-    } catch (error) {
-        console.error('Download failed:', error);
-        showAlert('파일을 다운로드하는 중 오류가 발생했습니다.');
-    } finally {
-        modalActionBtn.disabled = false;
-        modalActionBtn.textContent = originalButtonText;
+        if (item.type === 'file') {
+            const fileExtension = item.fileName.split('.').pop().toLowerCase();
+            if (['mp4', 'mov', 'avi'].includes(fileExtension)) return '🎬';
+            if (['zip', 'rar', '7z'].includes(fileExtension)) return '📦';
+        }
+        if (item.type === 'html' || (item.type === 'text' && isHtml(item.content))) return '💻';
+        return '📄'; // 문서 및 기타
     }
-}
+    
+    async function downloadFile(item) {
+        if (!item || !item.fileUrl) return;
+        const originalButtonText = modalActionBtn.textContent;
+        modalActionBtn.disabled = true;
+        modalActionBtn.textContent = '준비 중...';
+        try {
+            const response = await fetch(item.fileUrl);
+            if (!response.ok) throw new Error('파일을 가져오는 데 실패했습니다.');
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            const fileExtension = item.fileName.split('.').pop();
+            link.download = `${item.title}.${fileExtension}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            showAlert('파일을 다운로드하는 중 오류가 발생했습니다.');
+        } finally {
+            modalActionBtn.disabled = false;
+            modalActionBtn.textContent = originalButtonText;
+        }
+    }
 
+    // --- Firebase Data Handling ---
     function loadItemsFromFirebase() {
         itemsRef.on('value', (snapshot) => {
             const data = snapshot.val();
             savedItems = [];
             if (data) {
                 savedItems = Object.keys(data).map(key => ({
-                    id: key,
-                    ...data[key],
-                    timestamp: new Date(data[key].timestamp)
+                    id: key, ...data[key], timestamp: new Date(data[key].timestamp)
                 })).sort((a, b) => b.timestamp - a.timestamp);
             }
             renderList();
-        }, (error) => {
-            console.error("Firebase 데이터 로드 오류:", error);
-        });
+        }, (error) => console.error("Firebase 데이터 로드 오류:", error));
     }
 
+    // --- UI Rendering ---
     function renderList() {
         listContainer.innerHTML = '';
-        savedItems.forEach(item => {
-            const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
-            const icon = getIconForItem(item); // ✨ 아이콘 가져오기 함수 사용
-            
-            const fileNamePreview = item.type === 'file' 
-                ? item.fileName.length > 10 ? item.fileName.substring(0, 10) + '...' : item.fileName 
-                : '';
-            
-            const textPreview = item.type === 'text' || item.type === 'html' 
-                ? item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '') 
-                : '';
+        const filteredItems = savedItems.filter(item => {
+            if (currentListFilter === 'all') return true;
+            const category = item.category || getCategoryForItem(item);
+            return category === currentListFilter;
+        });
 
+        filteredItems.forEach(item => {
+            const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
+            const icon = getIconForItem(item);
+            const fileNamePreview = item.type === 'file' ? (item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName) : '';
+            const textPreview = (item.type === 'text' || item.type === 'html') ? (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')) : '';
             const itemEl = document.createElement('div');
             itemEl.className = 'list-item';
             itemEl.dataset.id = item.id;
-            
             let itemContentHTML = '';
             if (item.type === 'text' || item.type === 'html') {
-                itemContentHTML = `<div class="item-details">
-                                        <div class="item-title">${item.title}</div>
-                                        <div class="item-preview">${textPreview}</div>
-                                    </div>`;
+                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${textPreview}</div></div>`;
             } else if (item.type === 'file') {
-                itemContentHTML = `<div class="item-details">
-                                        <div class="item-title">${item.title}</div>
-                                        <div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div>
-                                    </div>`;
+                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
             }
-            
-            itemEl.innerHTML = `
-                <div class="item-icon">
-                    ${icon}
-                    ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
-                </div>
-                ${itemContentHTML}
-                <div class="item-date">${formatTimestamp(item.timestamp)}</div>
-                <button class="delete-btn">&times;</button>
-            `;
+            itemEl.innerHTML = `<div class="item-icon">${icon}${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}</div>${itemContentHTML}<div class="item-date">${formatTimestamp(item.timestamp)}</div><button class="delete-btn">&times;</button>`;
             listContainer.appendChild(itemEl);
         });
     }
     
-    // ✨ [변경] openModal 함수: 파일 클릭 시 바로 다운로드하지 않고 모달을 열도록 수정
+    // --- Modal Controls ---
     function openModal(id) {
         currentItemInModal = savedItems.find(i => i.id === id);
         if (!currentItemInModal) return;
-
         modalTitle.textContent = currentItemInModal.title;
-
-        // 모든 미리보기 영역 초기화
         modalText.style.display = 'none';
         modalHtmlPreview.style.display = 'none';
         modalImagePreview.style.display = 'none';
         modalFileInfo.style.display = 'none';
         modalToggleViewBtn.style.display = 'none';
         modalActionBtn.style.display = 'inline-block';
-
         if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
             modalToggleViewBtn.style.display = 'inline-block';
             modalActionBtn.textContent = '전체 복사';
             modalActionBtn.onclick = () => copyText(currentItemInModal.content);
             showContentView();
         } else if (currentItemInModal.type === 'file') {
-            modalToggleViewBtn.style.display = 'none'; // 파일은 미리보기/내용보기 토글 없음
+            modalToggleViewBtn.style.display = 'none';
             modalActionBtn.textContent = '다운로드';
             modalActionBtn.onclick = () => downloadFile(currentItemInModal);
-
             if (currentItemInModal.isImage) {
-                // 이미지 파일이면 이미지 미리보기
                 modalImagePreview.src = currentItemInModal.fileUrl;
                 modalImagePreview.style.display = 'block';
             } else {
-                // 이미지가 아니면 파일 정보 표시
-                modalFileInfo.innerHTML = `
-                    <div style="font-size: 5rem; line-height: 1;">${getIconForItem(currentItemInModal)}</div>
-                    <p style="font-weight: 600; margin-top: 1rem;">${currentItemInModal.fileName}</p>
-                    <p style="color: var(--secondary-text);">${formatFileSize(currentItemInModal.fileSize)}</p>
-                `;
+                modalFileInfo.innerHTML = `<div style="font-size: 5rem; line-height: 1;">${getIconForItem(currentItemInModal)}</div><p style="font-weight: 600; margin-top: 1rem;">${currentItemInModal.fileName}</p><p style="color: var(--secondary-text);">${formatFileSize(currentItemInModal.fileSize)}</p>`;
                 modalFileInfo.style.display = 'block';
             }
         }
-        
         modal.style.display = 'flex';
-    const newUrl = window.location.pathname + '#modal'; // 주소에 #modal 추가
-    history.pushState({ modalOpen: true }, '', newUrl); // 방문 기록 쌓기
+        history.pushState({ modalOpen: true }, '', '#modal');
     }
 
-    // (이하 나머지 코드는 기존과 동일)
-    function switchTab(tab) {
-        currentTab = tab;
-        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-        
-        textInputContainer.style.display = 'none';
-        fileInputContainer.style.display = 'none';
-        htmlInputContainer.style.display = 'none';
-        titleInput.style.display = 'none';
-        runHtmlBtn.style.display = 'none';
-        
-        if (tab === 'text') {
-            textInputContainer.style.display = 'block';
-            titleInput.style.display = 'block';
-        } else if (tab === 'file') {
-            fileInputContainer.style.display = 'block';
-            titleInput.style.display = 'block';
-        } else if (tab === 'html') {
-            htmlInputContainer.style.display = 'flex';
-            runHtmlBtn.style.display = 'block';
+    function closeModal() {
+        modal.style.display = 'none';
+        modalHtmlPreview.srcdoc = '';
+        modalImagePreview.src = '';
+        currentItemInModal = null;
+        if (window.location.hash === '#modal') {
+            history.back();
         }
-        updateSaveButtonState();
     }
-
-    function runHtml() {
-        const code = htmlInput.value;
-        if (!code.trim()) {
-            showAlert("실행할 HTML 코드를 입력하세요.");
-            return;
-        }
-        htmlPreview.srcdoc = code;
-        htmlPreviewModal.style.display = 'flex';
-    }
-
+    
     function showContentView() {
         if (!currentItemInModal || (currentItemInModal.type !== 'text' && currentItemInModal.type !== 'html')) return;
         modalText.textContent = currentItemInModal.content;
@@ -686,177 +672,69 @@ async function downloadFile(item) {
         modalHtmlPreview.srcdoc = currentItemInModal.content;
         modalToggleViewBtn.textContent = '내용 보기';
     }
+
+    function closeHtmlPreviewModal() { htmlPreviewModal.style.display = 'none'; }
     
-    function closeModal() {
-        modal.style.display = 'none';
-        modalHtmlPreview.srcdoc = '';
-        modalImagePreview.src = '';
-        currentItemInModal = null;
-    // ✨ 주소에 #modal이 있다면 이전 페이지로 이동 (실제로는 기록 제거)
-    if (window.location.hash === '#modal') {
-        history.back(); 
-    }
-    }
-
-    function closeHtmlPreviewModal() {
-        htmlPreviewModal.style.display = 'none';
-    }
-
     function showConfirmModal(message, onConfirm) {
         const confirmMessage = confirmModal.querySelector('h3');
         confirmMessage.textContent = message;
         confirmModal.style.display = 'flex';
-
-        const handleConfirm = () => {
-            onConfirm();
-            confirmModal.style.display = 'none';
-            confirmOkBtn.removeEventListener('click', handleConfirm);
-            confirmCancelBtn.removeEventListener('click', handleCancel);
-        };
-
-        const handleCancel = () => {
-            confirmModal.style.display = 'none';
-            confirmOkBtn.removeEventListener('click', handleConfirm);
-            confirmCancelBtn.removeEventListener('click', handleCancel);
-        };
-
+        const handleConfirm = () => { onConfirm(); confirmModal.style.display = 'none'; confirmOkBtn.removeEventListener('click', handleConfirm); confirmCancelBtn.removeEventListener('click', handleCancel); };
+        const handleCancel = () => { confirmModal.style.display = 'none'; confirmOkBtn.removeEventListener('click', handleConfirm); confirmCancelBtn.removeEventListener('click', handleCancel); };
         confirmOkBtn.addEventListener('click', handleConfirm);
         confirmCancelBtn.addEventListener('click', handleCancel);
     }
 
     function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
+    // --- Main App Logic ---
+    function switchTab(tab) {
+        currentTab = tab;
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        textInputContainer.style.display = 'none';
+        fileInputContainer.style.display = 'none';
+        htmlInputContainer.style.display = 'none';
+        titleInput.style.display = 'none';
+        runHtmlBtn.style.display = 'none';
+        if (tab === 'text') { textInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
+        else if (tab === 'file') { fileInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
+        else if (tab === 'html') { htmlInputContainer.style.display = 'flex'; runHtmlBtn.style.display = 'block'; }
+        updateSaveButtonState();
+    }
+
+    function runHtml() {
+        const code = htmlInput.value;
+        if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
+        htmlPreview.srcdoc = code;
+        htmlPreviewModal.style.display = 'flex';
+    }
+
     function updateSaveButtonState() {
         let isDisabled = true;
         const title = titleInput.value.trim();
-
-        if (currentTab === 'text') {
-            const content = textInput.value.trim();
-            if (title && content) {
-                isDisabled = false;
-            }
-        } else if (currentTab === 'file') {
-            const file = fileInput.files[0];
-            if (title && file) {
-                isDisabled = false;
-            }
-        } else if (currentTab === 'html') {
-            const content = htmlInput.value.trim();
-            if (content) {
-                isDisabled = false;
-            }
-        }
+        if (currentTab === 'text') { if (title && textInput.value.trim()) isDisabled = false; }
+        else if (currentTab === 'file') { if (title && fileInput.files[0]) isDisabled = false; }
+        else if (currentTab === 'html') { if (htmlInput.value.trim()) isDisabled = false; }
         saveBtn.disabled = isDisabled;
     }
     
-    function addEventListeners() {
-        tabButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                switchTab(btn.dataset.tab);
-            });
-        });
-
-        saveBtn.addEventListener('click', handleSave);
-        runHtmlBtn.addEventListener('click', runHtml);
-        htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
-        
-        listContainer.addEventListener('click', (e) => {
-            const listItem = e.target.closest('.list-item');
-            if (!listItem) return;
-            const id = listItem.dataset.id;
-            
-            if (e.target.classList.contains('delete-btn')) {
-                showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-                    const itemToDelete = savedItems.find(item => item.id === id);
-                    itemsRef.child(id).remove().then(() => {
-                        if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
-                            const fileRef = storage.ref(itemToDelete.storagePath);
-                            fileRef.delete().then(() => {
-                                console.log('Storage 파일 삭제 성공');
-                            }).catch(error => {
-                                console.warn('Storage 파일 삭제 실패 (파일이 없거나 권한 문제):', error);
-                            });
-                        }
-                    }).catch(error => {
-                        showAlert('삭제 실패: ' + error.message);
-                    });
-                });
-            } else {
-                openModal(id);
-            }
-        });
-
-        clearAllBtn.addEventListener('click', () => { 
-            showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => {
-                itemsRef.remove().then(() => {
-                    showAlert('모든 항목을 삭제했습니다.');
-                }).catch(error => {
-                    showAlert('모두 지우기 실패: ' + error.message);
-                });
-            });
-        });
-
-        titleInput.addEventListener('input', updateSaveButtonState);
-        textInput.addEventListener('input', updateSaveButtonState);
-        htmlInput.addEventListener('input', updateSaveButtonState);
-        fileInput.addEventListener('change', () => {
-            updateSaveButtonState();
-            if (fileInput.files.length > 0) {
-                dropZoneText.textContent = fileInput.files[0].name;
-            } else {
-                dropZoneText.textContent = '드래그 또는 클릭';
-            }
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                dropZoneText.textContent = files[0].name;
-            }
-            updateSaveButtonState();
-        });
-    }
-
     function handleSave() {
         let title = titleInput.value.trim();
-        const resetForm = () => {
-            titleInput.value = '';
-            textInput.value = '';
-            htmlInput.value = '';
-            fileInput.value = '';
-            dropZoneText.textContent = '드래그 또는 클릭';
-            updateSaveButtonState();
-        };
-
-        if (currentTab === 'html') {
-            title = prompt("저장할 이름을 입력하세요.");
-            if (!title) {
-                showAlert('저장할 이름이 입력되지 않았습니다.');
-                return;
-            }
-        } else {
-            if (!title) {
-                showAlert('제목을 입력해주세요.');
-                return;
-            }
-        }
-        
+        const resetForm = () => { titleInput.value = ''; textInput.value = ''; htmlInput.value = ''; fileInput.value = ''; dropZoneText.textContent = '드래그 또는 클릭'; updateSaveButtonState(); };
+        if (currentTab === 'html') { title = prompt("저장할 이름을 입력하세요."); if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; } }
+        else { if (!title) { showAlert('제목을 입력해주세요.'); return; } }
         let newItem;
         if (currentTab === 'text') {
-            const content = textInput.value.trim();
-            if (!content) { showAlert('내용을 입력해주세요.'); return; }
-            newItem = { type: 'text', title, content, timestamp: new Date().toISOString() };
+            if (!textInput.value.trim()) { showAlert('내용을 입력해주세요.'); return; }
+            newItem = { type: 'text', title, content: textInput.value.trim(), timestamp: new Date().toISOString() };
         } else if (currentTab === 'html') {
-            const content = htmlInput.value.trim();
-            if (!content) { showAlert('HTML 코드를 입력해주세요.'); return; }
-            newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
+            if (!htmlInput.value.trim()) { showAlert('HTML 코드를 입력해주세요.'); return; }
+            newItem = { type: 'html', title, content: htmlInput.value.trim(), timestamp: new Date().toISOString() };
         } else {
             const file = fileInput.files[0];
             if (!file) { showAlert('파일을 선택해주세요.'); return; }
-            
             if (file.type.startsWith('image/')) {
+                // Image optimization logic...
                 dropZoneText.textContent = '이미지 최적화 중...';
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -864,7 +742,7 @@ async function downloadFile(item) {
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const MAX_WIDTH = 1024; const MAX_HEIGHT = 768;
-                        let width = img.width; let height = img.height;
+                        let { width, height } = img;
                         if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
                         else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
                         canvas.width = width; canvas.height = height;
@@ -883,12 +761,8 @@ async function downloadFile(item) {
             }
             return;
         }
-
-        itemsRef.push(newItem).then(() => {
-            resetForm();
-        }).catch(error => {
-            showAlert('저장 실패: ' + error.message);
-        });
+        newItem.category = getCategoryForItem(newItem);
+        itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
     }
 
     function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
@@ -905,7 +779,6 @@ async function downloadFile(item) {
             },
             (error) => {
                 showAlert('파일 업로드 실패: ' + error.message);
-                dropZoneText.textContent = '드래그 또는 클릭';
                 dropZone.classList.remove('uploading');
                 progressBar.style.width = '0%';
             },
@@ -915,15 +788,11 @@ async function downloadFile(item) {
                 dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
                 uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                     const newItem = {
-                        type: 'file',
-                        title,
-                        fileName: originalFileName,
-                        fileSize: fileToUpload.size,
-                        isImage: fileType.startsWith('image/'),
-                        fileUrl: downloadURL,
-                        storagePath: storagePath,
+                        type: 'file', title, fileName: originalFileName, fileSize: fileToUpload.size,
+                        isImage: fileType.startsWith('image/'), fileUrl: downloadURL, storagePath: storagePath,
                         timestamp: new Date().toISOString()
                     };
+                    newItem.category = getCategoryForItem(newItem);
                     itemsRef.push(newItem).then(() => {
                         progressBar.style.width = '0%';
                         resetFormCallback();
@@ -932,66 +801,73 @@ async function downloadFile(item) {
             }
         );
     }
-
-    modalClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     
-    modalToggleViewBtn.addEventListener('click', () => {
-        if (modalToggleViewBtn.textContent === '미리보기') {
-            showPreviewView();
-        } else {
-            showContentView();
-        }
-    });
-
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;
-            dropZoneText.textContent = files[0].name;
-        }
-    });
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            dropZoneText.textContent = fileInput.files[0].name;
-        } else {
-            dropZoneText.textContent = '드래그 또는 클릭';
-        }
-    });
-
-    addEventListeners();
-    loadItemsFromFirebase();
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/youtube/service-worker.js', { scope: '/youtube/' })
-                .then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                })
-                .catch(error => {
-                    console.error('ServiceWorker registration failed: ', error);
+    // --- Event Listeners ---
+    function addEventListeners() {
+        tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        saveBtn.addEventListener('click', handleSave);
+        runHtmlBtn.addEventListener('click', runHtml);
+        htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+        listContainer.addEventListener('click', (e) => {
+            const listItem = e.target.closest('.list-item');
+            if (!listItem) return;
+            const id = listItem.dataset.id;
+            if (e.target.classList.contains('delete-btn')) {
+                showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+                    const itemToDelete = savedItems.find(item => item.id === id);
+                    itemsRef.child(id).remove().then(() => {
+                        if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
+                            storage.ref(itemToDelete.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
+                        }
+                    }).catch(err => showAlert('삭제 실패: ' + err.message));
                 });
+            } else {
+                openModal(id);
+            }
+        });
+        clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
+        titleInput.addEventListener('input', updateSaveButtonState);
+        textInput.addEventListener('input', updateSaveButtonState);
+        htmlInput.addEventListener('input', updateSaveButtonState);
+        fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
+        
+        window.addEventListener('popstate', (event) => {
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                currentItemInModal = null;
+            }
+        });
+        
+        listFilterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                listFilterTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentListFilter = tab.dataset.filter;
+                renderList();
+            });
         });
     }
 
-window.addEventListener('popstate', (event) => {
-    // #modal 상태가 사라졌을 때 (뒤로가기 눌렀을 때) 모달을 닫습니다.
-    if (modal.style.display === 'flex') {
-        // history.back()으로 무한 루프에 빠지는 것을 방지하기 위해,
-        // UI만 직접 닫습니다.
-        modal.style.display = 'none';
-        modalHtmlPreview.srcdoc = '';
-        modalImagePreview.src = '';
-        currentItemInModal = null;
+    // --- App Initialization ---
+    addEventListeners();
+    loadItemsFromFirebase();
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => console.log('SW registration successful with scope: ', registration.scope))
+                .catch(error => console.error('SW registration failed: ', error));
+        });
     }
-});
 </script>
 </body>
 </html>
-
 
