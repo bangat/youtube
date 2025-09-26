@@ -609,6 +609,8 @@
         }
         
         modal.style.display = 'flex';
+    const newUrl = window.location.pathname + '#modal'; // 주소에 #modal 추가
+    history.pushState({ modalOpen: true }, '', newUrl); // 방문 기록 쌓기
     }
 
     // (이하 나머지 코드는 기존과 동일)
@@ -666,6 +668,10 @@
         modalHtmlPreview.srcdoc = '';
         modalImagePreview.src = '';
         currentItemInModal = null;
+    // ✨ 주소에 #modal이 있다면 이전 페이지로 이동 (실제로는 기록 제거)
+    if (window.location.hash === '#modal') {
+        history.back(); 
+    }
     }
 
     function closeHtmlPreviewModal() {
@@ -948,6 +954,18 @@
                 });
         });
     }
+
+window.addEventListener('popstate', (event) => {
+    // #modal 상태가 사라졌을 때 (뒤로가기 눌렀을 때) 모달을 닫습니다.
+    if (modal.style.display === 'flex') {
+        // history.back()으로 무한 루프에 빠지는 것을 방지하기 위해,
+        // UI만 직접 닫습니다.
+        modal.style.display = 'none';
+        modalHtmlPreview.srcdoc = '';
+        modalImagePreview.src = '';
+        currentItemInModal = null;
+    }
+});
 </script>
 </body>
 </html>
