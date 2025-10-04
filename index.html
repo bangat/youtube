@@ -137,6 +137,45 @@ body.html-mode-mobile .app-container {
             .modal-content { width: 100%; border-radius: 0; }
             #dropZone-text { padding: 0 10px; }
         }
+
+/* 고정 표시 (별 모양) 스타일 */
+        .pin-indicator {
+            position: absolute;
+            bottom: -5px;
+            right: -8px;
+            font-size: 14px;
+            background-color: var(--surface-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        /* 고정된 아이템에 왼쪽 테두리로 하이라이트 */
+        .list-item.pinned {
+            background-color: #fdfaf0; /* 은은한 배경색 */
+            border-left: 4px solid #f9c74f; /* 노란색 테두리 */
+        }
+
+        /* 원래의 삭제 버튼 스타일 복원 */
+        .delete-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            padding: 0;
+            margin: 0;
+        }
+        
+        @media (max-width: 900px) {
+            .delete-btn {
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        }
     </style>
 </head>
 <body>
@@ -340,42 +379,66 @@ body.html-mode-mobile .app-container {
     }
 
     function loadItemsFromFirebase() {
-        itemsRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            savedItems = [];
-            if (data) {
-                savedItems = Object.keys(data).map(key => ({
-                    id: key, ...data[key], timestamp: new Date(data[key].timestamp)
-                })).sort((a, b) => b.timestamp - a.timestamp);
-            }
-            renderList();
-        }, (error) => console.error("Firebase 데이터 로드 오류:", error));
-    }
+    itemsRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        savedItems = [];
+        if (data) {
+            savedItems = Object.keys(data).map(key => ({
+                id: key,
+                ...data[key],
+                timestamp: new Date(data[key].timestamp) 
+            }));
+        }
+        renderList();
+    }, (error) => console.error("Firebase 데이터 로드 오류:", error));
+}
 
     function renderList() {
-        listContainer.innerHTML = '';
-        const filteredItems = savedItems.filter(item => {
-            if (currentListFilter === 'all') return true;
-            return (item.category || getCategoryForItem(item)) === currentListFilter;
-        });
-        filteredItems.forEach(item => {
-            const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
-            const icon = getIconForItem(item);
-            const itemEl = document.createElement('div');
-            itemEl.className = 'list-item';
-            itemEl.dataset.id = item.id;
-            let itemContentHTML = '';
-            if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
-                const preview = (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : ''));
-                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${preview}</div></div>`;
-            } else if (item.type === 'file') {
-                const fileNamePreview = item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName;
-                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
-            }
-            itemEl.innerHTML = `<div class="item-icon">${icon}${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}</div>${itemContentHTML}<div class="item-date">${formatTimestamp(item.timestamp)}</div><button class="delete-btn">&times;</button>`;
-            listContainer.appendChild(itemEl);
-        });
-    }
+    listContainer.innerHTML = '';
+
+    const sortedItems = savedItems.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.timestamp - a.timestamp; 
+    });
+
+    const filteredItems = sortedItems.filter(item => {
+        if (currentListFilter === 'all') return true;
+        return (item.category || getCategoryForItem(item)) === currentListFilter;
+    });
+
+    filteredItems.forEach(item => {
+        const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
+        const icon = getIconForItem(item);
+        const itemEl = document.createElement('div');
+        itemEl.className = 'list-item';
+        if (item.isPinned) {
+            itemEl.classList.add('pinned');
+        }
+        itemEl.dataset.id = item.id;
+
+        let itemContentHTML = '';
+        if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
+            const preview = (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : ''));
+            itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${preview}</div></div>`;
+        } else if (item.type === 'file') {
+            const fileNamePreview = item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName;
+            itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
+        }
+
+        itemEl.innerHTML = `
+            <div class="item-icon">
+                ${icon}
+                ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
+                ${item.isPinned ? '<div class="pin-indicator">⭐</div>' : ''}
+            </div>
+            ${itemContentHTML}
+            <div class="item-date">${formatTimestamp(item.timestamp)}</div>
+            <button class="delete-btn">&times;</button>
+        `;
+        listContainer.appendChild(itemEl);
+    });
+}
 
     function openModal(id) {
         currentItemInModal = savedItems.find(i => i.id === id);
@@ -647,28 +710,42 @@ body.html-mode-mobile .app-container {
         });
         searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
         htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+
         listContainer.addEventListener('click', (e) => {
-            const listItem = e.target.closest('.list-item');
-            if (!listItem) return;
-            const id = listItem.dataset.id;
-            if (e.target.classList.contains('delete-btn')) {
-                showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-                    const itemToDelete = savedItems.find(item => item.id === id);
-                    itemsRef.child(id).remove().then(() => {
-                        if (itemToDelete?.type === 'file' && itemToDelete.storagePath) {
-                            storage.ref(itemToDelete.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
-                        }
-                    }).catch(err => showAlert('삭제 실패: ' + err.message));
-                });
-            } else {
-                const itemToOpen = savedItems.find(item => item.id === id);
-                if (itemToOpen?.type === 'link') {
-                    window.open(itemToOpen.content, '_blank');
-                } else {
-                    openModal(id);
+    const listItem = e.target.closest('.list-item');
+    if (!listItem) return;
+    const id = listItem.dataset.id;
+    const item = savedItems.find(i => i.id === id);
+    if (!item) return;
+
+    // 아이콘 클릭 시 핀 상태 변경
+    if (e.target.closest('.item-icon')) {
+        const newPinnedState = !item.isPinned;
+        itemsRef.child(id).update({ isPinned: newPinnedState })
+            .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
+        return;
+    }
+
+    // 삭제 버튼 클릭 시
+    if (e.target.classList.contains('delete-btn')) {
+        showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+            itemsRef.child(id).remove().then(() => {
+                if (item.type === 'file' && item.storagePath) {
+                    storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
                 }
-            }
-        });
+            }).catch(err => showAlert('삭제 실패: ' + err.message));
+        }); // 이 괄호가 누락되었습니다.
+        return;
+    } // ✨ 이 괄호가 누락되었습니다.
+
+    // 아이템의 다른 영역 클릭 시
+    if (item.type === 'link') {
+        window.open(item.content, '_blank');
+    } else {
+        openModal(id);
+    }
+});
+
         clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
         [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
         fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
@@ -691,6 +768,41 @@ body.html-mode-mobile .app-container {
     }
 
     function initializeApp() {
+
+        // 공유 기능으로 앱이 실행되었는지 확인
+        const handleSharedData = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedTitle = urlParams.get('title');
+            const sharedText = urlParams.get('text');
+            const sharedUrl = urlParams.get('url');
+
+            // 공유된 데이터가 있다면
+            if (sharedTitle || sharedText || sharedUrl) {
+                // URL이 있다면 링크 탭으로, 없다면 텍스트 탭으로 이동
+                if (sharedUrl) {
+                    switchTab('link');
+                    titleInput.value = sharedTitle || '';
+                    linkInput.value = sharedUrl || '';
+                } else {
+                    switchTab('text');
+                    titleInput.value = sharedTitle || '';
+                    textInput.value = sharedText || '';
+                }
+                
+                // 앱이 로드된 후 입력창에 포커스를 줍니다.
+                setTimeout(() => {
+                    titleInput.focus();
+                    updateSaveButtonState(); // 저장 버튼 활성화 체크
+                }, 100);
+                
+                // URL에서 공유 파라미터를 제거하여 새로고침 시 데이터가 중복으로 남지 않게 합니다.
+                history.replaceState(null, '', window.location.pathname);
+            }
+        };
+
+        handleSharedData();
+        // --------------------------------------------------
+
         htmlEditor = CodeMirror.fromTextArea(htmlInput, {
             lineNumbers: true,
             mode: 'htmlmixed',
@@ -701,6 +813,8 @@ body.html-mode-mobile .app-container {
                 "Ctrl-G": "findNext", "Cmd-G": "findNext",
                 "Shift-Ctrl-G": "findPrev", "Shift-Cmd-G": "findPrev"
             }
+
+
         });
         htmlEditor.on('change', updateSaveButtonState);
         addEventListeners();
