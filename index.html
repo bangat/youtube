@@ -9,7 +9,6 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/material-darker.min.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.css">
     
@@ -18,15 +17,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/searchcursor.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/search.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/scroll/annotatescrollbar.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/jump-to-line.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
     <style>
         :root {
@@ -52,8 +50,8 @@
         .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
         #textInput { min-height: 150px; resize: vertical; }
         #linkInput-container, #fileInput-container { display: none; }
-#htmlInput-container { display: none; flex-grow: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
-.CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: 100%; font-size: 14px; }
+        #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+        .CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: 100%; font-size: 14px; }
         .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); overflow: hidden; }
         .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
         #fileInput { display: none; }
@@ -65,7 +63,7 @@
         #clearAllBtn { background: none; border: none; color: var(--secondary-text); cursor: pointer; font-weight: 600; }
         #clearAllBtn:hover { color: #e02c4f; }
         .list-container { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1; padding-right: 10px; }
-        .list-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 8px; cursor: pointer; transition: box-shadow 0.2s, border-color 0.2s; background-color: var(--surface-color); box-shadow: 0 1px 2px var(--shadow-color); position: relative; }
+        .list-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 8px; cursor: pointer; transition: background-color .2s, box-shadow 0.2s, border-color 0.2s; background-color: var(--surface-color); box-shadow: 0 1px 2px var(--shadow-color); position: relative; }
         .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
         .item-icon { font-size: 24px; position: relative; flex-shrink: 0; }
         .item-icon .html-badge { position: absolute; bottom: -5px; right: -8px; background-color: #e02c4f; color: white; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
@@ -73,7 +71,7 @@
         .item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
         .item-preview { font-size: 14px; color: var(--secondary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
         .item-date { font-size: 12px; color: var(--secondary-text); position: absolute; top: 15px; right: 50px; }
-        .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; position: absolute; right: 15px; top: 15px; padding: 0; margin: 0; }
+        .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; }
         .delete-btn:hover { color: #e02c4f; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background-color: var(--surface-color); padding: 24px; border-radius: 12px; width: 95%; max-width: 900px; height: 90%; display: flex; flex-direction: column; position: relative; }
@@ -107,77 +105,94 @@
         .list-filter-tabs { display: flex; gap: 10px; margin-top: 10px; border-bottom: 1px solid var(--border-color); }
         .list-filter-tab { padding: 10px 15px; border: none; background: none; color: var(--secondary-text); font-weight: 600; cursor: pointer; position: relative; border-bottom: 3px solid transparent; }
         .list-filter-tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
-        
-        /* HTML 뷰어 버튼 그룹 디자인 */
         #html-actions-container { display: none; gap: 10px; margin-bottom: 15px; }
         .html-action-btn { flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--surface-color); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         .html-action-btn:hover { background-color: #e9ebee; }
         #runHtmlBtn { background-color: #e02c4f; color: white; border-color: #e02c4f; }
         #runHtmlBtn:hover { background-color: #c72543; }
-        
-        @media (max-width: 900px) {
+        .pin-indicator { position: absolute; bottom: -5px; right: -8px; font-size: 14px; background-color: var(--surface-color); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .list-item.pinned { background-color: #fdfaf0; border-left: 4px solid #f9c74f; }
+        .delete-btn { position: absolute; right: 15px; top: 15px; padding: 0; margin: 0; }
+        .secret-list-item { display: flex; align-items: center; gap: 15px; padding: 15px; background-color: var(--surface-color); border-radius: 8px; box-shadow: 0 1px 2px var(--shadow-color); cursor: pointer; }
+        .secret-list-item:hover { background-color: #e9ebee; }
 
-body.html-mode-mobile .app-container {
-            display: block; /* 전체 화면 모드를 위해 grid 레이아웃 해제 */
-        }
-        body.html-mode-mobile .list-column {
-            display: none; /* 내 저장공간 숨기기 */
-        }
-        body.html-mode-mobile .input-column {
-            height: 100vh; /* 입력 섹션을 화면 전체 높이로 설정 */
-            border-right: none;
-        }
+        @media (max-width: 900px) {
+            body.html-mode-mobile .app-container { display: block; }
+            body.html-mode-mobile .list-column { display: none; }
+            body.html-mode-mobile .input-column { height: 100vh; border-right: none; }
             .app-container { grid-template-columns: 1fr; width: 100%; min-height: 100vh; }
-            .input-column, .list-column { padding: 16px; min-width: 0; /* 모바일 화면 깨짐 방지 */ }
+            .input-column, .list-column { padding: 16px; min-width: 0; }
             .list-item { padding: 15px; display: flex; flex-direction: row; align-items: center; position: relative; }
             .item-details { flex-grow: 1; overflow: hidden; padding-right: 0; display: flex; flex-direction: column; justify-content: center; }
             .item-icon { margin-right: 15px; }
             .item-date { font-size: 10px; color: var(--secondary-text); position: static; margin-top: 4px; }
             .item-title { font-size: 15px; }
             .item-preview { font-size: 13px; }
-            .delete-btn { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); font-size: 20px; }
+            .delete-btn { top: 50%; transform: translateY(-50%); font-size: 20px; }
             .modal-content { width: 100%; border-radius: 0; }
             #dropZone-text { padding: 0 10px; }
         }
 
-/* 고정 표시 (별 모양) 스타일 */
-        .pin-indicator {
-            position: absolute;
-            bottom: -5px;
-            right: -8px;
-            font-size: 14px;
-            background-color: var(--surface-color);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
+.secret-list-item {
+            /* ✨ display: flex; 와 justify-content 속성을 추가합니다. ✨ */
             display: flex;
+            justify-content: space-between; 
             align-items: center;
-            justify-content: center;
-            line-height: 1;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            gap: 15px;
+            padding: 15px;
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px var(--shadow-color);
+            cursor: pointer;
+        }
+        .secret-list-item-title {
+            /* ✨ 파일 이름을 감싸서, 내용이 길어지면 줄임표(...)로 표시되게 합니다. ✨ */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* ✨ 아래 삭제 버튼 스타일을 새로 추가하세요. ✨ */
+        .secret-delete-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--secondary-text);
+            cursor: pointer;
+            flex-shrink: 0; /* 버튼 크기가 줄어들지 않도록 설정 */
+            padding: 0 5px;
+        }
+        .secret-delete-btn:hover {
+            color: #e02c4f;
         }
 
-        /* 고정된 아이템에 왼쪽 테두리로 하이라이트 */
-        .list-item.pinned {
-            background-color: #fdfaf0; /* 은은한 배경색 */
-            border-left: 4px solid #f9c74f; /* 노란색 테두리 */
-        }
-
-        /* 원래의 삭제 버튼 스타일 복원 */
-        .delete-btn {
-            position: absolute;
-            right: 15px;
-            top: 15px;
-            padding: 0;
-            margin: 0;
-        }
-        
-        @media (max-width: 900px) {
-            .delete-btn {
-                top: 50%;
-                transform: translateY(-50%);
-            }
-        }
+/* 동영상 플레이어 모달 스타일 */
+#videoPlayerModal .modal-content {
+    width: 95vw;
+    max-width: 1400px;
+    height: auto;
+    padding: 12px;
+    background-color: #1c1c1e; /* 어두운 배경 */
+}
+#videoPlayerModal .modal-header {
+    margin-bottom: 10px;
+}
+#videoPlayerModal #videoTitle {
+    color: #fff; /* 제목 흰색으로 */
+    font-size: 16px;
+}
+#videoPlayerContainer {
+    padding: 0;
+    margin-bottom: 0;
+    background-color: #000;
+}
+#videoPlayer {
+    width: 100%;
+    max-height: 85vh; /* 비디오 최대 높이 확보 */
+    display: block;
+}
+#confirmModal, #alertModal {
+    z-index: 2000; /* 다른 모달(1000)보다 항상 위에 표시되도록 값을 높여줍니다. */
+}
     </style>
 </head>
 <body>
@@ -190,22 +205,17 @@ body.html-mode-mobile .app-container {
                 <button class="tab-btn" data-tab="file">파일</button>
                 <button class="tab-btn" data-tab="html">HTML 뷰어</button>
             </div>
-            
             <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
-            
             <div id="html-actions-container">
                 <button id="runHtmlBtn" class="html-action-btn">▶ 실행</button>
                 <button id="searchBtn" class="html-action-btn">🔍 검색</button>
             </div>
-            
             <div id="textInput-container">
                 <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
             </div>
-
             <div id="linkInput-container">
                 <input type="url" id="linkInput" class="input-field" placeholder="URL 주소를 입력하세요. (예: https://google.com)">
             </div>
-            
             <div id="fileInput-container">
                 <div class="drop-zone" id="dropZone">
                     <div id="upload-progress-bar"></div>
@@ -213,11 +223,9 @@ body.html-mode-mobile .app-container {
                     <input type="file" id="fileInput">
                 </div>
             </div>
-            
             <div id="htmlInput-container">
                 <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요"></textarea>
             </div>
-
             <button id="saveBtn" disabled>저장하기</button>
         </section>
         
@@ -226,34 +234,92 @@ body.html-mode-mobile .app-container {
                 <h2>내 저장공간</h2>
                 <button id="clearAllBtn">모두 지우기</button>
             </div>
-
             <div class="list-filter-tabs">
                 <button class="list-filter-tab active" data-filter="all">전체</button>
                 <button class="list-filter-tab" data-filter="document">문서</button>
                 <button class="list-filter-tab" data-filter="photo">사진</button>
                 <button class="list-filter-tab" data-filter="music">음악</button>
             </div>
-
             <div id="listContainer" class="list-container"></div>
         </section>
     </main>
 
-    <div id="modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h3 id="modalTitle"></h3> <button class="modal-close-btn">닫기</button> </div> <div id="modalBody"> <pre id="modalText"></pre> <iframe id="modalHtmlPreview"></iframe> <img id="modalImagePreview" /> <div id="modalFileInfo"></div> </div> <div class="modal-actions"> <button class="modal-btn" id="modalToggleViewBtn">미리보기</button> <button class="modal-btn" id="modalActionBtn"></button> </div> </div> </div>
-    <div id="htmlPreviewModal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <button class="modal-close-btn">닫기</button> </div> <div class="modal-body"> <iframe id="htmlPreview" title="HTML Preview"></iframe> </div> </div> </div>
-    <div id="confirmModal" class="modal-overlay"> <div class="modal-content"> <h3>정말로 이 항목을 삭제하시겠습니까?</h3> <div class="modal-actions"> <button id="confirmCancelBtn" class="modal-btn">취소</button> <button id="confirmOkBtn" class="modal-btn" style="background-color: #e02c4f; color: white; border-color: #e02c4f;">확인</button> </div> </div> </div>
-    <div id="alertModal" class="modal-overlay"> <div class="modal-content"> <h3 id="alertMessage"></h3> <div class="modal-actions"> <button id="alertOkBtn" class="modal-btn">확인</button> </div> </div> </div>
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle"></h3>
+                <button class="modal-close-btn">닫기</button>
+            </div>
+            <div id="modalBody">
+                <pre id="modalText"></pre>
+                <iframe id="modalHtmlPreview"></iframe>
+                <img id="modalImagePreview" />
+                <div id="modalFileInfo"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" id="modalToggleViewBtn">미리보기</button>
+                <button class="modal-btn" id="modalActionBtn"></button>
+            </div>
+        </div>
+    </div>
+    <div id="htmlPreviewModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-close-btn">닫기</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="htmlPreview" title="HTML Preview"></iframe>
+            </div>
+        </div>
+    </div>
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>정말로 이 항목을 삭제하시겠습니까?</h3>
+            <div class="modal-actions">
+                <button id="confirmCancelBtn" class="modal-btn">취소</button>
+                <button id="confirmOkBtn" class="modal-btn" style="background-color: #e02c4f; color: white; border-color: #e02c4f;">확인</button>
+            </div>
+        </div>
+    </div>
+    <div id="alertModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="alertMessage"></h3>
+            <div class="modal-actions">
+                <button id="alertOkBtn" class="modal-btn">확인</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="secretModal" class="modal-overlay" style="align-items: flex-start; padding-top: 5vh;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="secretModalTitle">🔒 보안모드</h3>
+                <button class="modal-close-btn">닫기</button>
+            </div>
+            <div id="secretModalBody" style="background: var(--bg-color); padding: 15px; border-radius: 8px; text-align: left;">
+               <p style="margin-bottom: 15px; font-weight: 600;">보안 업로드</p>
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <input type="file" id="secretUploadInput" accept="video/*,image/*,audio/*" class="input-field" style="margin-bottom: 0;">
+    <button id="secretUploadBtn" class="html-action-btn" style="flex-shrink: 0; width: 100px; margin: 0;">업로드</button>
+</div>
+<p id="secretUploadProgress" style="color: var(--secondary-text); height: 20px;"></p>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
+                <div id="secretListContainer" class="list-container" style="margin-top: 0; padding-right: 0;">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
-    // 원본 코드를 기준으로 모든 기능 추가
     const firebaseConfig = {
       apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
       authDomain: "youtubu-c770d.firebaseapp.com",
       projectId: "youtubu-c770d",
-      storageBucket: "youtubu-c770d.firebasestorage.app", // 원본 유지
+      storageBucket: "youtubu-c770d.firebasestorage.app",
       messagingSenderId: "727943010727",
       appId: "1:727943010727:web:44ce6a65c1887026523e82",
       measurementId: "G-82SBN9ZWZQ"
@@ -263,8 +329,8 @@ body.html-mode-mobile .app-container {
     const database = firebase.database();
     const itemsRef = database.ref('items');
     const storage = firebase.storage();
+    const secretRef = database.ref('secret_items');
 
-    // DOM Elements
     const titleInput = document.getElementById('titleInput');
     const textInputContainer = document.getElementById('textInput-container');
     const fileInputContainer = document.getElementById('fileInput-container');
@@ -304,15 +370,15 @@ body.html-mode-mobile .app-container {
     const runHtmlBtn = document.getElementById('runHtmlBtn');
     const searchBtn = document.getElementById('searchBtn');
     
-    let htmlEditor; // CodeMirror instance
+    let htmlEditor;
 
-    // State Variables
     let currentTab = 'text';
     let savedItems = [];
     let currentItemInModal = null;
     let currentListFilter = 'all';
+    let tapCounter = 0;
+    let tapTimer = null;
 
-    // Utility Functions
     function showAlert(message) {
         alertMessage.textContent = message;
         alertModal.style.display = 'flex';
@@ -323,13 +389,9 @@ body.html-mode-mobile .app-container {
     function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
 
     function getCategoryForItem(item) {
-        if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
-            return 'document';
-        }
+        if (item.type === 'text' || item.type === 'html' || item.type === 'link') { return 'document'; }
         if (item.type === 'file') {
-            if (item.isImage) {
-                return 'photo';
-            }
+            if (item.isImage) { return 'photo'; }
             const extension = item.fileName.split('.').pop().toLowerCase();
             const musicExtensions = ['mp3', 'wav', 'm4a', 'ogg', 'flac'];
             const docExtensions = ['pdf', 'txt', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'hwp'];
@@ -380,74 +442,187 @@ body.html-mode-mobile .app-container {
         }
     }
 
-    function loadItemsFromFirebase() {
-    itemsRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        savedItems = [];
-        if (data) {
-            savedItems = Object.keys(data).map(key => ({
-                id: key,
-                ...data[key],
-                timestamp: new Date(data[key].timestamp) 
-            }));
+    function openSecretStash() {
+        const storedPasswordHash = localStorage.getItem('secretStashPassword');
+        if (!storedPasswordHash) {
+            const newPassword = prompt("최초 접속입니다. 보안모드에서 사용할 새 암호를 만드세요:");
+            if (newPassword) {
+                localStorage.setItem('secretStashPassword', CryptoJS.SHA256(newPassword).toString());
+                showAlert('암호가 설정되었습니다. 보안모드 사용가능합니다.');
+            }
+        } else {
+            const password = prompt("보안모드 암호를 입력하세요:");
+            if (password) {
+                if (CryptoJS.SHA256(password).toString() === storedPasswordHash) {
+                    const secretModal = document.getElementById('secretModal');
+                    secretModal.style.display = 'flex';
+                    secretRef.on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        const items = [];
+                        if (data) {
+                            Object.keys(data).forEach(key => {
+                                items.push({ id: key, ...data[key] });
+                            });
+                        }
+                        renderSecretList(items.sort((a, b) => b.timestamp - a.timestamp));
+                    });
+                    secretModal.querySelector('.modal-close-btn').onclick = () => {
+                        secretModal.style.display = 'none';
+                        secretRef.off();
+                    };
+                } else {
+                    showAlert("암호가 틀렸습니다.");
+                }
+            }
         }
-        renderList();
-    }, (error) => console.error("Firebase 데이터 로드 오류:", error));
-}
+    }
 
-    function renderList() {
-    listContainer.innerHTML = '';
-
-    const sortedItems = savedItems.sort((a, b) => {
-    // 1순위: 핀 고정된 항목이 항상 위로
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-
-    // 2순위: 같은 상태(둘다 고정/둘다 미고정) 내에서는 드래그 순서(sortOrder)로 정렬
-    // sortOrder 값이 없는 항목은 맨 뒤로 보냅니다.
-    const orderA = a.sortOrder !== undefined ? a.sortOrder : Infinity;
-    const orderB = b.sortOrder !== undefined ? b.sortOrder : Infinity;
-
-    return orderA - orderB;
-});
-
-    const filteredItems = sortedItems.filter(item => {
-        if (currentListFilter === 'all') return true;
-        return (item.category || getCategoryForItem(item)) === currentListFilter;
-    });
-
-    filteredItems.forEach(item => {
-        const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
-        const icon = getIconForItem(item);
+    function renderSecretList(items) {
+    const container = document.getElementById('secretListContainer');
+    container.innerHTML = '<h4>저장된 파일 목록</h4>';
+    if (items.length === 0) {
+        container.innerHTML += '<p style="color: var(--secondary-text); margin-top: 10px;">저장된 파일이 없습니다.</p>';
+        return;
+    }
+    items.forEach(item => {
         const itemEl = document.createElement('div');
-        itemEl.className = 'list-item';
-        if (item.isPinned) {
-            itemEl.classList.add('pinned');
-        }
-        itemEl.dataset.id = item.id;
-
-        let itemContentHTML = '';
-        if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
-            const preview = (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : ''));
-            itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${preview}</div></div>`;
-        } else if (item.type === 'file') {
-            const fileNamePreview = item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName;
-            itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
-        }
+        itemEl.className = 'secret-list-item';
+        // ✨ data 속성으로 파일 정보를 저장합니다.
+        itemEl.dataset.fileUrl = item.fileUrl; 
+        itemEl.dataset.fileName = item.fileName;
 
         itemEl.innerHTML = `
-            <div class="item-icon">
-                ${icon}
-                ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
-                ${item.isPinned ? '<div class="pin-indicator">⭐</div>' : ''}
-            </div>
-            ${itemContentHTML}
-            <div class="item-date">${formatTimestamp(item.timestamp)}</div>
-            <button class="delete-btn">&times;</button>
+            <span class="secret-list-item-title">🎬 ${item.fileName}</span>
+            <button class="secret-delete-btn" data-id="${item.id}" data-path="${item.storagePath}">&times;</button>
         `;
-        listContainer.appendChild(itemEl);
+        container.appendChild(itemEl);
     });
 }
+
+function playVideo(fileName, fileUrl) {
+        const videoModal = document.getElementById('videoPlayerModal');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoTitle = document.getElementById('videoTitle');
+
+        videoTitle.textContent = fileName;
+        videoPlayer.src = fileUrl;
+        videoModal.style.display = 'flex';
+
+        videoModal.querySelector('.modal-close-btn').onclick = () => {
+            videoPlayer.pause();
+            videoPlayer.src = ""; // 리소스 정리
+            videoModal.style.display = 'none';
+        };
+    }
+
+   function uploadSecretFile(file) {
+    if (!file) return;
+
+    const progressEl = document.getElementById('secretUploadProgress');
+    const uploadBtn = document.getElementById('secretUploadBtn');
+    uploadBtn.disabled = true; // 업로드 중 버튼 비활성화
+
+    const timestamp = Date.now();
+    const storagePath = `secret_files/${timestamp}_${file.name}`;
+    const fileRef = storage.ref(storagePath);
+    const uploadTask = fileRef.put(file);
+
+    uploadTask.on('state_changed', 
+        (snapshot) => {
+            // ✨ 업로드 진행률 계산 및 표시
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
+        },
+        (error) => {
+            showAlert('보안 파일 업로드 실패: ' + error.message);
+            progressEl.textContent = ''; // 진행률 텍스트 초기화
+            uploadBtn.disabled = false; // 버튼 다시 활성화
+        },
+        () => {
+            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                const newItem = {
+                    fileName: file.name,
+                    fileUrl: downloadURL,
+                    storagePath: storagePath,
+                    timestamp: new Date().toISOString()
+                };
+                secretRef.push(newItem)
+                    .then(() => {
+                        progressEl.textContent = '업로드 완료!';
+                        document.getElementById('secretUploadInput').value = '';
+                        setTimeout(() => { progressEl.textContent = ''; }, 2000); 
+                        uploadBtn.disabled = false; 
+                    })
+                    .catch(err => {
+                        showAlert('DB 저장 실패: ' + err.message);
+                        uploadBtn.disabled = false;
+                    });
+            });
+        }
+    );
+}
+
+    function loadItemsFromFirebase() {
+        itemsRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            savedItems = [];
+            if (data) {
+                savedItems = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key],
+                    timestamp: new Date(data[key].timestamp)
+                }));
+            }
+            renderList();
+        }, (error) => console.error("Firebase 데이터 로드 오류:", error));
+    }
+
+    function renderList() {
+        listContainer.innerHTML = '';
+        const sortedItems = savedItems.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            const orderA = a.sortOrder !== undefined ? a.sortOrder : Infinity;
+            const orderB = b.sortOrder !== undefined ? b.sortOrder : Infinity;
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return b.timestamp - a.timestamp;
+        });
+        const filteredItems = sortedItems.filter(item => {
+            if (currentListFilter === 'all') return true;
+            return (item.category || getCategoryForItem(item)) === currentListFilter;
+        });
+        filteredItems.forEach(item => {
+            const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
+            const icon = getIconForItem(item);
+            const itemEl = document.createElement('div');
+            itemEl.className = 'list-item';
+            if (item.isPinned) {
+                itemEl.classList.add('pinned');
+            }
+            itemEl.dataset.id = item.id;
+            let itemContentHTML = '';
+            if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
+                const preview = (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : ''));
+                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${preview}</div></div>`;
+            } else if (item.type === 'file') {
+                const fileNamePreview = item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName;
+                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
+            }
+            itemEl.innerHTML = `
+                <div class="item-icon">
+                    ${icon}
+                    ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
+                    ${item.isPinned ? '<div class="pin-indicator">⭐</div>' : ''}
+                </div>
+                ${itemContentHTML}
+                <div class="item-date">${formatTimestamp(item.timestamp)}</div>
+                <button class="delete-btn">&times;</button>
+            `;
+            listContainer.appendChild(itemEl);
+        });
+    }
 
     function openModal(id) {
         currentItemInModal = savedItems.find(i => i.id === id);
@@ -521,37 +696,28 @@ body.html-mode-mobile .app-container {
     }
 
    function copyText(text) {
-    const originalButtonText = '전체 복사'; // 기존 버튼 텍스트를 상수로 정의
-
-    // 최신 Clipboard API를 우선적으로 시도합니다.
+    const originalButtonText = '전체 복사';
     if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
             modalActionBtn.textContent = '복사 완료!';
             setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
         }).catch(err => {
             console.error('클립보드 복사 실패, 대체 방법 시도:', err);
-            fallbackCopy(text); // 실패 시 대체 방법 실행
+            fallbackCopy(text);
         });
     } else {
-        // Clipboard API를 사용할 수 없는 환경(http, file:// 등)일 경우
         fallbackCopy(text);
     }
-
-    // Clipboard API 사용 불가 시 대체 복사 함수
     function fallbackCopy(textToCopy) {
         const textArea = document.createElement("textarea");
         textArea.value = textToCopy;
-        
-        // 화면에 보이지 않게 하고, 스크롤 이동을 방지합니다.
         textArea.style.position = "fixed";
         textArea.style.top = 0;
         textArea.style.left = 0;
         textArea.style.opacity = 0;
-
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-
         try {
             const successful = document.execCommand('copy');
             modalActionBtn.textContent = successful ? '복사 완료!' : '복사 실패';
@@ -559,7 +725,6 @@ body.html-mode-mobile .app-container {
             modalActionBtn.textContent = '복사 실패';
             console.error('대체 복사 방법 오류:', err);
         }
-
         document.body.removeChild(textArea);
         setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
     }
@@ -568,20 +733,17 @@ body.html-mode-mobile .app-container {
     function switchTab(tab) {
         currentTab = tab;
         tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-
         if (tab === 'html') {
             document.body.classList.add('html-mode-mobile');
         } else {
             document.body.classList.remove('html-mode-mobile');
         }
-
         textInputContainer.style.display = 'none';
         linkInputContainer.style.display = 'none';
         fileInputContainer.style.display = 'none';
         htmlInputContainer.style.display = 'none';
         titleInput.style.display = 'none';
         htmlActionsContainer.style.display = 'none';
-
         if (tab === 'text' || tab === 'link' || tab === 'file') {
             titleInput.style.display = 'block';
             if (tab === 'text') textInputContainer.style.display = 'block';
@@ -619,7 +781,7 @@ body.html-mode-mobile .app-container {
             title = prompt("저장할 이름을 입력하세요.");
             if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; }
             const newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
-		newItem.sortOrder = Date.now();
+		    newItem.sortOrder = Date.now();
             newItem.category = getCategoryForItem(newItem);
             itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
             return;
@@ -668,7 +830,7 @@ body.html-mode-mobile .app-container {
             return;
         }
         if (newItem) {
-newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
+            newItem.sortOrder = Date.now();
             newItem.category = getCategoryForItem(newItem);
             itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
         }
@@ -701,7 +863,7 @@ newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
                         isImage: fileType.startsWith('image/'), fileUrl: downloadURL, storagePath: storagePath,
                         timestamp: new Date().toISOString()
                     };
-newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
+                    newItem.sortOrder = Date.now();
                     newItem.category = getCategoryForItem(newItem);
                     itemsRef.push(newItem).then(() => {
                         setTimeout(() => { progressBar.style.width = '0%'; resetFormCallback(); }, 500);
@@ -712,108 +874,150 @@ newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
     }
     
     function addEventListeners() {
-        tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-        saveBtn.addEventListener('click', handleSave);
-        runHtmlBtn.addEventListener('click', () => {
-            const code = htmlEditor.getValue();
-            if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
-            htmlPreview.srcdoc = code;
-            htmlPreviewModal.style.display = 'flex';
-        });
-        searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
-        htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+    tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+    saveBtn.addEventListener('click', handleSave);
+    runHtmlBtn.addEventListener('click', () => {
+        const code = htmlEditor.getValue();
+        if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
+        htmlPreview.srcdoc = code;
+        htmlPreviewModal.style.display = 'flex';
+    });
+    searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
+    htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
 
-        listContainer.addEventListener('click', (e) => {
-    const listItem = e.target.closest('.list-item');
-    if (!listItem) return;
-    const id = listItem.dataset.id;
-    const item = savedItems.find(i => i.id === id);
-    if (!item) return;
+    listContainer.addEventListener('click', (e) => {
+        const listItem = e.target.closest('.list-item');
+        if (!listItem) return;
+        const id = listItem.dataset.id;
+        const item = savedItems.find(i => i.id === id);
+        if (!item) return;
 
-    // 아이콘 클릭 시 핀 상태 변경
-    if (e.target.closest('.item-icon')) {
-        const newPinnedState = !item.isPinned;
-        itemsRef.child(id).update({ isPinned: newPinnedState })
-            .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
-        return;
-    }
+        if (e.target.closest('.item-icon')) {
+            const newPinnedState = !item.isPinned;
+            itemsRef.child(id).update({ isPinned: newPinnedState })
+                .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
+            return;
+        }
 
-    // 삭제 버튼 클릭 시
-    if (e.target.classList.contains('delete-btn')) {
-        showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-            itemsRef.child(id).remove().then(() => {
-                if (item.type === 'file' && item.storagePath) {
-                    storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
-                }
-            }).catch(err => showAlert('삭제 실패: ' + err.message));
-        }); 
-        return;
-    } 
-
-    if (item.type === 'link') {
-        window.open(item.content, '_blank');
-    } else {
-        openModal(id);
-    }
-});
-
-        clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
-        [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
-        fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
-        modalClose.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-        modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
-        window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
-        listFilterTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                listFilterTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentListFilter = tab.dataset.filter;
-                renderList();
+        if (e.target.classList.contains('delete-btn')) {
+            showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+                itemsRef.child(id).remove().then(() => {
+                    if (item.type === 'file' && item.storagePath) {
+                        storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
+                    }
+                }).catch(err => showAlert('삭제 실패: ' + err.message));
             });
+            return;
+        }
+
+        if (item.type === 'link') {
+            window.open(item.content, '_blank');
+        } else {
+            openModal(id);
+        }
+    });
+
+    clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
+    [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
+    fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
+    window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
+    listFilterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            listFilterTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentListFilter = tab.dataset.filter;
+            renderList();
+        });
+    });
+
+    const secretTrigger = document.querySelector('.list-header h2');
+    if (secretTrigger) {
+        secretTrigger.style.cursor = 'pointer';
+        secretTrigger.addEventListener('click', () => {
+            tapCounter++;
+            clearTimeout(tapTimer);
+            if (tapCounter === 10) {
+                tapCounter = 0;
+                openSecretStash();
+            } else {
+                tapTimer = setTimeout(() => {
+                    tapCounter = 0;
+                }, 2000);
+            }
         });
     }
+
+    const secretUploadInput = document.getElementById('secretUploadInput');
+    const secretUploadBtn = document.getElementById('secretUploadBtn');
+    secretUploadBtn.addEventListener('click', () => {
+        if (secretUploadInput.files.length > 0) {
+            uploadSecretFile(secretUploadInput.files[0]);
+        } else {
+            showAlert('업로드할 파일을 먼저 선택하세요.');
+        }
+    });
+
+    const secretListContainer = document.getElementById('secretListContainer');
+    secretListContainer.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('.secret-delete-btn');
+        const listItem = e.target.closest('.secret-list-item');
+
+        if (deleteBtn) {
+            const id = deleteBtn.dataset.id;
+            const path = deleteBtn.dataset.path;
+
+            showConfirmModal('이 파일을 정말로 삭제하시겠습니까?', () => {
+                secretRef.child(id).remove().then(() => {
+                    if (path && path !== "undefined") {
+                        storage.ref(path).delete().then(() => {
+                            // ✨ 성공 시 알림 ✨
+                            showAlert('파일이 성공적으로 삭제되었습니다.');
+                        }).catch((error) => {
+                            // ✨ 실패 시 원인과 함께 알림 ✨
+                            console.error('스토리지 파일 삭제 실패:', error);
+                            showAlert(`파일 삭제에 실패했습니다. 에러: ${error.code}`);
+                        });
+                    } else {
+                        showAlert('목록에서 항목이 삭제되었습니다.');
+                    }
+                }).catch(err => showAlert('DB 정보 삭제 실패: ' + err.message));
+            });
+        } else if (listItem) {
+            playVideo(listItem.dataset.fileName, listItem.dataset.fileUrl);
+        }
+    });
+}
 
     function initializeApp() {
-
-        // --------------------------------------------------
-        // SortableJS 초기화
         new Sortable(listContainer, {
-            animation: 150, // 드래그 애니메이션 효과
-            ghostClass: 'sortable-ghost', // 드래그 시 placeholder 스타일
+            animation: 150,
+            ghostClass: 'sortable-ghost',
             onEnd: function (evt) {
-                // 드래그가 끝났을 때 순서 저장
                 const items = listContainer.querySelectorAll('.list-item');
                 const updates = {};
-                
                 items.forEach((item, index) => {
                     const itemId = item.dataset.id;
-                    // 각 아이템의 새로운 순서(index)를 DB에 업데이트할 준비
                     updates[`/${itemId}/sortOrder`] = index;
                 });
-
-                // 한 번의 요청으로 모든 아이템의 순서를 DB에 업데이트
                 itemsRef.update(updates).catch(err => {
                     showAlert('순서 저장에 실패했습니다: ' + err.message);
                 });
             }
         });
 
-
-        // 공유 기능으로 앱이 실행되었는지 확인
         const handleSharedData = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const sharedTitle = urlParams.get('title');
             const sharedText = urlParams.get('text');
             const sharedUrl = urlParams.get('url');
-
-            // 공유된 데이터가 있다면
             if (sharedTitle || sharedText || sharedUrl) {
-                // URL이 있다면 링크 탭으로, 없다면 텍스트 탭으로 이동
                 if (sharedUrl) {
                     switchTab('link');
                     titleInput.value = sharedTitle || '';
@@ -823,20 +1027,14 @@ newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
                     titleInput.value = sharedTitle || '';
                     textInput.value = sharedText || '';
                 }
-                
-                // 앱이 로드된 후 입력창에 포커스를 줍니다.
                 setTimeout(() => {
                     titleInput.focus();
-                    updateSaveButtonState(); // 저장 버튼 활성화 체크
+                    updateSaveButtonState();
                 }, 100);
-                
-                // URL에서 공유 파라미터를 제거하여 새로고침 시 데이터가 중복으로 남지 않게 합니다.
                 history.replaceState(null, '', window.location.pathname);
             }
         };
-
         handleSharedData();
-        // --------------------------------------------------
 
         htmlEditor = CodeMirror.fromTextArea(htmlInput, {
             lineNumbers: true,
@@ -848,12 +1046,12 @@ newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
                 "Ctrl-G": "findNext", "Cmd-G": "findNext",
                 "Shift-Ctrl-G": "findPrev", "Shift-Cmd-G": "findPrev"
             }
-
-
         });
         htmlEditor.on('change', updateSaveButtonState);
+        
         addEventListeners();
         loadItemsFromFirebase();
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('service-worker.js')
@@ -865,5 +1063,16 @@ newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
 
     initializeApp();
 </script>
+<div id="videoPlayerModal" class="modal-overlay">
+        <div class="modal-content" style="width: 90%; max-width: 1200px; height: auto;">
+            <div class="modal-header">
+                <h3 id="videoTitle">동영상 재생</h3>
+                <button class="modal-close-btn">닫기</button>
+            </div>
+            <div id="videoPlayerContainer" style="background: #000; padding: 0; margin-bottom: 20px;">
+                <video id="videoPlayer" controls style="width: 100%; max-height: 75vh;"></video>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
