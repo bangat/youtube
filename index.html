@@ -6,25 +6,6 @@
     <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
     <link rel="manifest" href="/youtube/manifest.json">
     <title>Clould Pro</title>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/material-darker.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.css">
-   
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/searchcursor.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/search.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/scroll/annotatescrollbar.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/jump-to-line.min.js"></script>
-    
     <style>
         /* --- 기본 & 테마 --- */
         :root {
@@ -75,19 +56,10 @@
         
         .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
         #textInput { min-height: 150px; resize: vertical; }
+        #htmlInput { min-height: 400px; flex-grow: 1; resize: vertical; border-radius: 8px; }
         
         #fileInput-container { display: none; }
         #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; }
-        #linkInput-container { display: none; }
-
-        /* --- CodeMirror 스타일 수정 --- */
-        .CodeMirror {
-            flex-grow: 1; /* 컨테이너 높이를 채우도록 설정 */
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            height: auto; /* flex-grow와 함께 사용 */
-            font-size: 14px;
-        }
         
         /* HTML 뷰어 전용 스타일 */
         #runHtmlBtn { width: 100%; padding: 12px; background-color: #e02c4f; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
@@ -108,6 +80,7 @@
         .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
         #fileInput { display: none; }
         
+        /* 파일명 길어짐 방지 */
         #dropZone-text {
             display: inline-block;
             max-width: 100%;
@@ -151,6 +124,7 @@
         }
         .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
         
+        /* 아이콘, 제목, 파일명, 날짜, 삭제 버튼을 모두 재배치 */
         .item-icon { 
             font-size: 24px; 
             position: relative; 
@@ -229,9 +203,145 @@
         .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
         #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
         
-        #htmlPreviewModal .modal-content{max-width:100%;width:100%;height:100%;border-radius:0;padding:0}#htmlPreviewModal .modal-header{padding:16px;margin:0;border-bottom:1px solid var(--border-color)}#htmlPreviewModal .modal-body{padding:0;background:#fff;flex-grow:1}#htmlPreviewModal .modal-body iframe{width:100%;height:100%;border:none}#confirmModal,#alertModal{align-items:center;justify-content:center}#confirmModal .modal-content,#alertModal .modal-content{max-width:400px;padding:24px;text-align:center;border-radius:12px;height:auto}#confirmModal h3,#alertModal h3{margin-bottom:20px}#confirmModal .modal-actions,#alertModal .modal-actions{justify-content:center}#alertModal .modal-actions{display:flex;justify-content:center}#alertModal .modal-btn{background-color:var(--accent-color);color:white}
-        @media (max-width:900px){.app-container{grid-template-columns:1fr;width:100%;min-height:100vh}.input-column,.list-column{padding:16px}.list-item{padding:15px;display:flex;flex-direction:row;align-items:center;position:relative}.item-header{flex-shrink:0;display:flex;flex-direction:column;align-items:center}.item-details{flex-grow:1;overflow:hidden;padding-right:0;display:flex;flex-direction:column;justify-content:center}.item-icon{margin-right:15px}.item-date{font-size:10px;color:var(--secondary-text);position:static;margin-top:4px}.item-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item-preview{font-size:13px;color:var(--secondary-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.delete-btn{position:absolute;top:50%;right:15px;transform:translateY(-50%);font-size:20px}.modal-content{width:100%;border-radius:0}#dropZone-text{padding:0 10px}}
-        .drop-zone{position:relative;overflow:hidden}#upload-progress-bar{position:absolute;top:0;left:0;height:100%;width:0;background-color:var(--accent-color);opacity:.3;transition:width .3s ease;z-index:1}#dropZone-text{position:relative;z-index:2}.drop-zone.uploading{border-color:var(--accent-color)}#titleInput{display:block}#runHtmlBtn{display:none}.list-filter-tabs{display:flex;gap:10px;margin-top:10px;border-bottom:1px solid var(--border-color)}.list-filter-tab{padding:10px 15px;border:none;background:0 0;color:var(--secondary-text);font-weight:600;cursor:pointer;position:relative;border-bottom:3px solid transparent}.list-filter-tab.active{color:var(--accent-color);border-bottom-color:var(--accent-color)}
+        /* --- HTML 미리보기 전용 스타일 --- */
+        #htmlPreviewModal .modal-content {
+            max-width: 100%;
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            padding: 0;
+        }
+        #htmlPreviewModal .modal-header {
+            padding: 16px;
+            margin: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #htmlPreviewModal .modal-body {
+            padding: 0;
+            background: #fff;
+            flex-grow: 1;
+        }
+        #htmlPreviewModal .modal-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* --- 커스텀 Confirm & Alert 모달 전용 스타일 --- */
+        #confirmModal, #alertModal {
+            align-items: center;
+            justify-content: center;
+        }
+        #confirmModal .modal-content, #alertModal .modal-content {
+            max-width: 400px;
+            padding: 24px;
+            text-align: center;
+            border-radius: 12px;
+    height: auto;
+        }
+        #confirmModal h3, #alertModal h3 { margin-bottom: 20px; }
+        #confirmModal .modal-actions, #alertModal .modal-actions { justify-content: center; }
+        #alertModal .modal-actions { display: flex; justify-content: center; }
+        #alertModal .modal-btn { background-color: var(--accent-color); color: white; }
+        
+        /* --- 모바일 반응형 --- */
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                width: 100%;
+                min-height: 100vh;
+            }
+            .input-column, .list-column {
+                padding: 16px;
+            }
+            /* 파일 목록 레이아웃 재조정 */
+            .list-item { 
+                padding: 15px;
+                display: flex;
+                flex-direction: row; 
+                align-items: center;
+                position: relative;
+            }
+            .item-header {
+                flex-shrink: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .item-details {
+                flex-grow: 1;
+                overflow: hidden;
+                padding-right: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .item-icon { margin-right: 15px; } /* 아이콘과 제목 사이 간격 */
+            .item-date {
+                font-size: 10px;
+                color: var(--secondary-text);
+                position: static;
+                margin-top: 4px;
+            }
+            .item-title {
+                font-size: 15px;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .item-preview {
+                font-size: 13px;
+                color: var(--secondary-text);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .delete-btn {
+                position: absolute;
+                top: 50%;
+                right: 15px;
+                transform: translateY(-50%);
+                font-size: 20px;
+            }
+            .modal-content { width: 100%; border-radius: 0; }
+            /* 드래그 영역 텍스트 재조정 */
+            #dropZone-text {
+                padding: 0 10px;
+            }
+        }
+        
+        /* --- 진행바 스타일 --- */
+        .drop-zone { position: relative; overflow: hidden; }
+        #upload-progress-bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background-color: var(--accent-color); opacity: 0.3; transition: width 0.3s ease; z-index: 1; }
+        #dropZone-text { position: relative; z-index: 2; }
+        .drop-zone.uploading { border-color: var(--accent-color); }
+
+        #titleInput { display: block; }
+        #runHtmlBtn { display: none; }
+
+/* --- 목록 탭 필터 스타일 --- */
+.list-filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.list-filter-tab {
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    color: var(--secondary-text);
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    border-bottom: 3px solid transparent;
+}
+.list-filter-tab.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
     </style>
 </head>
 <body>
@@ -240,24 +350,14 @@
         <section class="input-column">
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
-                <button class="tab-btn" data-tab="link">링크</button>
                 <button class="tab-btn" data-tab="file">파일</button>
                 <button class="tab-btn" data-tab="html">HTML 뷰어</button>
             </div>
             <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
             <button id="runHtmlBtn" class="input-field">▶ 코드 실행</button>
-
-<div id="html-actions-container" class="input-field" style="display: none; gap: 10px; padding: 0; border: none; background: none;">
-    <button id="runHtmlBtn" style="width: 50%; margin: 0;">▶ 실행</button>
-    <button id="searchBtn" style="width: 50%; margin: 0;">🔍 검색</button>
-</div>
             
             <div id="textInput-container">
                 <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
-            </div>
-            
-            <div id="linkInput-container">
-                <input type="url" id="linkInput" class="input-field" placeholder="URL 주소를 입력하세요. (예: https://google.com)">
             </div>
             
             <div id="fileInput-container">
@@ -269,7 +369,7 @@
             </div>
             
             <div id="htmlInput-container">
-                <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요"></textarea>
+                <textarea id="htmlInput" class="input-field" placeholder="HTML 코드를 입력하세요"></textarea>
             </div>
 
             <button id="saveBtn" disabled>저장하기</button>
@@ -277,21 +377,21 @@
         
         <section class="list-column">
             <div class="list-header">
-                <h2>내 저장공간</h2>
-                <button id="clearAllBtn">모두 지우기</button>
-            </div>
+    <h2>내 저장공간</h2>
+    <button id="clearAllBtn">모두 지우기</button>
+</div>
 
-            <div class="list-filter-tabs">
-                <button class="list-filter-tab active" data-filter="all">전체</button>
-                <button class="list-filter-tab" data-filter="document">문서</button>
-                <button class="list-filter-tab" data-filter="photo">사진</button>
-                <button class="list-filter-tab" data-filter="music">음악</button>
-            </div>
+<div class="list-filter-tabs">
+    <button class="list-filter-tab active" data-filter="all">전체</button>
+    <button class="list-filter-tab" data-filter="document">문서</button>
+    <button class="list-filter-tab" data-filter="photo">사진</button>
+    <button class="list-filter-tab" data-filter="music">음악</button>
+</div>
 
-            <div id="listContainer" class="list-container"></div>
+<div id="listContainer" class="list-container"></div>
         </section>
     </main>
-    
+
     <div id="modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -310,7 +410,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="htmlPreviewModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -331,7 +431,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="alertModal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="alertMessage"></h3>
@@ -350,7 +450,7 @@
       apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
       authDomain: "youtubu-c770d.firebaseapp.com",
       projectId: "youtubu-c770d",
-      storageBucket: "youtubu-c770d.appspot.com",
+      storageBucket: "youtubu-c770d.firebasestorage.app",
       messagingSenderId: "727943010727",
       appId: "1:727943010727:web:44ce6a65c1887026523e82",
       measurementId: "G-82SBN9ZWZQ"
@@ -367,11 +467,9 @@
     const textInputContainer = document.getElementById('textInput-container');
     const fileInputContainer = document.getElementById('fileInput-container');
     const htmlInputContainer = document.getElementById('htmlInput-container');
-    const linkInputContainer = document.getElementById('linkInput-container');
     const textInput = document.getElementById('textInput');
     const fileInput = document.getElementById('fileInput');
     const htmlInput = document.getElementById('htmlInput');
-    const linkInput = document.getElementById('linkInput');
     const htmlPreviewModal = document.getElementById('htmlPreviewModal');
     const htmlPreview = document.getElementById('htmlPreview');
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -398,11 +496,6 @@
     const alertMessage = document.getElementById('alertMessage');
     const alertOkBtn = document.getElementById('alertOkBtn');
     const listFilterTabs = document.querySelectorAll('.list-filter-tab');
-const htmlActionsContainer = document.getElementById('html-actions-container'); // 추가
-const searchBtn = document.getElementById('searchBtn'); // 추가
-
-    // --- CodeMirror 에디터 인스턴스 ---
-    let htmlEditor;
 
     // --- State Variables ---
     let currentTab = 'text';
@@ -423,7 +516,7 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
     function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
 
     function getCategoryForItem(item) {
-        if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
+        if (item.type === 'text' || item.type === 'html') {
             return 'document';
         }
         if (item.type === 'file') {
@@ -440,8 +533,6 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
     }
     
     function getIconForItem(item) {
-        if (item.type === 'link') return '🔗';
-
         const category = item.category || getCategoryForItem(item);
         if (category === 'photo') return '🖼️';
         if (category === 'music') return '🎵';
@@ -452,7 +543,7 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
             if (['zip', 'rar', '7z'].includes(fileExtension)) return '📦';
         }
         if (item.type === 'html' || (item.type === 'text' && isHtml(item.content))) return '💻';
-        return '📄';
+        return '📄'; // 문서 및 기타
     }
     
     async function downloadFile(item) {
@@ -508,19 +599,17 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
         filteredItems.forEach(item => {
             const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
             const icon = getIconForItem(item);
+            const fileNamePreview = item.type === 'file' ? (item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName) : '';
+            const textPreview = (item.type === 'text' || item.type === 'html') ? (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')) : '';
             const itemEl = document.createElement('div');
             itemEl.className = 'list-item';
             itemEl.dataset.id = item.id;
             let itemContentHTML = '';
-
-            if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
-                const preview = (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : ''));
-                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${preview}</div></div>`;
+            if (item.type === 'text' || item.type === 'html') {
+                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${textPreview}</div></div>`;
             } else if (item.type === 'file') {
-                const fileNamePreview = item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName;
                 itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
             }
-            
             itemEl.innerHTML = `<div class="item-icon">${icon}${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}</div>${itemContentHTML}<div class="item-date">${formatTimestamp(item.timestamp)}</div><button class="delete-btn">&times;</button>`;
             listContainer.appendChild(itemEl);
         });
@@ -602,40 +691,19 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
     function switchTab(tab) {
         currentTab = tab;
         tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-
-        // 모든 입력 컨테이너를 먼저 숨깁니다.
         textInputContainer.style.display = 'none';
-        linkInputContainer.style.display = 'none';
         fileInputContainer.style.display = 'none';
         htmlInputContainer.style.display = 'none';
         titleInput.style.display = 'none';
-        
-        htmlActionsContainer.style.display = 'none'; 
-
-        // 선택된 탭에 맞는 컨테이너만 다시 보여줍니다.
-        if (tab === 'text') { 
-            textInputContainer.style.display = 'block'; 
-            titleInput.style.display = 'block'; 
-        }
-        else if (tab === 'link') { 
-            linkInputContainer.style.display = 'block'; 
-            titleInput.style.display = 'block'; 
-        }
-        else if (tab === 'file') { 
-            fileInputContainer.style.display = 'block'; 
-            titleInput.style.display = 'block'; 
-        }
-        else if (tab === 'html') { 
-            htmlInputContainer.style.display = 'flex'; 
-            htmlActionsContainer.style.display = 'flex'; // 'html' 탭에서만 버튼 그룹을 보여줍니다.
-            setTimeout(() => htmlEditor.refresh(), 1); 
-        }
-        
+        runHtmlBtn.style.display = 'none';
+        if (tab === 'text') { textInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
+        else if (tab === 'file') { fileInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
+        else if (tab === 'html') { htmlInputContainer.style.display = 'flex'; runHtmlBtn.style.display = 'block'; }
         updateSaveButtonState();
     }
-    
+
     function runHtml() {
-        const code = htmlEditor.getValue();
+        const code = htmlInput.value;
         if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
         htmlPreview.srcdoc = code;
         htmlPreviewModal.style.display = 'flex';
@@ -645,39 +713,28 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
         let isDisabled = true;
         const title = titleInput.value.trim();
         if (currentTab === 'text') { if (title && textInput.value.trim()) isDisabled = false; }
-        else if (currentTab === 'link') { if (title && linkInput.value.trim()) isDisabled = false; }
         else if (currentTab === 'file') { if (title && fileInput.files[0]) isDisabled = false; }
-        else if (currentTab === 'html') { if (htmlEditor.getValue().trim()) isDisabled = false; }
+        else if (currentTab === 'html') { if (htmlInput.value.trim()) isDisabled = false; }
         saveBtn.disabled = isDisabled;
     }
     
     function handleSave() {
         let title = titleInput.value.trim();
-        const resetForm = () => { titleInput.value = ''; textInput.value = ''; fileInput.value = ''; linkInput.value = ''; htmlEditor.setValue(''); dropZoneText.textContent = '드래그 또는 클릭'; updateSaveButtonState(); };
-        
+        const resetForm = () => { titleInput.value = ''; textInput.value = ''; htmlInput.value = ''; fileInput.value = ''; dropZoneText.textContent = '드래그 또는 클릭'; updateSaveButtonState(); };
         if (currentTab === 'html') { title = prompt("저장할 이름을 입력하세요."); if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; } }
         else { if (!title) { showAlert('제목을 입력해주세요.'); return; } }
-        
         let newItem;
         if (currentTab === 'text') {
             if (!textInput.value.trim()) { showAlert('내용을 입력해주세요.'); return; }
             newItem = { type: 'text', title, content: textInput.value.trim(), timestamp: new Date().toISOString() };
-        } else if (currentTab === 'link') {
-            const url = linkInput.value.trim();
-            if (!url) { showAlert('URL을 입력해주세요.'); return; }
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                showAlert('유효한 URL 형식이 아닙니다. (http:// 또는 https:// 로 시작해야 합니다)');
-                return;
-            }
-            newItem = { type: 'link', title, content: url, timestamp: new Date().toISOString() };
         } else if (currentTab === 'html') {
-            const content = htmlEditor.getValue().trim();
-            if (!content) { showAlert('HTML 코드를 입력해주세요.'); return; }
-            newItem = { type: 'html', title, content: content, timestamp: new Date().toISOString() };
+            if (!htmlInput.value.trim()) { showAlert('HTML 코드를 입력해주세요.'); return; }
+            newItem = { type: 'html', title, content: htmlInput.value.trim(), timestamp: new Date().toISOString() };
         } else {
             const file = fileInput.files[0];
             if (!file) { showAlert('파일을 선택해주세요.'); return; }
             if (file.type.startsWith('image/')) {
+                // Image optimization logic...
                 dropZoneText.textContent = '이미지 최적화 중...';
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -707,7 +764,7 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
         newItem.category = getCategoryForItem(newItem);
         itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
     }
-    
+
     function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
         const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
         const fileRef = storage.ref(storagePath);
@@ -746,21 +803,15 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
     }
     
     // --- Event Listeners ---
-searchBtn.addEventListener('click', () => {
-    htmlEditor.execCommand("findPersistent");
-});
-
     function addEventListeners() {
         tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
         saveBtn.addEventListener('click', handleSave);
         runHtmlBtn.addEventListener('click', runHtml);
         htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
-        
         listContainer.addEventListener('click', (e) => {
             const listItem = e.target.closest('.list-item');
             if (!listItem) return;
             const id = listItem.dataset.id;
-            
             if (e.target.classList.contains('delete-btn')) {
                 showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
                     const itemToDelete = savedItems.find(item => item.id === id);
@@ -771,22 +822,13 @@ searchBtn.addEventListener('click', () => {
                     }).catch(err => showAlert('삭제 실패: ' + err.message));
                 });
             } else {
-                const itemToOpen = savedItems.find(item => item.id === id);
-                if (itemToOpen && itemToOpen.type === 'link') {
-                    window.open(itemToOpen.content, '_blank');
-                } else {
-                    openModal(id);
-                }
+                openModal(id);
             }
         });
-
         clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
         titleInput.addEventListener('input', updateSaveButtonState);
         textInput.addEventListener('input', updateSaveButtonState);
-        linkInput.addEventListener('input', updateSaveButtonState);
-        
-        htmlEditor.on('change', updateSaveButtonState);
-
+        htmlInput.addEventListener('input', updateSaveButtonState);
         fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -796,7 +838,12 @@ searchBtn.addEventListener('click', () => {
         modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
         
-        window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { modal.style.display = 'none'; currentItemInModal = null; } });
+        window.addEventListener('popstate', (event) => {
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                currentItemInModal = null;
+            }
+        });
         
         listFilterTabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -809,36 +856,17 @@ searchBtn.addEventListener('click', () => {
     }
 
     // --- App Initialization ---
-    function initializeApp() {
-        htmlEditor = CodeMirror.fromTextArea(htmlInput, {
-            lineNumbers: true,
-            mode: 'htmlmixed',
-            theme: 'material-darker',
-            lineWrapping: true,
-            extraKeys: {
-                "Ctrl-F": "findPersistent", // 검색 (Mac: Cmd-F)
-                "Cmd-F": "findPersistent",
-                "Ctrl-G": "findNext",       // 다음 찾기 (Mac: Cmd-G)
-                "Cmd-G": "findNext",
-                "Shift-Ctrl-G": "findPrev", // 이전 찾기 (Mac: Shift-Cmd-G)
-                "Shift-Cmd-G": "findPrev"
-            }
+    addEventListeners();
+    loadItemsFromFirebase();
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => console.log('SW registration successful with scope: ', registration.scope))
+                .catch(error => console.error('SW registration failed: ', error));
         });
-
-        addEventListeners();
-        loadItemsFromFirebase();
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.service-worker.register('service-worker.js')
-                    .then(registration => console.log('SW registration successful with scope: ', registration.scope))
-                    .catch(error => console.error('SW registration failed: ', error));
-            });
-        }
     }
-
-    initializeApp();
-
 </script>
 </body>
 </html>
