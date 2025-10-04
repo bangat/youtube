@@ -6,8 +6,27 @@
     <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
     <link rel="manifest" href="/youtube/manifest.json">
     <title>Clould Pro</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/material-darker.min.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/scroll/annotatescrollbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/jump-to-line.min.js"></script>
+
     <style>
-        /* --- 기본 & 테마 --- */
         :root {
             --bg-color: #f0f2f5;
             --surface-color: #ffffff;
@@ -18,176 +37,42 @@
             --border-color: #dddfe2;
             --shadow-color: rgba(0, 0, 0, 0.1);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--primary-text); }
-
-        /* --- 레이아웃 --- */
-        .app-container {
-            display: grid;
-            grid-template-columns: 360px 1fr;
-            width: 100%;
-            height: 100vh;
-        }
-        
-        .input-column {
-            background-color: var(--sidebar-color);
-            padding: 24px;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .list-column {
-            background-color: var(--bg-color);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            overflow-y: hidden;
-        }
-        
+        .app-container { display: grid; grid-template-columns: 360px 1fr; width: 100%; height: 100vh; }
+        .input-column { background-color: var(--sidebar-color); padding: 24px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .list-column { background-color: var(--bg-color); padding: 24px; display: flex; flex-direction: column; overflow-y: hidden; }
         h2 { font-size: 20px; margin-bottom: 20px; }
-
-        /* --- 입력 섹션 --- */
         .tab-buttons { display: flex; margin-bottom: 20px; background-color: var(--surface-color); border-radius: 12px; padding: 6px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); }
         .tab-btn { flex: 1; padding: 12px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--secondary-text); border-radius: 8px; transition: background-color 0.2s, box-shadow 0.2s; }
         .tab-btn:hover { background-color: rgba(0,0,0,0.03); }
         .tab-btn.active { color: var(--accent-color); background-color: var(--bg-color); box-shadow: 0 1px 3px var(--shadow-color); }
-        
         .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
         #textInput { min-height: 150px; resize: vertical; }
-        #htmlInput { min-height: 400px; flex-grow: 1; resize: vertical; border-radius: 8px; }
-        
-        #fileInput-container { display: none; }
-        #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; }
-        
-        /* HTML 뷰어 전용 스타일 */
-        #runHtmlBtn { width: 100%; padding: 12px; background-color: #e02c4f; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        #runHtmlBtn:hover { background-color: #c72543; }
-        
-        .drop-zone { 
-            position: relative; 
-            border: 2px dashed var(--border-color); 
-            border-radius: 8px; 
-            padding: 30px; 
-            text-align: center; 
-            color: var(--secondary-text); 
-            cursor: pointer; 
-            transition: background-color 0.2s, border-color 0.2s; 
-            background-color: var(--surface-color);
-            overflow: hidden; 
-        }
+        #linkInput-container, #fileInput-container { display: none; }
+        #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; min-width: 0; }
+        .CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: auto; font-size: 14px; }
+        .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); overflow: hidden; }
         .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
         #fileInput { display: none; }
-        
-        /* 파일명 길어짐 방지 */
-        #dropZone-text {
-            display: inline-block;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis; 
-            white-space: nowrap; 
-        }
-
+        #dropZone-text { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
         #saveBtn:hover { background-color: #1868cd; }
-        #saveBtn:disabled {
-            background-color: #e0e0e0;
-            color: #a0a0a0;
-            cursor: not-allowed;
-        }
-
-        /* --- 목록 섹션 --- */
+        #saveBtn:disabled { background-color: #e0e0e0; color: #a0a0a0; cursor: not-allowed; }
         .list-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         #clearAllBtn { background: none; border: none; color: var(--secondary-text); cursor: pointer; font-weight: 600; }
         #clearAllBtn:hover { color: #e02c4f; }
-        .list-container {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            overflow-y: auto;
-            flex-grow: 1;
-            padding-right: 10px;
-        }
-        .list-item {
-            display: flex;
-            align-items: center; 
-            gap: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: box-shadow 0.2s, border-color 0.2s;
-            background-color: var(--surface-color);
-            box-shadow: 0 1px 2px var(--shadow-color);
-            position: relative;
-        }
+        .list-container { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1; padding-right: 10px; }
+        .list-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 8px; cursor: pointer; transition: box-shadow 0.2s, border-color 0.2s; background-color: var(--surface-color); box-shadow: 0 1px 2px var(--shadow-color); position: relative; }
         .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
-        
-        /* 아이콘, 제목, 파일명, 날짜, 삭제 버튼을 모두 재배치 */
-        .item-icon { 
-            font-size: 24px; 
-            position: relative; 
-            flex-shrink: 0; 
-        }
-        .item-icon .html-badge { 
-            position: absolute; 
-            bottom: -5px; 
-            right: -8px; 
-            background-color: #e02c4f; 
-            color: white; 
-            font-size: 10px; 
-            font-weight: bold; 
-            padding: 2px 4px; 
-            border-radius: 4px; 
-        }
-        
-        .item-details {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            flex-grow: 1;
-        }
-        .item-title { 
-            font-weight: 600; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis;
-            line-height: 1.2;
-        }
-        .item-preview { 
-            font-size: 14px; 
-            color: var(--secondary-text); 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            line-height: 1.2;
-        }
-        
-        .item-date {
-            font-size: 12px;
-            color: var(--secondary-text);
-            position: absolute;
-            top: 15px;
-            right: 50px;
-        }
-        
-        .delete-btn { 
-            background: none; 
-            border: none; 
-            font-size: 24px; 
-            color: var(--secondary-text); 
-            cursor: pointer; 
-            transition: color 0.2s; 
-            position: absolute; 
-            right: 15px; 
-            top: 15px; 
-            padding: 0;
-            margin: 0;
-        }
+        .item-icon { font-size: 24px; position: relative; flex-shrink: 0; }
+        .item-icon .html-badge { position: absolute; bottom: -5px; right: -8px; background-color: #e02c4f; color: white; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
+        .item-details { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
+        .item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+        .item-preview { font-size: 14px; color: var(--secondary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+        .item-date { font-size: 12px; color: var(--secondary-text); position: absolute; top: 15px; right: 50px; }
+        .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; position: absolute; right: 15px; top: 15px; padding: 0; margin: 0; }
         .delete-btn:hover { color: #e02c4f; }
-        
-        /* --- 모달 --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background-color: var(--surface-color); padding: 24px; border-radius: 12px; width: 95%; max-width: 900px; height: 90%; display: flex; flex-direction: column; position: relative; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
@@ -202,146 +87,45 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
         .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
         #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
-        
-        /* --- HTML 미리보기 전용 스타일 --- */
-        #htmlPreviewModal .modal-content {
-            max-width: 100%;
-            width: 100%;
-            height: 100%;
-            border-radius: 0;
-            padding: 0;
-        }
-        #htmlPreviewModal .modal-header {
-            padding: 16px;
-            margin: 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        #htmlPreviewModal .modal-body {
-            padding: 0;
-            background: #fff;
-            flex-grow: 1;
-        }
-        #htmlPreviewModal .modal-body iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
-        /* --- 커스텀 Confirm & Alert 모달 전용 스타일 --- */
-        #confirmModal, #alertModal {
-            align-items: center;
-            justify-content: center;
-        }
-        #confirmModal .modal-content, #alertModal .modal-content {
-            max-width: 400px;
-            padding: 24px;
-            text-align: center;
-            border-radius: 12px;
-    height: auto;
-        }
+        #htmlPreviewModal .modal-content { max-width: 100%; width: 100%; height: 100%; border-radius: 0; padding: 0; }
+        #htmlPreviewModal .modal-header { padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); }
+        #htmlPreviewModal .modal-body { padding: 0; background: #fff; flex-grow: 1; }
+        #htmlPreviewModal .modal-body iframe { width: 100%; height: 100%; border: none; }
+        #confirmModal, #alertModal { align-items: center; justify-content: center; }
+        #confirmModal .modal-content, #alertModal .modal-content { max-width: 400px; padding: 24px; text-align: center; border-radius: 12px; height: auto; }
         #confirmModal h3, #alertModal h3 { margin-bottom: 20px; }
         #confirmModal .modal-actions, #alertModal .modal-actions { justify-content: center; }
         #alertModal .modal-actions { display: flex; justify-content: center; }
         #alertModal .modal-btn { background-color: var(--accent-color); color: white; }
-        
-        /* --- 모바일 반응형 --- */
-        @media (max-width: 900px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                width: 100%;
-                min-height: 100vh;
-            }
-            .input-column, .list-column {
-                padding: 16px;
-            }
-            /* 파일 목록 레이아웃 재조정 */
-            .list-item { 
-                padding: 15px;
-                display: flex;
-                flex-direction: row; 
-                align-items: center;
-                position: relative;
-            }
-            .item-header {
-                flex-shrink: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            .item-details {
-                flex-grow: 1;
-                overflow: hidden;
-                padding-right: 0;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
-            .item-icon { margin-right: 15px; } /* 아이콘과 제목 사이 간격 */
-            .item-date {
-                font-size: 10px;
-                color: var(--secondary-text);
-                position: static;
-                margin-top: 4px;
-            }
-            .item-title {
-                font-size: 15px;
-                font-weight: 600;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-            .item-preview {
-                font-size: 13px;
-                color: var(--secondary-text);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-            .delete-btn {
-                position: absolute;
-                top: 50%;
-                right: 15px;
-                transform: translateY(-50%);
-                font-size: 20px;
-            }
-            .modal-content { width: 100%; border-radius: 0; }
-            /* 드래그 영역 텍스트 재조정 */
-            #dropZone-text {
-                padding: 0 10px;
-            }
-        }
-        
-        /* --- 진행바 스타일 --- */
         .drop-zone { position: relative; overflow: hidden; }
         #upload-progress-bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background-color: var(--accent-color); opacity: 0.3; transition: width 0.3s ease; z-index: 1; }
         #dropZone-text { position: relative; z-index: 2; }
         .drop-zone.uploading { border-color: var(--accent-color); }
-
         #titleInput { display: block; }
-        #runHtmlBtn { display: none; }
-
-/* --- 목록 탭 필터 스타일 --- */
-.list-filter-tabs {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-.list-filter-tab {
-    padding: 10px 15px;
-    border: none;
-    background: none;
-    color: var(--secondary-text);
-    font-weight: 600;
-    cursor: pointer;
-    position: relative;
-    border-bottom: 3px solid transparent;
-}
-.list-filter-tab.active {
-    color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-}
-
+        .list-filter-tabs { display: flex; gap: 10px; margin-top: 10px; border-bottom: 1px solid var(--border-color); }
+        .list-filter-tab { padding: 10px 15px; border: none; background: none; color: var(--secondary-text); font-weight: 600; cursor: pointer; position: relative; border-bottom: 3px solid transparent; }
+        .list-filter-tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        
+        /* HTML 뷰어 버튼 그룹 디자인 */
+        #html-actions-container { display: none; gap: 10px; margin-bottom: 15px; }
+        .html-action-btn { flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--surface-color); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .html-action-btn:hover { background-color: #e9ebee; }
+        #runHtmlBtn { background-color: #e02c4f; color: white; border-color: #e02c4f; }
+        #runHtmlBtn:hover { background-color: #c72543; }
+        
+        @media (max-width: 900px) {
+            .app-container { grid-template-columns: 1fr; width: 100%; min-height: 100vh; }
+            .input-column, .list-column { padding: 16px; min-width: 0; /* 모바일 화면 깨짐 방지 */ }
+            .list-item { padding: 15px; display: flex; flex-direction: row; align-items: center; position: relative; }
+            .item-details { flex-grow: 1; overflow: hidden; padding-right: 0; display: flex; flex-direction: column; justify-content: center; }
+            .item-icon { margin-right: 15px; }
+            .item-date { font-size: 10px; color: var(--secondary-text); position: static; margin-top: 4px; }
+            .item-title { font-size: 15px; }
+            .item-preview { font-size: 13px; }
+            .delete-btn { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); font-size: 20px; }
+            .modal-content { width: 100%; border-radius: 0; }
+            #dropZone-text { padding: 0 10px; }
+        }
     </style>
 </head>
 <body>
@@ -350,14 +134,24 @@
         <section class="input-column">
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
+                <button class="tab-btn" data-tab="link">링크</button>
                 <button class="tab-btn" data-tab="file">파일</button>
                 <button class="tab-btn" data-tab="html">HTML 뷰어</button>
             </div>
+            
             <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
-            <button id="runHtmlBtn" class="input-field">▶ 코드 실행</button>
+            
+            <div id="html-actions-container">
+                <button id="runHtmlBtn" class="html-action-btn">▶ 실행</button>
+                <button id="searchBtn" class="html-action-btn">🔍 검색</button>
+            </div>
             
             <div id="textInput-container">
                 <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
+            </div>
+
+            <div id="linkInput-container">
+                <input type="url" id="linkInput" class="input-field" placeholder="URL 주소를 입력하세요. (예: https://google.com)">
             </div>
             
             <div id="fileInput-container">
@@ -369,7 +163,7 @@
             </div>
             
             <div id="htmlInput-container">
-                <textarea id="htmlInput" class="input-field" placeholder="HTML 코드를 입력하세요"></textarea>
+                <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요"></textarea>
             </div>
 
             <button id="saveBtn" disabled>저장하기</button>
@@ -377,80 +171,37 @@
         
         <section class="list-column">
             <div class="list-header">
-    <h2>내 저장공간</h2>
-    <button id="clearAllBtn">모두 지우기</button>
-</div>
+                <h2>내 저장공간</h2>
+                <button id="clearAllBtn">모두 지우기</button>
+            </div>
 
-<div class="list-filter-tabs">
-    <button class="list-filter-tab active" data-filter="all">전체</button>
-    <button class="list-filter-tab" data-filter="document">문서</button>
-    <button class="list-filter-tab" data-filter="photo">사진</button>
-    <button class="list-filter-tab" data-filter="music">음악</button>
-</div>
+            <div class="list-filter-tabs">
+                <button class="list-filter-tab active" data-filter="all">전체</button>
+                <button class="list-filter-tab" data-filter="document">문서</button>
+                <button class="list-filter-tab" data-filter="photo">사진</button>
+                <button class="list-filter-tab" data-filter="music">음악</button>
+            </div>
 
-<div id="listContainer" class="list-container"></div>
+            <div id="listContainer" class="list-container"></div>
         </section>
     </main>
 
-    <div id="modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle"></h3>
-                <button class="modal-close-btn">닫기</button>
-            </div>
-            <div id="modalBody">
-                <pre id="modalText"></pre>
-                <iframe id="modalHtmlPreview"></iframe>
-                <img id="modalImagePreview" />
-                <div id="modalFileInfo"></div>
-            </div>
-            <div class="modal-actions">
-                <button class="modal-btn" id="modalToggleViewBtn">미리보기</button>
-                <button class="modal-btn" id="modalActionBtn"></button>
-            </div>
-        </div>
-    </div>
-
-    <div id="htmlPreviewModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button class="modal-close-btn">닫기</button>
-            </div>
-            <div class="modal-body">
-                <iframe id="htmlPreview" title="HTML Preview"></iframe>
-            </div>
-        </div>
-    </div>
-    
-    <div id="confirmModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>정말로 이 항목을 삭제하시겠습니까?</h3>
-            <div class="modal-actions">
-                <button id="confirmCancelBtn" class="modal-btn">취소</button>
-                <button id="confirmOkBtn" class="modal-btn" style="background-color: #e02c4f; color: white; border-color: #e02c4f;">확인</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="alertModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 id="alertMessage"></h3>
-            <div class="modal-actions">
-                <button id="alertOkBtn" class="modal-btn">확인</button>
-            </div>
-        </div>
-    </div>
+    <div id="modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h3 id="modalTitle"></h3> <button class="modal-close-btn">닫기</button> </div> <div id="modalBody"> <pre id="modalText"></pre> <iframe id="modalHtmlPreview"></iframe> <img id="modalImagePreview" /> <div id="modalFileInfo"></div> </div> <div class="modal-actions"> <button class="modal-btn" id="modalToggleViewBtn">미리보기</button> <button class="modal-btn" id="modalActionBtn"></button> </div> </div> </div>
+    <div id="htmlPreviewModal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <button class="modal-close-btn">닫기</button> </div> <div class="modal-body"> <iframe id="htmlPreview" title="HTML Preview"></iframe> </div> </div> </div>
+    <div id="confirmModal" class="modal-overlay"> <div class="modal-content"> <h3>정말로 이 항목을 삭제하시겠습니까?</h3> <div class="modal-actions"> <button id="confirmCancelBtn" class="modal-btn">취소</button> <button id="confirmOkBtn" class="modal-btn" style="background-color: #e02c4f; color: white; border-color: #e02c4f;">확인</button> </div> </div> </div>
+    <div id="alertModal" class="modal-overlay"> <div class="modal-content"> <h3 id="alertMessage"></h3> <div class="modal-actions"> <button id="alertOkBtn" class="modal-btn">확인</button> </div> </div> </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
+    // 원본 코드를 기준으로 모든 기능 추가
     const firebaseConfig = {
       apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
       authDomain: "youtubu-c770d.firebaseapp.com",
       projectId: "youtubu-c770d",
-      storageBucket: "youtubu-c770d.firebasestorage.app",
+      storageBucket: "youtubu-c770d.firebasestorage.app", // 원본 유지
       messagingSenderId: "727943010727",
       appId: "1:727943010727:web:44ce6a65c1887026523e82",
       measurementId: "G-82SBN9ZWZQ"
@@ -461,13 +212,14 @@
     const itemsRef = database.ref('items');
     const storage = firebase.storage();
 
-    // --- DOM Elements ---
+    // DOM Elements
     const titleInput = document.getElementById('titleInput');
-    const runHtmlBtn = document.getElementById('runHtmlBtn');
     const textInputContainer = document.getElementById('textInput-container');
     const fileInputContainer = document.getElementById('fileInput-container');
     const htmlInputContainer = document.getElementById('htmlInput-container');
+    const linkInputContainer = document.getElementById('linkInput-container');
     const textInput = document.getElementById('textInput');
+    const linkInput = document.getElementById('linkInput');
     const fileInput = document.getElementById('fileInput');
     const htmlInput = document.getElementById('htmlInput');
     const htmlPreviewModal = document.getElementById('htmlPreviewModal');
@@ -496,27 +248,30 @@
     const alertMessage = document.getElementById('alertMessage');
     const alertOkBtn = document.getElementById('alertOkBtn');
     const listFilterTabs = document.querySelectorAll('.list-filter-tab');
+    const htmlActionsContainer = document.getElementById('html-actions-container');
+    const runHtmlBtn = document.getElementById('runHtmlBtn');
+    const searchBtn = document.getElementById('searchBtn');
+    
+    let htmlEditor; // CodeMirror instance
 
-    // --- State Variables ---
+    // State Variables
     let currentTab = 'text';
     let savedItems = [];
     let currentItemInModal = null;
     let currentListFilter = 'all';
 
-    // --- Utility Functions ---
+    // Utility Functions
     function showAlert(message) {
         alertMessage.textContent = message;
         alertModal.style.display = 'flex';
-        alertOkBtn.onclick = () => {
-            alertModal.style.display = 'none';
-        };
+        alertOkBtn.onclick = () => { alertModal.style.display = 'none'; };
     }
     function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
     function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
     function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
 
     function getCategoryForItem(item) {
-        if (item.type === 'text' || item.type === 'html') {
+        if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
             return 'document';
         }
         if (item.type === 'file') {
@@ -531,19 +286,19 @@
         }
         return 'document';
     }
-    
+
     function getIconForItem(item) {
+        if (item.type === 'link') return '🔗';
         const category = item.category || getCategoryForItem(item);
         if (category === 'photo') return '🖼️';
         if (category === 'music') return '🎵';
-        
         if (item.type === 'file') {
             const fileExtension = item.fileName.split('.').pop().toLowerCase();
             if (['mp4', 'mov', 'avi'].includes(fileExtension)) return '🎬';
             if (['zip', 'rar', '7z'].includes(fileExtension)) return '📦';
         }
         if (item.type === 'html' || (item.type === 'text' && isHtml(item.content))) return '💻';
-        return '📄'; // 문서 및 기타
+        return '📄';
     }
     
     async function downloadFile(item) {
@@ -573,7 +328,6 @@
         }
     }
 
-    // --- Firebase Data Handling ---
     function loadItemsFromFirebase() {
         itemsRef.on('value', (snapshot) => {
             const data = snapshot.val();
@@ -587,35 +341,31 @@
         }, (error) => console.error("Firebase 데이터 로드 오류:", error));
     }
 
-    // --- UI Rendering ---
     function renderList() {
         listContainer.innerHTML = '';
         const filteredItems = savedItems.filter(item => {
             if (currentListFilter === 'all') return true;
-            const category = item.category || getCategoryForItem(item);
-            return category === currentListFilter;
+            return (item.category || getCategoryForItem(item)) === currentListFilter;
         });
-
         filteredItems.forEach(item => {
             const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
             const icon = getIconForItem(item);
-            const fileNamePreview = item.type === 'file' ? (item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName) : '';
-            const textPreview = (item.type === 'text' || item.type === 'html') ? (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')) : '';
             const itemEl = document.createElement('div');
             itemEl.className = 'list-item';
             itemEl.dataset.id = item.id;
             let itemContentHTML = '';
-            if (item.type === 'text' || item.type === 'html') {
-                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${textPreview}</div></div>`;
+            if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
+                const preview = (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : ''));
+                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${preview}</div></div>`;
             } else if (item.type === 'file') {
+                const fileNamePreview = item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName;
                 itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
             }
             itemEl.innerHTML = `<div class="item-icon">${icon}${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}</div>${itemContentHTML}<div class="item-date">${formatTimestamp(item.timestamp)}</div><button class="delete-btn">&times;</button>`;
             listContainer.appendChild(itemEl);
         });
     }
-    
-    // --- Modal Controls ---
+
     function openModal(id) {
         currentItemInModal = savedItems.find(i => i.id === id);
         if (!currentItemInModal) return;
@@ -652,9 +402,7 @@
         modalHtmlPreview.srcdoc = '';
         modalImagePreview.src = '';
         currentItemInModal = null;
-        if (window.location.hash === '#modal') {
-            history.back();
-        }
+        if (window.location.hash === '#modal') { history.back(); }
     }
     
     function showContentView() {
@@ -676,93 +424,119 @@
     function closeHtmlPreviewModal() { htmlPreviewModal.style.display = 'none'; }
     
     function showConfirmModal(message, onConfirm) {
-        const confirmMessage = confirmModal.querySelector('h3');
-        confirmMessage.textContent = message;
+        confirmModal.querySelector('h3').textContent = message;
         confirmModal.style.display = 'flex';
-        const handleConfirm = () => { onConfirm(); confirmModal.style.display = 'none'; confirmOkBtn.removeEventListener('click', handleConfirm); confirmCancelBtn.removeEventListener('click', handleCancel); };
-        const handleCancel = () => { confirmModal.style.display = 'none'; confirmOkBtn.removeEventListener('click', handleConfirm); confirmCancelBtn.removeEventListener('click', handleCancel); };
+        const handleConfirm = () => { onConfirm(); closeModalAndListeners(); };
+        const handleCancel = () => { closeModalAndListeners(); };
+        function closeModalAndListeners() {
+            confirmModal.style.display = 'none';
+            confirmOkBtn.removeEventListener('click', handleConfirm);
+            confirmCancelBtn.removeEventListener('click', handleCancel);
+        }
         confirmOkBtn.addEventListener('click', handleConfirm);
         confirmCancelBtn.addEventListener('click', handleCancel);
     }
 
     function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
-    // --- Main App Logic ---
     function switchTab(tab) {
         currentTab = tab;
         tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
         textInputContainer.style.display = 'none';
+        linkInputContainer.style.display = 'none';
         fileInputContainer.style.display = 'none';
         htmlInputContainer.style.display = 'none';
         titleInput.style.display = 'none';
-        runHtmlBtn.style.display = 'none';
-        if (tab === 'text') { textInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
-        else if (tab === 'file') { fileInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
-        else if (tab === 'html') { htmlInputContainer.style.display = 'flex'; runHtmlBtn.style.display = 'block'; }
+        htmlActionsContainer.style.display = 'none';
+
+        if (tab === 'text' || tab === 'link' || tab === 'file') {
+            titleInput.style.display = 'block';
+            if (tab === 'text') textInputContainer.style.display = 'block';
+            if (tab === 'link') linkInputContainer.style.display = 'block';
+            if (tab === 'file') fileInputContainer.style.display = 'block';
+        } else if (tab === 'html') {
+            htmlInputContainer.style.display = 'flex';
+            htmlActionsContainer.style.display = 'flex';
+            setTimeout(() => htmlEditor.refresh(), 1);
+        }
         updateSaveButtonState();
     }
-
-    function runHtml() {
-        const code = htmlInput.value;
-        if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
-        htmlPreview.srcdoc = code;
-        htmlPreviewModal.style.display = 'flex';
-    }
-
+    
     function updateSaveButtonState() {
         let isDisabled = true;
         const title = titleInput.value.trim();
-        if (currentTab === 'text') { if (title && textInput.value.trim()) isDisabled = false; }
+        if (currentTab === 'text') { if (title && textInput.value.trim()) isDisabled = false; } 
+        else if (currentTab === 'link') { if (title && linkInput.value.trim()) isDisabled = false; }
         else if (currentTab === 'file') { if (title && fileInput.files[0]) isDisabled = false; }
-        else if (currentTab === 'html') { if (htmlInput.value.trim()) isDisabled = false; }
+        else if (currentTab === 'html') { if (htmlEditor && htmlEditor.getValue().trim()) isDisabled = false; }
         saveBtn.disabled = isDisabled;
     }
     
     function handleSave() {
         let title = titleInput.value.trim();
-        const resetForm = () => { titleInput.value = ''; textInput.value = ''; htmlInput.value = ''; fileInput.value = ''; dropZoneText.textContent = '드래그 또는 클릭'; updateSaveButtonState(); };
-        if (currentTab === 'html') { title = prompt("저장할 이름을 입력하세요."); if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; } }
-        else { if (!title) { showAlert('제목을 입력해주세요.'); return; } }
+        const resetForm = () => {
+            titleInput.value = ''; textInput.value = ''; linkInput.value = ''; fileInput.value = '';
+            if (htmlEditor) htmlEditor.setValue('');
+            dropZoneText.textContent = '드래그 또는 클릭';
+            updateSaveButtonState();
+        };
+        if (currentTab === 'html') {
+            const content = htmlEditor.getValue().trim();
+            if (!content) { showAlert('HTML 코드를 입력해주세요.'); return; }
+            title = prompt("저장할 이름을 입력하세요.");
+            if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; }
+            const newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
+            newItem.category = getCategoryForItem(newItem);
+            itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
+            return;
+        }
+        if (!title) { showAlert('제목을 입력해주세요.'); return; }
         let newItem;
         if (currentTab === 'text') {
             if (!textInput.value.trim()) { showAlert('내용을 입력해주세요.'); return; }
             newItem = { type: 'text', title, content: textInput.value.trim(), timestamp: new Date().toISOString() };
-        } else if (currentTab === 'html') {
-            if (!htmlInput.value.trim()) { showAlert('HTML 코드를 입력해주세요.'); return; }
-            newItem = { type: 'html', title, content: htmlInput.value.trim(), timestamp: new Date().toISOString() };
-        } else {
+        } else if (currentTab === 'link') {
+            const url = linkInput.value.trim();
+            if (!url) { showAlert('URL을 입력해주세요.'); return; }
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                showAlert('유효한 URL 형식이 아닙니다.'); return;
+            }
+            newItem = { type: 'link', title, content: url, timestamp: new Date().toISOString() };
+        } else if (currentTab === 'file') {
             const file = fileInput.files[0];
             if (!file) { showAlert('파일을 선택해주세요.'); return; }
-            if (file.type.startsWith('image/')) {
-                // Image optimization logic...
+            const isImage = file.type.startsWith('image/');
+            const handleUpload = (fileToUpload) => {
+                uploadFileToFirebase(fileToUpload, title, file.name, file.type, resetForm);
+            };
+            if (isImage) {
                 dropZoneText.textContent = '이미지 최적화 중...';
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = e => {
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1024; const MAX_HEIGHT = 768;
+                        const MAX_WIDTH = 1024, MAX_HEIGHT = 768;
                         let { width, height } = img;
                         if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
                         else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
                         canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => {
-                            if (!blob) { showAlert('이미지 최적화에 실패했습니다.'); dropZoneText.textContent = '드래그 또는 클릭'; return; }
-                            uploadFileToFirebase(blob, title, file.name, file.type, resetForm);
-                        }, file.type, 0.75);
+                        canvas.toBlob(blob => handleUpload(blob || file), file.type, 0.75);
                     };
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
             } else {
-                uploadFileToFirebase(file, title, file.name, file.type, resetForm);
+                handleUpload(file);
             }
             return;
         }
-        newItem.category = getCategoryForItem(newItem);
-        itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
+        if (newItem) {
+            newItem.category = getCategoryForItem(newItem);
+            itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
+        }
     }
 
     function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
@@ -785,7 +559,7 @@
             () => {
                 progressBar.style.width = '100%';
                 dropZone.classList.remove('uploading');
-                dropZoneText.textContent = '업로드 완료! (DB 저장 중...)';
+                dropZoneText.textContent = '업로드 완료!';
                 uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                     const newItem = {
                         type: 'file', title, fileName: originalFileName, fileSize: fileToUpload.size,
@@ -794,19 +568,23 @@
                     };
                     newItem.category = getCategoryForItem(newItem);
                     itemsRef.push(newItem).then(() => {
-                        progressBar.style.width = '0%';
-                        resetFormCallback();
-                    }).catch(error => { showAlert('DB 저장 실패: ' + error.message); });
+                        setTimeout(() => { progressBar.style.width = '0%'; resetFormCallback(); }, 500);
+                    }).catch(error => showAlert('DB 저장 실패: ' + error.message));
                 }).catch(error => showAlert('URL 가져오기 실패: ' + error.message));
             }
         );
     }
     
-    // --- Event Listeners ---
     function addEventListeners() {
         tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
         saveBtn.addEventListener('click', handleSave);
-        runHtmlBtn.addEventListener('click', runHtml);
+        runHtmlBtn.addEventListener('click', () => {
+            const code = htmlEditor.getValue();
+            if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
+            htmlPreview.srcdoc = code;
+            htmlPreviewModal.style.display = 'flex';
+        });
+        searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
         htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
         listContainer.addEventListener('click', (e) => {
             const listItem = e.target.closest('.list-item');
@@ -816,19 +594,22 @@
                 showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
                     const itemToDelete = savedItems.find(item => item.id === id);
                     itemsRef.child(id).remove().then(() => {
-                        if (itemToDelete && itemToDelete.type === 'file' && itemToDelete.storagePath) {
+                        if (itemToDelete?.type === 'file' && itemToDelete.storagePath) {
                             storage.ref(itemToDelete.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
                         }
                     }).catch(err => showAlert('삭제 실패: ' + err.message));
                 });
             } else {
-                openModal(id);
+                const itemToOpen = savedItems.find(item => item.id === id);
+                if (itemToOpen?.type === 'link') {
+                    window.open(itemToOpen.content, '_blank');
+                } else {
+                    openModal(id);
+                }
             }
         });
         clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
-        titleInput.addEventListener('input', updateSaveButtonState);
-        textInput.addEventListener('input', updateSaveButtonState);
-        htmlInput.addEventListener('input', updateSaveButtonState);
+        [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
         fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -837,14 +618,7 @@
         modalClose.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
         modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
-        
-        window.addEventListener('popstate', (event) => {
-            if (modal.style.display === 'flex') {
-                modal.style.display = 'none';
-                currentItemInModal = null;
-            }
-        });
-        
+        window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
         listFilterTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 listFilterTabs.forEach(t => t.classList.remove('active'));
@@ -855,18 +629,31 @@
         });
     }
 
-    // --- App Initialization ---
-    addEventListeners();
-    loadItemsFromFirebase();
-
-    // PWA Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('service-worker.js')
-                .then(registration => console.log('SW registration successful with scope: ', registration.scope))
-                .catch(error => console.error('SW registration failed: ', error));
+    function initializeApp() {
+        htmlEditor = CodeMirror.fromTextArea(htmlInput, {
+            lineNumbers: true,
+            mode: 'htmlmixed',
+            theme: 'material-darker',
+            lineWrapping: true,
+            extraKeys: {
+                "Ctrl-F": "findPersistent", "Cmd-F": "findPersistent",
+                "Ctrl-G": "findNext", "Cmd-G": "findNext",
+                "Shift-Ctrl-G": "findPrev", "Shift-Cmd-G": "findPrev"
+            }
         });
+        htmlEditor.on('change', updateSaveButtonState);
+        addEventListeners();
+        loadItemsFromFirebase();
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('SW registered.', reg))
+                    .catch(err => console.error('SW registration failed: ', err));
+            });
+        }
     }
+
+    initializeApp();
 </script>
 </body>
 </html>
