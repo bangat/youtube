@@ -27,6 +27,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
+    <link rel="stylesheet" href="https://unpkg.com/pulltorefreshjs@0.1.22/dist/index.css">
+    <script src="https://unpkg.com/pulltorefreshjs@0.1.22/dist/index.umd.js"></script>
+
     <style>
         :root {
             --bg-color: #f0f2f5;
@@ -1286,6 +1289,18 @@ secretUploadBtn.addEventListener('click', () => {
 
         
         addEventListeners();
+
+        // ✨ '내려서 새로고침' 기능 초기화
+        PullToRefresh.init({
+            mainElement: '.list-column', // 새로고침 제스처를 감지할 기본 영역
+            triggerElement: '.list-column', // 제스처가 시작될 수 있는 영역
+            onRefresh: function(done) {
+                // 새로고침 시 실행될 함수
+                loadItemsFromFirebase(); // 파이어베이스에서 데이터를 다시 불러옵니다.
+                done(); // 새로고침 완료를 라이브러리에 알립니다.
+            }
+        });
+
         // loadItemsFromFirebase(); // This should be called inside onAuthStateChanged
 
         if ('serviceWorker' in navigator) {
