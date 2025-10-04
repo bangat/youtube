@@ -50,8 +50,8 @@
         .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
         #textInput { min-height: 150px; resize: vertical; }
         #linkInput-container, #fileInput-container { display: none; }
-        #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; min-width: 0; }
-        .CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: auto; font-size: 14px; }
+#htmlInput-container { display: none; flex-grow: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: 100%; font-size: 14px; }
         .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); overflow: hidden; }
         .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
         #fileInput { display: none; }
@@ -114,6 +114,17 @@
         #runHtmlBtn:hover { background-color: #c72543; }
         
         @media (max-width: 900px) {
+
+body.html-mode-mobile .app-container {
+            display: block; /* 전체 화면 모드를 위해 grid 레이아웃 해제 */
+        }
+        body.html-mode-mobile .list-column {
+            display: none; /* 내 저장공간 숨기기 */
+        }
+        body.html-mode-mobile .input-column {
+            height: 100vh; /* 입력 섹션을 화면 전체 높이로 설정 */
+            border-right: none;
+        }
             .app-container { grid-template-columns: 1fr; width: 100%; min-height: 100vh; }
             .input-column, .list-column { padding: 16px; min-width: 0; /* 모바일 화면 깨짐 방지 */ }
             .list-item { padding: 15px; display: flex; flex-direction: row; align-items: center; position: relative; }
@@ -437,11 +448,61 @@
         confirmCancelBtn.addEventListener('click', handleCancel);
     }
 
-    function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
+   function copyText(text) {
+    const originalButtonText = '전체 복사'; // 기존 버튼 텍스트를 상수로 정의
+
+    // 최신 Clipboard API를 우선적으로 시도합니다.
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            modalActionBtn.textContent = '복사 완료!';
+            setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
+        }).catch(err => {
+            console.error('클립보드 복사 실패, 대체 방법 시도:', err);
+            fallbackCopy(text); // 실패 시 대체 방법 실행
+        });
+    } else {
+        // Clipboard API를 사용할 수 없는 환경(http, file:// 등)일 경우
+        fallbackCopy(text);
+    }
+
+    // Clipboard API 사용 불가 시 대체 복사 함수
+    function fallbackCopy(textToCopy) {
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        
+        // 화면에 보이지 않게 하고, 스크롤 이동을 방지합니다.
+        textArea.style.position = "fixed";
+        textArea.style.top = 0;
+        textArea.style.left = 0;
+        textArea.style.opacity = 0;
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            modalActionBtn.textContent = successful ? '복사 완료!' : '복사 실패';
+        } catch (err) {
+            modalActionBtn.textContent = '복사 실패';
+            console.error('대체 복사 방법 오류:', err);
+        }
+
+        document.body.removeChild(textArea);
+        setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
+    }
+}
 
     function switchTab(tab) {
         currentTab = tab;
         tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+
+        if (tab === 'html') {
+            document.body.classList.add('html-mode-mobile');
+        } else {
+            document.body.classList.remove('html-mode-mobile');
+        }
+
         textInputContainer.style.display = 'none';
         linkInputContainer.style.display = 'none';
         fileInputContainer.style.display = 'none';
