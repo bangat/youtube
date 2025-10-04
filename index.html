@@ -14,6 +14,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.css">
+   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/scroll/annotatescrollbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/jump-to-line.min.js"></script>
     
     <style>
         /* --- 기본 & 테마 --- */
@@ -236,6 +246,11 @@
             </div>
             <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
             <button id="runHtmlBtn" class="input-field">▶ 코드 실행</button>
+
+<div id="html-actions-container" class="input-field" style="display: flex; gap: 10px; padding: 0; border: none; background: none;">
+    <button id="runHtmlBtn" style="width: 50%; margin: 0;">▶ 실행</button>
+    <button id="searchBtn" style="width: 50%; margin: 0;">🔍 검색</button>
+</div>
             
             <div id="textInput-container">
                 <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
@@ -383,6 +398,8 @@
     const alertMessage = document.getElementById('alertMessage');
     const alertOkBtn = document.getElementById('alertOkBtn');
     const listFilterTabs = document.querySelectorAll('.list-filter-tab');
+const htmlActionsContainer = document.getElementById('html-actions-container'); // 추가
+const searchBtn = document.getElementById('searchBtn'); // 추가
 
     // --- CodeMirror 에디터 인스턴스 ---
     let htmlEditor;
@@ -595,11 +612,12 @@
         if (tab === 'text') { textInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
         else if (tab === 'link') { linkInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
         else if (tab === 'file') { fileInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
-        else if (tab === 'html') { 
-            htmlInputContainer.style.display = 'flex'; 
-            runHtmlBtn.style.display = 'block';
-            setTimeout(() => htmlEditor.refresh(), 1); 
-        }
+else if (tab === 'html') { 
+    htmlInputContainer.style.display = 'flex'; 
+    // runHtmlBtn.style.display = 'block'; // 이 줄을 아래 줄로 변경
+    htmlActionsContainer.style.display = 'flex'; // 수정된 부분
+    setTimeout(() => htmlEditor.refresh(), 1); 
+}
         updateSaveButtonState();
     }
     
@@ -715,6 +733,10 @@
     }
     
     // --- Event Listeners ---
+searchBtn.addEventListener('click', () => {
+    htmlEditor.execCommand("findPersistent");
+});
+
     function addEventListeners() {
         tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
         saveBtn.addEventListener('click', handleSave);
@@ -780,6 +802,15 @@
             mode: 'htmlmixed',
             theme: 'material-darker',
             lineWrapping: true,
+            // --- 검색 기능 단축키 설정 (추가된 부분) ---
+            extraKeys: {
+                "Ctrl-F": "findPersistent", // 검색 (Mac: Cmd-F)
+                "Cmd-F": "findPersistent",
+                "Ctrl-G": "findNext",       // 다음 찾기 (Mac: Cmd-G)
+                "Cmd-G": "findNext",
+                "Shift-Ctrl-G": "findPrev", // 이전 찾기 (Mac: Shift-Cmd-G)
+                "Shift-Cmd-G": "findPrev"
+            }
         });
 
         addEventListeners();
@@ -787,7 +818,7 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
+                navigator.service-worker.register('service-worker.js')
                     .then(registration => console.log('SW registration successful with scope: ', registration.scope))
                     .catch(error => console.error('SW registration failed: ', error));
             });
