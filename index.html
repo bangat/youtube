@@ -219,7 +219,7 @@
                 <div class="drop-zone" id="dropZone">
                     <div id="upload-progress-bar"></div>
                     <span id="dropZone-text">드래그 또는 클릭</span>
-                    <input type="file" id="fileInput">
+                    <input type="file" id="fileInput" multiple>
                 </div>
             </div>
             <div id="htmlInput-container">
@@ -297,7 +297,7 @@
             <div id="secretModalBody">
                 <p style="margin-bottom: 15px; font-weight: 600;">보안 업로드</p>
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <input type="file" id="secretUploadInput" accept="video/*,image/*,audio/*" class="input-field" style="margin-bottom: 0;">
+                   <input type="file" id="secretUploadInput" accept="video/*,image/*,audio/*" class="input-field" style="margin-bottom: 0;" multiple>
                     <button id="secretUploadBtn" class="html-action-btn" style="flex-shrink: 0; width: 100px; margin: 0;">업로드</button>
                 </div>
                 <p id="secretUploadProgress" style="color: var(--secondary-text); height: 20px;"></p>
@@ -842,15 +842,25 @@ let secretRef;
                 showAlert('유효한 URL 형식이 아닙니다.'); return;
             }
             newItem = { type: 'link', title, content: url, timestamp: new Date().toISOString(), isPinned: false, sortOrder: Date.now() };
-        } else if (currentTab === 'file') {
-            const file = fileInput.files[0];
-            if (!file) { showAlert('파일을 선택해주세요.'); return; }
-            const isImage = file.type.startsWith('image/');
-            const handleUpload = (fileToUpload) => {
-                uploadFileToFirebase(fileToUpload, title, file.name, file.type, resetForm);
+     } else if (currentTab === 'file') {
+    const files = fileInput.files; // ✨ files[0] 대신 files 전체를 가져옵니다.
+    if (files.length === 0) { showAlert('파일을 선택해주세요.'); return; }
+
+    // ✨ 선택된 모든 파일에 대해 반복 실행합니다.
+    for (const file of files) {
+        // ✨ 각 파일에 대해 업로드 로직을 실행하기 위해 즉시 실행 함수로 감쌉니다.
+        ((fileToProcess) => {
+            const isImage = fileToProcess.type.startsWith('image/');
+            const handleUpload = (fileBlob) => {
+                // 여러 파일 업로드 시, 제목 뒤에 파일명을 붙여 구분합니다.
+                const fileTitle = files.length > 1 ? `${title} (${fileToProcess.name})` : title;
+                // 마지막 파일 업로드 시에만 폼을 초기화하도록 콜백을 수정합니다.
+                const isLastFile = fileToProcess === files[files.length - 1];
+                uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, fileToProcess.type, isLastFile ? resetForm : () => {});
             };
+
             if (isImage) {
-                dropZoneText.textContent = '이미지 최적화 중...';
+                // 이미지 최적화 로직 (기존과 동일)
                 const reader = new FileReader();
                 reader.onload = e => {
                     const img = new Image();
@@ -863,16 +873,19 @@ let secretRef;
                         canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob(blob => handleUpload(blob || file), file.type, 0.75);
+                        canvas.toBlob(blob => handleUpload(blob || fileToProcess), fileToProcess.type, 0.75);
                     };
                     img.src = e.target.result;
                 };
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(fileToProcess);
             } else {
-                handleUpload(file);
+                handleUpload(fileToProcess);
             }
-            return;
-        }
+        })(file);
+    }
+    return; // 반복문이 끝난 후 함수 종료
+}
+
         if (newItem) {
             newItem.category = getCategoryForItem(newItem);
             itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
@@ -999,13 +1012,16 @@ function addEventListeners() {
     }
     const secretUploadInput = document.getElementById('secretUploadInput');
     const secretUploadBtn = document.getElementById('secretUploadBtn');
-    secretUploadBtn.addEventListener('click', () => {
-        if (secretUploadInput.files.length > 0) {
-            uploadSecretFile(secretUploadInput.files[0]);
-        } else {
-            showAlert('업로드할 파일을 먼저 선택하세요.');
+secretUploadBtn.addEventListener('click', () => {
+    const files = secretUploadInput.files;
+    if (files.length > 0) {
+        for (const file of files) {
+            uploadSecretFile(file);
         }
-    });
+    } else {
+        showAlert('업로드할 파일을 먼저 선택하세요.');
+    }
+});
     const secretListContainer = document.getElementById('secretListContainer');
     secretListContainer.addEventListener('click', (e) => {
         const deleteBtn = e.target.closest('.secret-delete-btn');
