@@ -550,7 +550,6 @@ let secretRef;
     function uploadSecretFile(file) {
     if (!file) return;
 
-    // ✨ 현재 로그인한 사용자 정보 확인
     const currentUser = auth.currentUser;
     if (!currentUser) {
         showAlert('업로드를 위해 먼저 로그인해주세요.');
@@ -562,7 +561,6 @@ let secretRef;
     uploadBtn.disabled = true;
     const timestamp = Date.now();
 
-    // ✨ 업로드 경로를 사용자 개인 경로로 변경
     const storagePath = `users/${currentUser.uid}/secret_files/${timestamp}_${file.name}`;
 
     const fileRef = storage.ref(storagePath);
@@ -573,7 +571,7 @@ let secretRef;
             progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
         },
         (error) => {
-            showAlert('비밀 파일 업로드 실패: ' + error.message);
+            showAlert('보안 파일 업로드 실패: ' + error.message);
             progressEl.textContent = '';
             uploadBtn.disabled = false;
         },
@@ -1096,7 +1094,7 @@ const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
             userInfo.style.display = 'none';
             loginBtn.style.display = 'inline';
             logoutBtn.style.display = 'none';
-            secretRef = null; // 비밀 공간 참조 초기화
+            secretRef = null; 
         }
         loadItemsFromFirebase();
     });
