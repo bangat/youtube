@@ -247,7 +247,7 @@
             <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
             <button id="runHtmlBtn" class="input-field">▶ 코드 실행</button>
 
-<div id="html-actions-container" class="input-field" style="display: flex; gap: 10px; padding: 0; border: none; background: none;">
+<div id="html-actions-container" class="input-field" style="display: none; gap: 10px; padding: 0; border: none; background: none;">
     <button id="runHtmlBtn" style="width: 50%; margin: 0;">▶ 실행</button>
     <button id="searchBtn" style="width: 50%; margin: 0;">🔍 검색</button>
 </div>
@@ -602,22 +602,35 @@ const searchBtn = document.getElementById('searchBtn'); // 추가
     function switchTab(tab) {
         currentTab = tab;
         tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+
+        // 모든 입력 컨테이너를 먼저 숨깁니다.
         textInputContainer.style.display = 'none';
+        linkInputContainer.style.display = 'none';
         fileInputContainer.style.display = 'none';
         htmlInputContainer.style.display = 'none';
-        linkInputContainer.style.display = 'none';
         titleInput.style.display = 'none';
-        runHtmlBtn.style.display = 'none';
+        
+        htmlActionsContainer.style.display = 'none'; 
 
-        if (tab === 'text') { textInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
-        else if (tab === 'link') { linkInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
-        else if (tab === 'file') { fileInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
-else if (tab === 'html') { 
-    htmlInputContainer.style.display = 'flex'; 
-    // runHtmlBtn.style.display = 'block'; // 이 줄을 아래 줄로 변경
-    htmlActionsContainer.style.display = 'flex'; // 수정된 부분
-    setTimeout(() => htmlEditor.refresh(), 1); 
-}
+        // 선택된 탭에 맞는 컨테이너만 다시 보여줍니다.
+        if (tab === 'text') { 
+            textInputContainer.style.display = 'block'; 
+            titleInput.style.display = 'block'; 
+        }
+        else if (tab === 'link') { 
+            linkInputContainer.style.display = 'block'; 
+            titleInput.style.display = 'block'; 
+        }
+        else if (tab === 'file') { 
+            fileInputContainer.style.display = 'block'; 
+            titleInput.style.display = 'block'; 
+        }
+        else if (tab === 'html') { 
+            htmlInputContainer.style.display = 'flex'; 
+            htmlActionsContainer.style.display = 'flex'; // 'html' 탭에서만 버튼 그룹을 보여줍니다.
+            setTimeout(() => htmlEditor.refresh(), 1); 
+        }
+        
         updateSaveButtonState();
     }
     
@@ -802,7 +815,6 @@ searchBtn.addEventListener('click', () => {
             mode: 'htmlmixed',
             theme: 'material-darker',
             lineWrapping: true,
-            // --- 검색 기능 단축키 설정 (추가된 부분) ---
             extraKeys: {
                 "Ctrl-F": "findPersistent", // 검색 (Mac: Cmd-F)
                 "Cmd-F": "findPersistent",
