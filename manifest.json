@@ -2,24 +2,29 @@
     "name": "최클라우드",
     "short_name": "최클라우드",
     "description": "최윤서 클라우드",
-    // 💡 수정: index.html을 제거하고 리포지토리 폴더를 시작 경로로 지정
-    "start_url": "/youtube/", 
-    
+    "start_url": "/youtube/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#1b74e4",
     "icons": [
         {
-            // 💡 수정: 파일 경로는 리포지토리 이름 없이 상대 경로로 유지하는 것이 좋습니다.
             "src": "./icons/icon-192x192.png",
             "sizes": "192x192",
             "type": "image/png"
         },
         {
-            "src": "./icons/icon-512x512.png", 
+            "src": "./icons/icon-512x512.png",
             "sizes": "512x512",
             "type": "image/png"
         }
-    ]
+    ],
+    "share_target": {
+        "action": "/youtube/",
+        "method": "GET",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
+    }
 }
-
