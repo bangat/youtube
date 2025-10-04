@@ -237,6 +237,30 @@
     background-color: rgba(66, 133, 244, 0.2);
 }
 
+@media (max-width: 480px) {
+    #auth-container {
+        /* 자식 요소들이 줄바꿈되지 않도록 설정 */
+        white-space: nowrap;
+        /* 공간이 부족할 때 요소가 줄어들도록 허용 */
+        flex-shrink: 1;
+        min-width: 0;
+    }
+    #userInfo {
+        font-size: 14px; /* 이름 글씨 크기를 살짝 줄입니다. */
+        
+        /* 이름이 너무 길 경우 ... 으로 표시되도록 처리 */
+        max-width: 120px; 
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block; /* ellipsis 처리를 위해 추가 */
+    }
+    #logoutBtn {
+        font-size: 14px; /* 로그아웃 버튼 글씨 크기를 살짝 줄입니다. */
+        padding: 4px 8px; /* 버튼 크기를 조금 더 컴팩트하게 조절 */
+    }
+}
+
+
     </style>
 </head>
 <body>
