@@ -9,6 +9,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/material-darker.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/eclipse.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/dialog/dialog.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.css">
     
@@ -26,223 +27,248 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-    <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --surface-color: #ffffff;
-            --sidebar-color: #f7f8fa;
-            --primary-text: #050505;
-            --secondary-text: #65676b;
-            --accent-color: #1b74e4;
-            --border-color: #dddfe2;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--primary-text); }
-        .app-container { display: grid; grid-template-columns: 360px 1fr; width: 100%; height: 100vh; }
-        .input-column { background-color: var(--sidebar-color); padding: 24px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
-        .list-column { background-color: var(--bg-color); padding: 24px; display: flex; flex-direction: column; overflow-y: hidden; }
-        h2 { font-size: 20px; margin-bottom: 20px; }
-        .tab-buttons { display: flex; margin-bottom: 20px; background-color: var(--surface-color); border-radius: 12px; padding: 6px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); }
-        .tab-btn { flex: 1; padding: 12px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--secondary-text); border-radius: 8px; transition: background-color 0.2s, box-shadow 0.2s; }
-        .tab-btn:hover { background-color: rgba(0,0,0,0.03); }
-        .tab-btn.active { color: var(--accent-color); background-color: var(--bg-color); box-shadow: 0 1px 3px var(--shadow-color); }
-        .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
-        #textInput { min-height: 150px; resize: vertical; }
-        #linkInput-container, #fileInput-container { display: none; }
-        #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
-        .CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: 100%; font-size: 14px; }
-        .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); overflow: hidden; }
-        .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
-        #fileInput { display: none; }
-        #dropZone-text { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
-        #saveBtn:hover { background-color: #1868cd; }
-        #saveBtn:disabled { background-color: #e0e0e0; color: #a0a0a0; cursor: not-allowed; }
-        .list-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        #clearAllBtn { background: none; border: none; color: var(--secondary-text); cursor: pointer; font-weight: 600; }
-        #clearAllBtn:hover { color: #e02c4f; }
-        .list-container { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1; padding-right: 10px; }
-        .list-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 8px; cursor: pointer; transition: background-color .2s, box-shadow 0.2s, border-color 0.2s; background-color: var(--surface-color); box-shadow: 0 1px 2px var(--shadow-color); position: relative; }
-        .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
-        .item-icon { font-size: 24px; position: relative; flex-shrink: 0; }
-        .item-icon .html-badge { position: absolute; bottom: -5px; right: -8px; background-color: #e02c4f; color: white; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
-        .item-details { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
-        .item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
-        .item-preview { font-size: 14px; color: var(--secondary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
-        .item-date { font-size: 12px; color: var(--secondary-text); position: absolute; top: 15px; right: 50px; }
-        .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; }
-        .delete-btn:hover { color: #e02c4f; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background-color: var(--surface-color); padding: 24px; border-radius: 12px; width: 95%; max-width: 900px; height: 90%; display: flex; flex-direction: column; position: relative; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
-        #modalTitle { font-size: 20px; }
-        .modal-close-btn { font-size: 14px; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--secondary-text); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
-        .modal-close-btn:hover { background-color: #e4e6e9; }
-        #modalBody { flex-grow: 1; overflow: auto; background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; min-height: 0; text-align: center; }
-        #modalText { white-space: pre-wrap; word-break: break-all; height: 100%; text-align: left; }
-        #modalHtmlPreview { width: 100%; height: 100%; border: none; }
-        #modalImagePreview { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
-        #modalFileInfo { color: var(--secondary-text); text-align: left; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
-        .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
-        #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
-        #htmlPreviewModal .modal-content { max-width: 100%; width: 100%; height: 100%; border-radius: 0; padding: 0; }
-        #htmlPreviewModal .modal-header { padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); }
-        #htmlPreviewModal .modal-body { padding: 0; background: #fff; flex-grow: 1; }
-        #htmlPreviewModal .modal-body iframe { width: 100%; height: 100%; border: none; }
-        #confirmModal, #alertModal { align-items: center; justify-content: center; }
-        #confirmModal .modal-content, #alertModal .modal-content { max-width: 400px; padding: 24px; text-align: center; border-radius: 12px; height: auto; }
-        #confirmModal h3, #alertModal h3 { margin-bottom: 20px; }
-        #confirmModal .modal-actions, #alertModal .modal-actions { justify-content: center; }
-        #alertModal .modal-actions { display: flex; justify-content: center; }
-        #alertModal .modal-btn { background-color: var(--accent-color); color: white; }
-        .drop-zone { position: relative; overflow: hidden; }
-        #upload-progress-bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background-color: var(--accent-color); opacity: 0.3; transition: width 0.3s ease; z-index: 1; }
-        #dropZone-text { position: relative; z-index: 2; }
-        .drop-zone.uploading { border-color: var(--accent-color); }
-        #titleInput { display: block; }
-        .list-filter-tabs { display: flex; gap: 10px; margin-top: 10px; border-bottom: 1px solid var(--border-color); }
-        .list-filter-tab { padding: 10px 15px; border: none; background: none; color: var(--secondary-text); font-weight: 600; cursor: pointer; position: relative; border-bottom: 3px solid transparent; }
-        .list-filter-tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
-        #html-actions-container { display: none; gap: 10px; margin-bottom: 15px; }
-        .html-action-btn { flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--surface-color); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-        .html-action-btn:hover { background-color: #e9ebee; }
-        #runHtmlBtn { background-color: #e02c4f; color: white; border-color: #e02c4f; }
-        #runHtmlBtn:hover { background-color: #c72543; }
-        .pin-indicator { position: absolute; bottom: -5px; right: -8px; font-size: 14px; background-color: var(--surface-color); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        .list-item.pinned { background-color: #fdfaf0; border-left: 4px solid #f9c74f; }
-        .delete-btn { position: absolute; right: 15px; top: 15px; padding: 0; margin: 0; }
-        .secret-list-item { display: flex; align-items: center; gap: 15px; padding: 15px; background-color: var(--surface-color); border-radius: 8px; box-shadow: 0 1px 2px var(--shadow-color); cursor: pointer; }
-        .secret-list-item:hover { background-color: #e9ebee; }
+   <style>
+    :root {
+        --bg-color: #f0f2f5;
+        --surface-color: #ffffff;
+        --sidebar-color: #f7f8fa;
+        --primary-text: #050505;
+        --secondary-text: #65676b;
+        --accent-color: #1b74e4;
+        --border-color: #dddfe2;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        @media (max-width: 900px) {
-            body.html-mode-mobile .app-container { display: block; }
-            body.html-mode-mobile .list-column { display: none; }
-            body.html-mode-mobile .input-column { height: 100vh; border-right: none; }
-            .app-container { grid-template-columns: 1fr; width: 100%; min-height: 100vh; }
-            .input-column, .list-column { padding: 16px; min-width: 0; }
-            .list-item { padding: 15px; display: flex; flex-direction: row; align-items: center; position: relative; }
-            .item-details { flex-grow: 1; overflow: hidden; padding-right: 0; display: flex; flex-direction: column; justify-content: center; }
-            .item-icon { margin-right: 15px; }
-            .item-date { font-size: 10px; color: var(--secondary-text); position: static; margin-top: 4px; }
-            .item-title { font-size: 15px; }
-            .item-preview { font-size: 13px; }
-            .delete-btn { top: 50%; transform: translateY(-50%); font-size: 20px; }
-            .modal-content { width: 100%; border-radius: 0; }
-            #dropZone-text { padding: 0 10px; }
-        }
+    /* ✨ [수정] 앱 전체 높이 기준 설정 */
+    html, body {
+        height: 100%;
+        overflow: hidden; /* 전체 페이지 스크롤 방지 */
+    }
 
-.secret-list-item {
-            /* ✨ display: flex; 와 justify-content 속성을 추가합니다. ✨ */
-            display: flex;
-            justify-content: space-between; 
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background-color: var(--surface-color);
-            border-radius: 8px;
-            box-shadow: 0 1px 2px var(--shadow-color);
-            cursor: pointer;
-        }
-        .secret-list-item-title {
-            /* ✨ 파일 이름을 감싸서, 내용이 길어지면 줄임표(...)로 표시되게 합니다. ✨ */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        /* ✨ 아래 삭제 버튼 스타일을 새로 추가하세요. ✨ */
-        .secret-delete-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: var(--secondary-text);
-            cursor: pointer;
-            flex-shrink: 0; /* 버튼 크기가 줄어들지 않도록 설정 */
-            padding: 0 5px;
-        }
-        .secret-delete-btn:hover {
-            color: #e02c4f;
-        }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--primary-text); }
+    
+    /* ✨ [수정] 앱 컨테이너 레이아웃 재정의 */
+    .app-container { display: flex; flex-direction: column; width: 100%; height: 100%; }
 
-/* 동영상 플레이어 모달 스타일 */
-#videoPlayerModal .modal-content {
-    width: 95vw;
-    max-width: 1400px;
-    height: auto;
-    padding: 12px;
-    background-color: #1c1c1e; /* 어두운 배경 */
-}
-#videoPlayerModal .modal-header {
-    margin-bottom: 10px;
-}
-#videoPlayerModal #videoTitle {
-    color: #fff; /* 제목 흰색으로 */
-    font-size: 16px;
-}
-#videoPlayerContainer {
-    padding: 0;
-    margin-bottom: 0;
-    background-color: #000;
-}
-#videoPlayer {
-    width: 100%;
-    max-height: 85vh; /* 비디오 최대 높이 확보 */
-    display: block;
-}
-#confirmModal, #alertModal {
-    z-index: 2000; /* 다른 모달(1000)보다 항상 위에 표시되도록 값을 높여줍니다. */
-}
-    </style>
+    /* --- 상단 메인 탭 --- */
+    #main-tabs {
+        display: flex;
+        padding: 12px 24px 0 24px;
+        background-color: var(--sidebar-color);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+    .main-tab-btn {
+        flex: 1;
+        max-width: 120px;
+        padding: 12px;
+        border: none;
+        border-bottom: 3px solid transparent;
+        background: none;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--secondary-text);
+        cursor: pointer;
+    }
+    .main-tab-btn.active {
+        color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
+    }
+
+    /* --- 메인 컨텐츠 영역 (업로드/저장공간) --- */
+    .input-column, .list-column {
+        flex-grow: 1;
+        min-height: 0; /* 스크롤 오류 방지 */
+        border-right: none;
+        display: flex;
+        flex-direction: column;
+        padding: 24px;
+    }
+    .list-column {
+        display: none; /* 시작 시 list-column은 숨김 */
+    }
+    .list-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    #clearAllBtn { background: none; border: none; color: var(--secondary-text); cursor: pointer; font-weight: 600; }
+    #clearAllBtn:hover { color: #e02c4f; }
+    h2 { font-size: 20px; margin: 0; }
+
+    /* --- 하위 탭 및 입력 필드 --- */
+    .tab-buttons { display: flex; margin-bottom: 20px; background-color: var(--surface-color); border-radius: 12px; padding: 6px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); flex-shrink: 0; }
+    .tab-btn { flex: 1; padding: 12px; background: none; border: none; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--secondary-text); border-radius: 8px; transition: background-color 0.2s, box-shadow 0.2s; }
+    .tab-btn:hover { background-color: rgba(0,0,0,0.03); }
+    .tab-btn.active { color: var(--accent-color); background-color: var(--bg-color); box-shadow: 0 1px 3px var(--shadow-color); }
+    .input-field { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 15px; margin-bottom: 15px; background-color: var(--surface-color); }
+    #saveBtn { width: 100%; padding: 12px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: auto; flex-shrink: 0; }
+    #saveBtn:hover { background-color: #1868cd; }
+    #saveBtn:disabled { background-color: #e0e0e0; color: #a0a0a0; cursor: not-allowed; }
+
+    /* 모든 입력창 컨테이너에 대한 통합 스타일 */
+    #textInput-container,
+    #linkInput-container,
+    #fileInput-container,
+    #htmlInput-container {
+        flex-grow: 1;
+        display: none;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .input-column > #textInput-container { display: flex; } /* 시작 시 텍스트 입력창만 표시 */
+    #textInput { flex-grow: 1; resize: vertical; }
+    .CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: 100%; font-size: 14px; }
+
+    /* HTML 뷰어 버튼 */
+    #html-actions-container { display: none; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
+    .html-action-btn { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--surface-color); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+    .html-action-btn:hover { background-color: #e9ebee; }
+#runHtmlBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+#runHtmlBtn:hover { background-color: #1868cd; }
+
+    /* 파일 드롭존 */
+    .drop-zone { position: relative; border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--secondary-text); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; background-color: var(--surface-color); overflow: hidden; }
+    .drop-zone.drag-over { background-color: #e8f0fe; border-color: var(--accent-color); }
+    #fileInput { display: none; }
+    #dropZone-text { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #upload-progress-bar { position: absolute; top: 0; left: 0; height: 100%; width: 0; background-color: var(--accent-color); opacity: 0.3; transition: width 0.3s ease; z-index: 1; }
+    #dropZone-text { position: relative; z-index: 2; }
+    .drop-zone.uploading { border-color: var(--accent-color); }
+
+    /* 목록 필터 탭 */
+    .list-filter-tabs { display: flex; gap: 10px; margin-top: 10px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+    .list-filter-tab { padding: 10px 15px; border: none; background: none; color: var(--secondary-text); font-weight: 600; cursor: pointer; position: relative; border-bottom: 3px solid transparent; }
+    .list-filter-tab.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+
+    /* 목록 아이템 */
+    .list-container { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1; padding-right: 10px; }
+    .list-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-radius: 8px; cursor: pointer; transition: background-color .2s, box-shadow 0.2s, border-color 0.2s; background-color: var(--surface-color); box-shadow: 0 1px 2px var(--shadow-color); position: relative; }
+    .list-item:hover { border-color: var(--accent-color); box-shadow: 0 2px 8px var(--shadow-color); }
+    .item-icon { font-size: 24px; position: relative; flex-shrink: 0; }
+    .item-icon .html-badge { position: absolute; bottom: -5px; right: -8px; background-color: #e02c4f; color: white; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 4px; }
+    .item-details { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
+    .item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+    .item-preview { font-size: 14px; color: var(--secondary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+    .item-date { font-size: 12px; color: var(--secondary-text); position: absolute; top: 15px; right: 50px; }
+    .delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; transition: color 0.2s; position: absolute; right: 15px; top: 15px; padding: 0; margin: 0; }
+    .delete-btn:hover { color: #e02c4f; }
+    .pin-indicator { position: absolute; bottom: -5px; right: -8px; font-size: 14px; background-color: var(--surface-color); border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; line-height: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .list-item.pinned { background-color: #fdfaf0; border-left: 4px solid #f9c74f; }
+    .sortable-ghost { opacity: 0.4; background: #c8ebfb; }
+
+    /* 모달 공통 */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-content { background-color: var(--surface-color); padding: 24px; border-radius: 12px; width: 95%; max-width: 900px; height: 90%; display: flex; flex-direction: column; position: relative; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
+    #modalTitle { font-size: 20px; }
+    .modal-close-btn { font-size: 14px; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--secondary-text); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+    .modal-close-btn:hover { background-color: #e4e6e9; }
+    #modalBody { flex-grow: 1; overflow: auto; background-color: var(--bg-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; min-height: 0; text-align: center; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+    .modal-btn { padding: 12px 20px; border: 1px solid var(--border-color); background-color: var(--surface-color); color: var(--primary-text); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    #modalActionBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+    #modalText { white-space: pre-wrap; word-break: break-all; height: 100%; text-align: left; }
+    #modalImagePreview { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+    #modalFileInfo { color: var(--secondary-text); text-align: left; }
+
+    /* HTML 미리보기 모달 */
+    #htmlPreviewModal .modal-content { max-width: 100%; width: 100%; height: 100%; border-radius: 0; padding: 0; }
+    #htmlPreviewModal .modal-header { padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); }
+    #htmlPreviewModal .modal-body { padding: 0; background: #fff; flex-grow: 1; }
+    #htmlPreviewModal .modal-body iframe { width: 100%; height: 100%; border: none; }
+    
+    /* 확인/알림 모달 */
+    #confirmModal, #alertModal { align-items: center; justify-content: center; z-index: 2000; }
+    #confirmModal .modal-content, #alertModal .modal-content { max-width: 400px; padding: 24px; text-align: center; border-radius: 12px; height: auto; }
+    #confirmModal h3, #alertModal h3 { margin-bottom: 20px; }
+    #confirmModal .modal-actions, #alertModal .modal-actions { justify-content: center; }
+    #alertModal .modal-actions { display: flex; justify-content: center; }
+    #alertModal .modal-btn { background-color: var(--accent-color); color: white; }
+
+    /* 보안 모달 */
+    #secretModalBody { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+    .secret-list-item { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 15px; background-color: var(--surface-color); border-radius: 8px; box-shadow: 0 1px 2px var(--shadow-color); cursor: pointer; }
+    .secret-list-item:hover { background-color: #e9ebee; }
+    .secret-list-item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .secret-delete-btn { background: none; border: none; font-size: 24px; color: var(--secondary-text); cursor: pointer; flex-shrink: 0; padding: 0 5px; }
+    .secret-delete-btn:hover { color: #e02c4f; }
+
+    /* 비디오 플레이어 모달 */
+    #videoPlayerModal .modal-content { width: 95vw; max-width: 1400px; height: auto; padding: 12px; background-color: #1c1c1e; }
+    #videoPlayerModal .modal-header { margin-bottom: 10px; }
+    #videoPlayerModal #videoTitle { color: #fff; font-size: 16px; }
+    #videoPlayerContainer { padding: 0; margin-bottom: 0; background-color: #000; }
+    #videoPlayer { width: 100%; max-height: 85vh; display: block; }
+    
+    /* 모바일 반응형 */
+    @media (max-width: 900px) {
+        .input-column, .list-column { padding: 16px; }
+        #main-tabs { padding: 8px 16px 0 16px; }
+        .list-item { flex-direction: row; }
+        .item-details { padding-right: 0; }
+        .item-icon { margin-right: 15px; }
+        .item-date { position: static; margin-top: 4px; font-size: 10px; }
+        .item-title { font-size: 15px; }
+        .item-preview { font-size: 13px; }
+        .delete-btn { top: 50%; transform: translateY(-50%); font-size: 20px; }
+        .modal-content { width: 100%; height: 100%; border-radius: 0; }
+        #dropZone-text { padding: 0 10px; }
+    }
+</style>
 </head>
 <body>
 
-    <main class="app-container">
-        <section class="input-column">
-            <div class="tab-buttons">
-                <button class="tab-btn active" data-tab="text">텍스트</button>
-                <button class="tab-btn" data-tab="link">링크</button>
-                <button class="tab-btn" data-tab="file">파일</button>
-                <button class="tab-btn" data-tab="html">HTML 뷰어</button>
+  <main class="app-container">
+    <div id="main-tabs">
+        <button class="main-tab-btn active" data-tab="input">업로드</button>
+        <button class="main-tab-btn" data-tab="list">저장공간</button>
+    </div>
+
+    <section class="input-column">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="text">텍스트</button>
+            <button class="tab-btn" data-tab="link">링크</button>
+            <button class="tab-btn" data-tab="file">파일</button>
+            <button class="tab-btn" data-tab="html">HTML</button>
+        </div>
+        <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
+<div id="html-actions-container">
+    <button id="runHtmlBtn" class="html-action-btn">▶실행</button>
+    <button id="searchBtn" class="html-action-btn">🔍검색</button>
+    <button id="clearHtmlBtn" class="html-action-btn">🗑️삭제</button>
+    <button id="themeToggleBtn" class="html-action-btn" style="flex: 0.4;">☀️</button>
+</div>
+        <div id="textInput-container">
+            <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
+        </div>
+        <div id="linkInput-container">
+            <input type="url" id="linkInput" class="input-field" placeholder="URL 주소를 입력하세요. (예: https://google.com)">
+        </div>
+        <div id="fileInput-container">
+            <div class="drop-zone" id="dropZone">
+                <div id="upload-progress-bar"></div>
+                <span id="dropZone-text">드래그 또는 클릭</span>
+                <input type="file" id="fileInput">
             </div>
-            <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
-            <div id="html-actions-container">
-                <button id="runHtmlBtn" class="html-action-btn">▶ 실행</button>
-                <button id="searchBtn" class="html-action-btn">🔍 검색</button>
-            </div>
-            <div id="textInput-container">
-                <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
-            </div>
-            <div id="linkInput-container">
-                <input type="url" id="linkInput" class="input-field" placeholder="URL 주소를 입력하세요. (예: https://google.com)">
-            </div>
-            <div id="fileInput-container">
-                <div class="drop-zone" id="dropZone">
-                    <div id="upload-progress-bar"></div>
-                    <span id="dropZone-text">드래그 또는 클릭</span>
-                    <input type="file" id="fileInput">
-                </div>
-            </div>
-            <div id="htmlInput-container">
-                <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요"></textarea>
-            </div>
-            <button id="saveBtn" disabled>저장하기</button>
-        </section>
-        
-        <section class="list-column">
-            <div class="list-header">
-                <h2>내 저장공간</h2>
-                <button id="clearAllBtn">모두 지우기</button>
-            </div>
-            <div class="list-filter-tabs">
-                <button class="list-filter-tab active" data-filter="all">전체</button>
-                <button class="list-filter-tab" data-filter="document">문서</button>
-                <button class="list-filter-tab" data-filter="photo">사진</button>
-                <button class="list-filter-tab" data-filter="music">음악</button>
-            </div>
-            <div id="listContainer" class="list-container"></div>
-        </section>
-    </main>
+        </div>
+        <div id="htmlInput-container">
+            <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요"></textarea>
+        </div>
+        <button id="saveBtn" disabled>저장하기</button>
+    </section>
+
+    <section class="list-column">
+        <div class="list-header">
+            <h2>내 저장공간</h2>
+            <button id="clearAllBtn">모두 지우기</button>
+        </div>
+        <div class="list-filter-tabs">
+            <button class="list-filter-tab active" data-filter="all">전체</button>
+            <button class="list-filter-tab" data-filter="document">문서</button>
+            <button class="list-filter-tab" data-filter="photo">사진</button>
+            <button class="list-filter-tab" data-filter="music">음악</button>
+        </div>
+        <div id="listContainer" class="list-container"></div>
+    </section>
+</main>
 
     <div id="modal" class="modal-overlay">
         <div class="modal-content">
@@ -297,15 +323,26 @@
                 <button class="modal-close-btn">닫기</button>
             </div>
             <div id="secretModalBody" style="background: var(--bg-color); padding: 15px; border-radius: 8px; text-align: left;">
-               <p style="margin-bottom: 15px; font-weight: 600;">보안 업로드</p>
-<div style="display: flex; gap: 10px; margin-bottom: 20px;">
-    <input type="file" id="secretUploadInput" accept="video/*,image/*,audio/*" class="input-field" style="margin-bottom: 0;">
-    <button id="secretUploadBtn" class="html-action-btn" style="flex-shrink: 0; width: 100px; margin: 0;">업로드</button>
-</div>
-<p id="secretUploadProgress" style="color: var(--secondary-text); height: 20px;"></p>
-                <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
-                <div id="secretListContainer" class="list-container" style="margin-top: 0; padding-right: 0;">
+                <p style="margin-bottom: 15px; font-weight: 600;">보안 업로드</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="file" id="secretUploadInput" accept="video/*,image/*,audio/*" class="input-field" style="margin-bottom: 0;">
+                    <button id="secretUploadBtn" class="html-action-btn" style="flex-shrink: 0; width: 100px; margin: 0;">업로드</button>
                 </div>
+                <p id="secretUploadProgress" style="color: var(--secondary-text); height: 20px;"></p>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin-bottom: 20px;">
+                <div id="secretListContainer" class="list-container" style="margin-top: 0; padding-right: 0;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="videoPlayerModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="videoTitle">동영상 재생</h3>
+                <button class="modal-close-btn">닫기</button>
+            </div>
+            <div id="videoPlayerContainer" style="background: #000; padding: 0; margin-bottom: 0;">
+                <video id="videoPlayer" controls style="width: 100%; max-height: 85vh;"></video>
             </div>
         </div>
     </div>
@@ -315,6 +352,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
       authDomain: "youtubu-c770d.firebaseapp.com",
@@ -325,12 +363,14 @@
       measurementId: "G-82SBN9ZWZQ"
     };
     
+    // Firebase Init
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const itemsRef = database.ref('items');
     const storage = firebase.storage();
     const secretRef = database.ref('secret_items');
 
+    // DOM Elements
     const titleInput = document.getElementById('titleInput');
     const textInputContainer = document.getElementById('textInput-container');
     const fileInputContainer = document.getElementById('fileInput-container');
@@ -369,9 +409,12 @@
     const htmlActionsContainer = document.getElementById('html-actions-container');
     const runHtmlBtn = document.getElementById('runHtmlBtn');
     const searchBtn = document.getElementById('searchBtn');
-    
-    let htmlEditor;
+    const clearHtmlBtn = document.getElementById('clearHtmlBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 
+    
+    // State Variables
+    let htmlEditor;
     let currentTab = 'text';
     let savedItems = [];
     let currentItemInModal = null;
@@ -379,6 +422,7 @@
     let tapCounter = 0;
     let tapTimer = null;
 
+    // Utility Functions
     function showAlert(message) {
         alertMessage.textContent = message;
         alertModal.style.display = 'flex';
@@ -441,6 +485,20 @@
             modalActionBtn.textContent = originalButtonText;
         }
     }
+    
+    function playVideo(fileName, fileUrl) {
+        const videoModal = document.getElementById('videoPlayerModal');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoTitle = document.getElementById('videoTitle');
+        videoTitle.textContent = fileName;
+        videoPlayer.src = fileUrl;
+        videoModal.style.display = 'flex';
+        videoModal.querySelector('.modal-close-btn').onclick = () => {
+            videoPlayer.pause();
+            videoPlayer.src = "";
+            videoModal.style.display = 'none';
+        };
+    }
 
     function openSecretStash() {
         const storedPasswordHash = localStorage.getItem('secretStashPassword');
@@ -464,7 +522,7 @@
                                 items.push({ id: key, ...data[key] });
                             });
                         }
-                        renderSecretList(items.sort((a, b) => b.timestamp - a.timestamp));
+                        renderSecretList(items);
                     });
                     secretModal.querySelector('.modal-close-btn').onclick = () => {
                         secretModal.style.display = 'none';
@@ -478,89 +536,87 @@
     }
 
     function renderSecretList(items) {
-    const container = document.getElementById('secretListContainer');
-    container.innerHTML = '<h4>저장된 파일 목록</h4>';
-    if (items.length === 0) {
-        container.innerHTML += '<p style="color: var(--secondary-text); margin-top: 10px;">저장된 파일이 없습니다.</p>';
-        return;
-    }
-    items.forEach(item => {
-        const itemEl = document.createElement('div');
-        itemEl.className = 'secret-list-item';
-        // ✨ data 속성으로 파일 정보를 저장합니다.
-        itemEl.dataset.fileUrl = item.fileUrl; 
-        itemEl.dataset.fileName = item.fileName;
-
-        itemEl.innerHTML = `
-            <span class="secret-list-item-title">🎬 ${item.fileName}</span>
-            <button class="secret-delete-btn" data-id="${item.id}" data-path="${item.storagePath}">&times;</button>
-        `;
-        container.appendChild(itemEl);
-    });
-}
-
-function playVideo(fileName, fileUrl) {
-        const videoModal = document.getElementById('videoPlayerModal');
-        const videoPlayer = document.getElementById('videoPlayer');
-        const videoTitle = document.getElementById('videoTitle');
-
-        videoTitle.textContent = fileName;
-        videoPlayer.src = fileUrl;
-        videoModal.style.display = 'flex';
-
-        videoModal.querySelector('.modal-close-btn').onclick = () => {
-            videoPlayer.pause();
-            videoPlayer.src = ""; // 리소스 정리
-            videoModal.style.display = 'none';
-        };
-    }
-
-   function uploadSecretFile(file) {
-    if (!file) return;
-
-    const progressEl = document.getElementById('secretUploadProgress');
-    const uploadBtn = document.getElementById('secretUploadBtn');
-    uploadBtn.disabled = true; // 업로드 중 버튼 비활성화
-
-    const timestamp = Date.now();
-    const storagePath = `secret_files/${timestamp}_${file.name}`;
-    const fileRef = storage.ref(storagePath);
-    const uploadTask = fileRef.put(file);
-
-    uploadTask.on('state_changed', 
-        (snapshot) => {
-            // ✨ 업로드 진행률 계산 및 표시
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
-        },
-        (error) => {
-            showAlert('보안 파일 업로드 실패: ' + error.message);
-            progressEl.textContent = ''; // 진행률 텍스트 초기화
-            uploadBtn.disabled = false; // 버튼 다시 활성화
-        },
-        () => {
-            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                const newItem = {
-                    fileName: file.name,
-                    fileUrl: downloadURL,
-                    storagePath: storagePath,
-                    timestamp: new Date().toISOString()
-                };
-                secretRef.push(newItem)
-                    .then(() => {
-                        progressEl.textContent = '업로드 완료!';
-                        document.getElementById('secretUploadInput').value = '';
-                        setTimeout(() => { progressEl.textContent = ''; }, 2000); 
-                        uploadBtn.disabled = false; 
-                    })
-                    .catch(err => {
-                        showAlert('DB 저장 실패: ' + err.message);
-                        uploadBtn.disabled = false;
-                    });
-            });
+        const container = document.getElementById('secretListContainer');
+        container.innerHTML = '<h4>저장된 파일 목록</h4>';
+        items.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            const orderA = a.sortOrder !== undefined ? a.sortOrder : Infinity;
+            const orderB = b.sortOrder !== undefined ? b.sortOrder : Infinity;
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return b.timestamp - a.timestamp;
+        });
+        if (items.length === 0) {
+            container.innerHTML += '<p style="color: var(--secondary-text); margin-top: 10px;">저장된 파일이 없습니다.</p>';
+            return;
         }
-    );
-}
+        items.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'secret-list-item';
+            if(item.isPinned) {
+                itemEl.classList.add('pinned');
+            }
+            itemEl.dataset.fileUrl = item.fileUrl; 
+            itemEl.dataset.fileName = item.fileName;
+            itemEl.dataset.id = item.id;
+            itemEl.innerHTML = `
+                <div class="secret-item-icon">
+                    🎬
+                    ${item.isPinned ? '<div class="pin-indicator">⭐</div>' : ''}
+                </div>
+                <span class="secret-list-item-title">${item.fileName}</span>
+                <button class="secret-delete-btn" data-id="${item.id}" data-path="${item.storagePath}">&times;</button>
+            `;
+            container.appendChild(itemEl);
+        });
+    }
+
+    function uploadSecretFile(file) {
+        if (!file) return;
+        const progressEl = document.getElementById('secretUploadProgress');
+        const uploadBtn = document.getElementById('secretUploadBtn');
+        uploadBtn.disabled = true;
+        const timestamp = Date.now();
+        const storagePath = `secret_files/${timestamp}_${file.name}`;
+        const fileRef = storage.ref(storagePath);
+        const uploadTask = fileRef.put(file);
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
+            },
+            (error) => {
+                showAlert('비밀 파일 업로드 실패: ' + error.message);
+                progressEl.textContent = '';
+                uploadBtn.disabled = false;
+            },
+            () => {
+                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    const newItem = {
+                        fileName: file.name,
+                        fileUrl: downloadURL,
+                        storagePath: storagePath,
+                        timestamp: new Date().toISOString(),
+                        isPinned: false,
+                        sortOrder: Date.now()
+                    };
+                    secretRef.push(newItem)
+                        .then(() => {
+                            progressEl.textContent = '업로드 완료!';
+                            document.getElementById('secretUploadInput').value = '';
+                            setTimeout(() => { progressEl.textContent = ''; }, 2000); 
+                            uploadBtn.disabled = false; 
+                        })
+                        .catch(err => {
+                            showAlert('DB 저장 실패: ' + err.message);
+                            uploadBtn.disabled = false;
+                        });
+                });
+            }
+        );
+    }
 
     function loadItemsFromFirebase() {
         itemsRef.on('value', (snapshot) => {
@@ -744,12 +800,12 @@ function playVideo(fileName, fileUrl) {
         htmlInputContainer.style.display = 'none';
         titleInput.style.display = 'none';
         htmlActionsContainer.style.display = 'none';
-        if (tab === 'text' || tab === 'link' || tab === 'file') {
-            titleInput.style.display = 'block';
-            if (tab === 'text') textInputContainer.style.display = 'block';
-            if (tab === 'link') linkInputContainer.style.display = 'block';
-            if (tab === 'file') fileInputContainer.style.display = 'block';
-        } else if (tab === 'html') {
+if (tab === 'text' || tab === 'link' || tab === 'file') {
+    titleInput.style.display = 'block';
+    if (tab === 'text') textInputContainer.style.display = 'flex'; // 'block' -> 'flex'
+    if (tab === 'link') linkInputContainer.style.display = 'flex'; // 'block' -> 'flex'
+    if (tab === 'file') fileInputContainer.style.display = 'flex'; // 'block' -> 'flex'
+} else if (tab === 'html') {
             htmlInputContainer.style.display = 'flex';
             htmlActionsContainer.style.display = 'flex';
             setTimeout(() => htmlEditor.refresh(), 1);
@@ -874,97 +930,96 @@ function playVideo(fileName, fileUrl) {
     }
     
     function addEventListeners() {
-    tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-    saveBtn.addEventListener('click', handleSave);
-    runHtmlBtn.addEventListener('click', () => {
-        const code = htmlEditor.getValue();
-        if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
-        htmlPreview.srcdoc = code;
-        htmlPreviewModal.style.display = 'flex';
-    });
-    searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
-    htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
-
-    listContainer.addEventListener('click', (e) => {
-        const listItem = e.target.closest('.list-item');
-        if (!listItem) return;
-        const id = listItem.dataset.id;
-        const item = savedItems.find(i => i.id === id);
-        if (!item) return;
-
-        if (e.target.closest('.item-icon')) {
-            const newPinnedState = !item.isPinned;
-            itemsRef.child(id).update({ isPinned: newPinnedState })
-                .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
-            return;
-        }
-
-        if (e.target.classList.contains('delete-btn')) {
-            showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-                itemsRef.child(id).remove().then(() => {
-                    if (item.type === 'file' && item.storagePath) {
-                        storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
-                    }
-                }).catch(err => showAlert('삭제 실패: ' + err.message));
-            });
-            return;
-        }
-
-        if (item.type === 'link') {
-            window.open(item.content, '_blank');
-        } else {
-            openModal(id);
-        }
-    });
-
-    clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
-    [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
-    fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
-    modalClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-    modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
-    window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
-    listFilterTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            listFilterTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentListFilter = tab.dataset.filter;
-            renderList();
+        tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        saveBtn.addEventListener('click', handleSave);
+        runHtmlBtn.addEventListener('click', () => {
+            const code = htmlEditor.getValue();
+            if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
+            htmlPreview.srcdoc = code;
+            htmlPreviewModal.style.display = 'flex';
         });
-    });
+        searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
+        htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
 
-    const secretTrigger = document.querySelector('.list-header h2');
-    if (secretTrigger) {
-        secretTrigger.style.cursor = 'pointer';
-        secretTrigger.addEventListener('click', () => {
-            tapCounter++;
-            clearTimeout(tapTimer);
-            if (tapCounter === 10) {
-                tapCounter = 0;
-                openSecretStash();
+        listContainer.addEventListener('click', (e) => {
+            const listItem = e.target.closest('.list-item');
+            if (!listItem) return;
+            const id = listItem.dataset.id;
+            const item = savedItems.find(i => i.id === id);
+            if (!item) return;
+
+            if (e.target.closest('.item-icon')) {
+                const newPinnedState = !item.isPinned;
+                itemsRef.child(id).update({ isPinned: newPinnedState })
+                    .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
+                return;
+            }
+
+            if (e.target.classList.contains('delete-btn')) {
+                showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+                    itemsRef.child(id).remove().then(() => {
+                        if (item.type === 'file' && item.storagePath) {
+                            storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
+                        }
+                    }).catch(err => showAlert('삭제 실패: ' + err.message));
+                });
+                return;
+            }
+
+            if (item.type === 'link') {
+                window.open(item.content, '_blank');
             } else {
-                tapTimer = setTimeout(() => {
-                    tapCounter = 0;
-                }, 2000);
+                openModal(id);
             }
         });
-    }
 
-    const secretUploadInput = document.getElementById('secretUploadInput');
-    const secretUploadBtn = document.getElementById('secretUploadBtn');
-    secretUploadBtn.addEventListener('click', () => {
-        if (secretUploadInput.files.length > 0) {
-            uploadSecretFile(secretUploadInput.files[0]);
-        } else {
-            showAlert('업로드할 파일을 먼저 선택하세요.');
+        clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
+        [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
+        fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
+        window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
+        listFilterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                listFilterTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentListFilter = tab.dataset.filter;
+                renderList();
+            });
+        });
+
+        const secretTrigger = document.querySelector('.list-header h2');
+        if (secretTrigger) {
+            secretTrigger.style.cursor = 'pointer';
+            secretTrigger.addEventListener('click', () => {
+                tapCounter++;
+                clearTimeout(tapTimer);
+                if (tapCounter === 10) {
+                    tapCounter = 0;
+                    openSecretStash();
+                } else {
+                    tapTimer = setTimeout(() => {
+                        tapCounter = 0;
+                    }, 2000);
+                }
+            });
         }
-    });
 
-    const secretListContainer = document.getElementById('secretListContainer');
+        const secretUploadInput = document.getElementById('secretUploadInput');
+        const secretUploadBtn = document.getElementById('secretUploadBtn');
+        secretUploadBtn.addEventListener('click', () => {
+            if (secretUploadInput.files.length > 0) {
+                uploadSecretFile(secretUploadInput.files[0]);
+            } else {
+                showAlert('업로드할 파일을 먼저 선택하세요.');
+            }
+        });
+        const secretListContainer = document.getElementById('secretListContainer');
     secretListContainer.addEventListener('click', (e) => {
         const deleteBtn = e.target.closest('.secret-delete-btn');
         const listItem = e.target.closest('.secret-list-item');
@@ -977,10 +1032,9 @@ function playVideo(fileName, fileUrl) {
                 secretRef.child(id).remove().then(() => {
                     if (path && path !== "undefined") {
                         storage.ref(path).delete().then(() => {
-                            // ✨ 성공 시 알림 ✨
                             showAlert('파일이 성공적으로 삭제되었습니다.');
                         }).catch((error) => {
-                            // ✨ 실패 시 원인과 함께 알림 ✨
+ 
                             console.error('스토리지 파일 삭제 실패:', error);
                             showAlert(`파일 삭제에 실패했습니다. 에러: ${error.code}`);
                         });
@@ -992,25 +1046,63 @@ function playVideo(fileName, fileUrl) {
         } else if (listItem) {
             playVideo(listItem.dataset.fileName, listItem.dataset.fileUrl);
         }
-    });
-}
-
-    function initializeApp() {
-        new Sortable(listContainer, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: function (evt) {
-                const items = listContainer.querySelectorAll('.list-item');
-                const updates = {};
-                items.forEach((item, index) => {
-                    const itemId = item.dataset.id;
-                    updates[`/${itemId}/sortOrder`] = index;
-                });
-                itemsRef.update(updates).catch(err => {
-                    showAlert('순서 저장에 실패했습니다: ' + err.message);
-                });
+    });  
+    
+            clearHtmlBtn.addEventListener('click', () => {
+            if (htmlEditor) {
+                htmlEditor.setValue(''); // CodeMirror 편집기의 내용을 비웁니다.
             }
         });
+
+    themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = htmlEditor.getOption('theme');
+        const newTheme = currentTheme === 'material-darker' ? 'eclipse' : 'material-darker';
+        
+        htmlEditor.setOption('theme', newTheme); 
+        localStorage.setItem('editorTheme', newTheme); 
+        themeToggleBtn.innerHTML = newTheme === 'material-darker' ? '☀️' : '🌙'; // 버튼 아이콘 변경
+    });
+
+
+    }
+
+    function switchMainTab(tabToShow) {
+        const inputColumn = document.querySelector('.input-column');
+        const listColumn = document.querySelector('.list-column');
+        const mainTabBtns = document.querySelectorAll('.main-tab-btn');
+
+        if (tabToShow === 'input') {
+            inputColumn.style.display = 'flex';
+            listColumn.style.display = 'none';
+        } else {
+            inputColumn.style.display = 'none';
+            listColumn.style.display = 'flex';
+        }
+
+        mainTabBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabToShow);
+        });
+    }
+
+
+    function initializeApp() {
+new Sortable(listContainer, {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    delay: 1200, 
+    delayOnTouchOnly: true, 
+    onEnd: function (evt) {
+        const items = listContainer.querySelectorAll('.list-item');
+        const updates = {};
+        items.forEach((item, index) => {
+            const itemId = item.dataset.id;
+            updates[`/${itemId}/sortOrder`] = index;
+        });
+        itemsRef.update(updates).catch(err => {
+            showAlert('순서 저장에 실패했습니다: ' + err.message);
+        });
+    }
+});
 
         const handleSharedData = () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1036,17 +1128,21 @@ function playVideo(fileName, fileUrl) {
         };
         handleSharedData();
 
-        htmlEditor = CodeMirror.fromTextArea(htmlInput, {
-            lineNumbers: true,
-            mode: 'htmlmixed',
-            theme: 'material-darker',
-            lineWrapping: true,
-            extraKeys: {
-                "Ctrl-F": "findPersistent", "Cmd-F": "findPersistent",
-                "Ctrl-G": "findNext", "Cmd-G": "findNext",
-                "Shift-Ctrl-G": "findPrev", "Shift-Cmd-G": "findPrev"
-            }
-        });
+const savedTheme = localStorage.getItem('editorTheme') || 'material-darker';
+
+htmlEditor = CodeMirror.fromTextArea(htmlInput, {
+    lineNumbers: true,
+    mode: 'htmlmixed',
+    theme: savedTheme, 
+    lineWrapping: true,
+    extraKeys: {
+        "Ctrl-F": "findPersistent", "Cmd-F": "findPersistent",
+        "Ctrl-G": "findNext", "Cmd-G": "findNext",
+        "Shift-Ctrl-G": "findPrev", "Shift-Cmd-G": "findPrev"
+    }
+});
+
+themeToggleBtn.innerHTML = savedTheme === 'material-darker' ? '☀️' : '🌙';
         htmlEditor.on('change', updateSaveButtonState);
         
         addEventListeners();
@@ -1059,20 +1155,13 @@ function playVideo(fileName, fileUrl) {
                     .catch(err => console.error('SW registration failed: ', err));
             });
         }
+        const mainTabBtns = document.querySelectorAll('.main-tab-btn');
+        mainTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
+        });
     }
 
     initializeApp();
 </script>
-<div id="videoPlayerModal" class="modal-overlay">
-        <div class="modal-content" style="width: 90%; max-width: 1200px; height: auto;">
-            <div class="modal-header">
-                <h3 id="videoTitle">동영상 재생</h3>
-                <button class="modal-close-btn">닫기</button>
-            </div>
-            <div id="videoPlayerContainer" style="background: #000; padding: 0; margin-bottom: 20px;">
-                <video id="videoPlayer" controls style="width: 100%; max-height: 75vh;"></video>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
