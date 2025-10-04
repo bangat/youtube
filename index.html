@@ -26,6 +26,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/matchesonscrollbar.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/jump-to-line.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
     <style>
         :root {
             --bg-color: #f0f2f5;
@@ -397,10 +399,17 @@ body.html-mode-mobile .app-container {
     listContainer.innerHTML = '';
 
     const sortedItems = savedItems.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return b.timestamp - a.timestamp; 
-    });
+    // 1순위: 핀 고정된 항목이 항상 위로
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+
+    // 2순위: 같은 상태(둘다 고정/둘다 미고정) 내에서는 드래그 순서(sortOrder)로 정렬
+    // sortOrder 값이 없는 항목은 맨 뒤로 보냅니다.
+    const orderA = a.sortOrder !== undefined ? a.sortOrder : Infinity;
+    const orderB = b.sortOrder !== undefined ? b.sortOrder : Infinity;
+
+    return orderA - orderB;
+});
 
     const filteredItems = sortedItems.filter(item => {
         if (currentListFilter === 'all') return true;
@@ -610,6 +619,7 @@ body.html-mode-mobile .app-container {
             title = prompt("저장할 이름을 입력하세요.");
             if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; }
             const newItem = { type: 'html', title, content, timestamp: new Date().toISOString() };
+		newItem.sortOrder = Date.now();
             newItem.category = getCategoryForItem(newItem);
             itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
             return;
@@ -658,6 +668,7 @@ body.html-mode-mobile .app-container {
             return;
         }
         if (newItem) {
+newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
             newItem.category = getCategoryForItem(newItem);
             itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
         }
@@ -690,6 +701,7 @@ body.html-mode-mobile .app-container {
                         isImage: fileType.startsWith('image/'), fileUrl: downloadURL, storagePath: storagePath,
                         timestamp: new Date().toISOString()
                     };
+newItem.sortOrder = Date.now(); // ✨ 순서 값으로 현재 시간 추가
                     newItem.category = getCategoryForItem(newItem);
                     itemsRef.push(newItem).then(() => {
                         setTimeout(() => { progressBar.style.width = '0%'; resetFormCallback(); }, 500);
@@ -734,11 +746,10 @@ body.html-mode-mobile .app-container {
                     storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
                 }
             }).catch(err => showAlert('삭제 실패: ' + err.message));
-        }); // 이 괄호가 누락되었습니다.
+        }); 
         return;
-    } // ✨ 이 괄호가 누락되었습니다.
+    } 
 
-    // 아이템의 다른 영역 클릭 시
     if (item.type === 'link') {
         window.open(item.content, '_blank');
     } else {
@@ -768,6 +779,30 @@ body.html-mode-mobile .app-container {
     }
 
     function initializeApp() {
+
+        // --------------------------------------------------
+        // SortableJS 초기화
+        new Sortable(listContainer, {
+            animation: 150, // 드래그 애니메이션 효과
+            ghostClass: 'sortable-ghost', // 드래그 시 placeholder 스타일
+            onEnd: function (evt) {
+                // 드래그가 끝났을 때 순서 저장
+                const items = listContainer.querySelectorAll('.list-item');
+                const updates = {};
+                
+                items.forEach((item, index) => {
+                    const itemId = item.dataset.id;
+                    // 각 아이템의 새로운 순서(index)를 DB에 업데이트할 준비
+                    updates[`/${itemId}/sortOrder`] = index;
+                });
+
+                // 한 번의 요청으로 모든 아이템의 순서를 DB에 업데이트
+                itemsRef.update(updates).catch(err => {
+                    showAlert('순서 저장에 실패했습니다: ' + err.message);
+                });
+            }
+        });
+
 
         // 공유 기능으로 앱이 실행되었는지 확인
         const handleSharedData = () => {
