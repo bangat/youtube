@@ -920,144 +920,178 @@ const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
         );
     }
     
-    function addEventListeners() {
-        tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-        saveBtn.addEventListener('click', handleSave);
-        runHtmlBtn.addEventListener('click', () => {
-            const code = htmlEditor.getValue();
-            if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
-            htmlPreview.srcdoc = code;
-            htmlPreviewModal.style.display = 'flex';
-        });
-        searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
-        htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
-        listContainer.addEventListener('click', (e) => {
-            const listItem = e.target.closest('.list-item');
-            if (!listItem) return;
-            const id = listItem.dataset.id;
-            const item = savedItems.find(i => i.id === id);
-            if (!item) return;
-            if (e.target.closest('.item-icon')) {
-                const newPinnedState = !item.isPinned;
-                itemsRef.child(id).update({ isPinned: newPinnedState })
-                    .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
-                return;
-            }
-            if (e.target.classList.contains('delete-btn')) {
-                showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-                    itemsRef.child(id).remove().then(() => {
-                        if (item.type === 'file' && item.storagePath) {
-                            storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
-                        }
-                    }).catch(err => showAlert('삭제 실패: ' + err.message));
-                });
-                return;
-            }
-            if (item.type === 'link') {
-                window.open(item.content, '_blank');
-            } else {
-                openModal(id);
-            }
-        });
-        clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
-        [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
-        fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
-        dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
-        modalClose.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-        modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
-        window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
-        listFilterTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                listFilterTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentListFilter = tab.dataset.filter;
-                renderList();
-            });
-        });
-        const secretTrigger = document.querySelector('.list-header h2');
-        if (secretTrigger) {
-            secretTrigger.style.cursor = 'pointer';
-            secretTrigger.addEventListener('click', () => {
-                tapCounter++;
-                clearTimeout(tapTimer);
-                if (tapCounter === 10) {
-                    tapCounter = 0;
-                    const currentUser = auth.currentUser;
-                    if (currentUser && currentUser.uid === ADMIN_UID) {
-                        openSecretStash(); 
-                    }
-                } else {
-                    tapTimer = setTimeout(() => {
-                        tapCounter = 0;
-                    }, 2000);
-                }
-            });
+function addEventListeners() {
+    tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+    saveBtn.addEventListener('click', handleSave);
+    runHtmlBtn.addEventListener('click', () => {
+        const code = htmlEditor.getValue();
+        if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
+        htmlPreview.srcdoc = code;
+        htmlPreviewModal.style.display = 'flex';
+    });
+    searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
+    htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+    listContainer.addEventListener('click', (e) => {
+        const listItem = e.target.closest('.list-item');
+        if (!listItem) return;
+        const id = listItem.dataset.id;
+        const item = savedItems.find(i => i.id === id);
+        if (!item) return;
+        if (e.target.closest('.item-icon')) {
+            const newPinnedState = !item.isPinned;
+            itemsRef.child(id).update({ isPinned: newPinnedState })
+                .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
+            return;
         }
-        const secretUploadInput = document.getElementById('secretUploadInput');
-        const secretUploadBtn = document.getElementById('secretUploadBtn');
-        secretUploadBtn.addEventListener('click', () => {
-            if (secretUploadInput.files.length > 0) {
-                uploadSecretFile(secretUploadInput.files[0]);
-            } else {
-                showAlert('업로드할 파일을 먼저 선택하세요.');
-            }
-        });
-        const secretListContainer = document.getElementById('secretListContainer');
-        secretListContainer.addEventListener('click', (e) => {
-            const deleteBtn = e.target.closest('.secret-delete-btn');
-            const listItem = e.target.closest('.secret-list-item');
-            if (deleteBtn) {
-                const id = deleteBtn.dataset.id;
-                const path = deleteBtn.dataset.path;
-                showConfirmModal('이 파일을 정말로 삭제하시겠습니까?', () => {
-                    secretRef.child(id).remove().then(() => {
-                        if (path && path !== "undefined") {
-                            storage.ref(path).delete().then(() => {
-                                showAlert('파일이 성공적으로 삭제되었습니다.');
-                            }).catch((error) => {
-                                console.error('스토리지 파일 삭제 실패:', error);
-                                showAlert(`파일 삭제에 실패했습니다. 에러: ${error.code}`);
-                            });
-                        } else {
-                            showAlert('목록에서 항목이 삭제되었습니다.');
-                        }
-                    }).catch(err => showAlert('DB 정보 삭제 실패: ' + err.message));
-                });
-            } else if (listItem) {
-                playVideo(listItem.dataset.fileName, listItem.dataset.fileUrl);
-            }
-        });
-        clearHtmlBtn.addEventListener('click', () => {
-            if (htmlEditor) {
-                htmlEditor.setValue('');
-            }
-        });
-        themeToggleBtn.addEventListener('click', () => {
-            const currentTheme = htmlEditor.getOption('theme');
-            const newTheme = currentTheme === 'material-darker' ? 'eclipse' : 'material-darker';
-            htmlEditor.setOption('theme', newTheme); 
-            localStorage.setItem('editorTheme', newTheme); 
-            themeToggleBtn.innerHTML = newTheme === 'material-darker' ? '☀️' : '🌙';
-        });
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(error => {
-                console.error("로그인 실패:", error);
-                showAlert("로그인에 실패했습니다.");
+        if (e.target.classList.contains('delete-btn')) {
+            showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+                itemsRef.child(id).remove().then(() => {
+                    if (item.type === 'file' && item.storagePath) {
+                        storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
+                    }
+                }).catch(err => showAlert('삭제 실패: ' + err.message));
             });
+            return;
+        }
+        if (item.type === 'link') {
+            window.open(item.content, '_blank');
+        } else {
+            openModal(id);
+        }
+    });
+    clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
+    [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
+    fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
+    window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
+    listFilterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            listFilterTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentListFilter = tab.dataset.filter;
+            renderList();
         });
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            auth.signOut();
-        });
-        const mainTabBtns = document.querySelectorAll('.main-tab-btn');
-        mainTabBtns.forEach(btn => {
-            btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
+    });
+    const secretTrigger = document.querySelector('.list-header h2');
+    if (secretTrigger) {
+        secretTrigger.style.cursor = 'pointer';
+        secretTrigger.addEventListener('click', () => {
+            tapCounter++;
+            clearTimeout(tapTimer);
+            if (tapCounter === 10) {
+                tapCounter = 0;
+                const currentUser = auth.currentUser;
+                if (currentUser && currentUser.uid === ADMIN_UID) {
+                    openSecretStash(); 
+                }
+            } else {
+                tapTimer = setTimeout(() => {
+                    tapCounter = 0;
+                }, 2000);
+            }
         });
     }
+    const secretUploadInput = document.getElementById('secretUploadInput');
+    const secretUploadBtn = document.getElementById('secretUploadBtn');
+    secretUploadBtn.addEventListener('click', () => {
+        if (secretUploadInput.files.length > 0) {
+            uploadSecretFile(secretUploadInput.files[0]);
+        } else {
+            showAlert('업로드할 파일을 먼저 선택하세요.');
+        }
+    });
+    const secretListContainer = document.getElementById('secretListContainer');
+    secretListContainer.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('.secret-delete-btn');
+        const listItem = e.target.closest('.secret-list-item');
+        const icon = e.target.closest('.secret-item-icon');
+
+        if (icon) {
+            // ✨ [추가] 아이콘 클릭 시 핀 상태 변경
+            const id = listItem.dataset.id;
+            secretRef.child(id).once('value', snapshot => {
+                const currentItem = snapshot.val();
+                const newPinnedState = !(currentItem.isPinned || false);
+                secretRef.child(id).update({ isPinned: newPinnedState });
+            });
+        } else if (deleteBtn) {
+            // 삭제 버튼 로직
+            const id = deleteBtn.dataset.id;
+            const path = deleteBtn.dataset.path;
+            showConfirmModal('이 파일을 정말로 삭제하시겠습니까?', () => {
+                secretRef.child(id).remove().then(() => {
+                    if (path && path !== "undefined") {
+                        storage.ref(path).delete().then(() => {
+                            showAlert('파일이 성공적으로 삭제되었습니다.');
+                        }).catch((error) => {
+                            console.error('스토리지 파일 삭제 실패:', error);
+                            showAlert(`파일 삭제에 실패했습니다. 에러: ${error.code}`);
+                        });
+                    } else {
+                        showAlert('목록에서 항목이 삭제되었습니다.');
+                    }
+                }).catch(err => showAlert('DB 정보 삭제 실패: ' + err.message));
+            });
+        } else if (listItem) {
+            // 재생 로직
+            playVideo(listItem.dataset.fileName, listItem.dataset.fileUrl);
+        }
+    });
+
+    // ✨ [추가] 비밀 공간 드래그 앤 드롭 기능 활성화
+    new Sortable(secretListContainer, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: function (evt) {
+            const items = secretListContainer.querySelectorAll('.secret-list-item');
+            const updates = {};
+            items.forEach((item, index) => {
+                const itemId = item.dataset.id;
+                if (itemId) {
+                   updates[`/${itemId}/sortOrder`] = index;
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+               secretRef.update(updates).catch(err => {
+                   showAlert('순서 저장에 실패했습니다: ' + err.message);
+               });
+            }
+        }
+    });
+
+    clearHtmlBtn.addEventListener('click', () => {
+        if (htmlEditor) {
+            htmlEditor.setValue('');
+        }
+    });
+    themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = htmlEditor.getOption('theme');
+        const newTheme = currentTheme === 'material-darker' ? 'eclipse' : 'material-darker';
+        htmlEditor.setOption('theme', newTheme); 
+        localStorage.setItem('editorTheme', newTheme); 
+        themeToggleBtn.innerHTML = newTheme === 'material-darker' ? '☀️' : '🌙';
+    });
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(error => {
+            console.error("로그인 실패:", error);
+            showAlert("로그인에 실패했습니다.");
+        });
+    });
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        auth.signOut();
+    });
+    const mainTabBtns = document.querySelectorAll('.main-tab-btn');
+    mainTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
+    });
+}
 
     function switchMainTab(tabToShow) {
         const inputColumn = document.querySelector('.input-column');
