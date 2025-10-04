@@ -253,9 +253,9 @@
             </div>
             <input type="text" id="titleInput" class="input-field" placeholder="제목을 입력하세요 (필수)">
             <div id="html-actions-container">
-                <button id="runHtmlBtn" class="html-action-btn">▶ 실행</button>
-                <button id="searchBtn" class="html-action-btn">🔍 검색</button>
-                <button id="clearHtmlBtn" class="html-action-btn">🗑️ 비우기</button>
+                <button id="runHtmlBtn" class="html-action-btn">▶실행</button>
+                <button id="searchBtn" class="html-action-btn">🔍검색</button>
+                <button id="clearHtmlBtn" class="html-action-btn">🗑️삭제</button>
                 <button id="themeToggleBtn" class="html-action-btn" style="flex: 0.5;">☀️</button>
             </div>
             <div id="textInput-container">
@@ -1109,9 +1109,11 @@ secretUploadBtn.addEventListener('click', () => {
         }
     });
 
-    new Sortable(secretListContainer, {
+     new Sortable(secretListContainer, {
         animation: 150,
         ghostClass: 'sortable-ghost',
+        delay: 1000, // ✨ 터치스크린에서 스크롤이 가능하도록 1초 딜레이를 추가합니다.
+        delayOnTouchOnly: true, // ✨ 딜레이를 터치에만 적용합니다.
         onEnd: function (evt) {
             const items = secretListContainer.querySelectorAll('.secret-list-item');
             const updates = {};
@@ -1128,6 +1130,7 @@ secretUploadBtn.addEventListener('click', () => {
             }
         }
     });
+
 
     clearHtmlBtn.addEventListener('click', () => {
         if (htmlEditor) {
