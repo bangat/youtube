@@ -60,6 +60,8 @@
         
         #fileInput-container { display: none; }
         #htmlInput-container { display: none; flex-grow: 1; flex-direction: column; }
+        /* --- 추가된 부분 --- */
+        #linkInput-container { display: none; }
         
         /* HTML 뷰어 전용 스타일 */
         #runHtmlBtn { width: 100%; padding: 12px; background-color: #e02c4f; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
@@ -237,7 +239,7 @@
             padding: 24px;
             text-align: center;
             border-radius: 12px;
-    height: auto;
+            height: auto;
         }
         #confirmModal h3, #alertModal h3 { margin-bottom: 20px; }
         #confirmModal .modal-actions, #alertModal .modal-actions { justify-content: center; }
@@ -320,27 +322,27 @@
         #titleInput { display: block; }
         #runHtmlBtn { display: none; }
 
-/* --- 목록 탭 필터 스타일 --- */
-.list-filter-tabs {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-.list-filter-tab {
-    padding: 10px 15px;
-    border: none;
-    background: none;
-    color: var(--secondary-text);
-    font-weight: 600;
-    cursor: pointer;
-    position: relative;
-    border-bottom: 3px solid transparent;
-}
-.list-filter-tab.active {
-    color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-}
+        /* --- 목록 탭 필터 스타일 --- */
+        .list-filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .list-filter-tab {
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            color: var(--secondary-text);
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            border-bottom: 3px solid transparent;
+        }
+        .list-filter-tab.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
 
     </style>
 </head>
@@ -350,6 +352,7 @@
         <section class="input-column">
             <div class="tab-buttons">
                 <button class="tab-btn active" data-tab="text">텍스트</button>
+                <button class="tab-btn" data-tab="link">링크</button>
                 <button class="tab-btn" data-tab="file">파일</button>
                 <button class="tab-btn" data-tab="html">HTML 뷰어</button>
             </div>
@@ -358,6 +361,10 @@
             
             <div id="textInput-container">
                 <textarea id="textInput" class="input-field" placeholder="내용을 입력하세요."></textarea>
+            </div>
+            
+            <div id="linkInput-container">
+                <input type="url" id="linkInput" class="input-field" placeholder="URL 주소를 입력하세요. (예: https://google.com)">
             </div>
             
             <div id="fileInput-container">
@@ -377,18 +384,18 @@
         
         <section class="list-column">
             <div class="list-header">
-    <h2>내 저장공간</h2>
-    <button id="clearAllBtn">모두 지우기</button>
-</div>
+                <h2>내 저장공간</h2>
+                <button id="clearAllBtn">모두 지우기</button>
+            </div>
 
-<div class="list-filter-tabs">
-    <button class="list-filter-tab active" data-filter="all">전체</button>
-    <button class="list-filter-tab" data-filter="document">문서</button>
-    <button class="list-filter-tab" data-filter="photo">사진</button>
-    <button class="list-filter-tab" data-filter="music">음악</button>
-</div>
+            <div class="list-filter-tabs">
+                <button class="list-filter-tab active" data-filter="all">전체</button>
+                <button class="list-filter-tab" data-filter="document">문서</button>
+                <button class="list-filter-tab" data-filter="photo">사진</button>
+                <button class="list-filter-tab" data-filter="music">음악</button>
+            </div>
 
-<div id="listContainer" class="list-container"></div>
+            <div id="listContainer" class="list-container"></div>
         </section>
     </main>
 
@@ -450,7 +457,7 @@
       apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
       authDomain: "youtubu-c770d.firebaseapp.com",
       projectId: "youtubu-c770d",
-      storageBucket: "youtubu-c770d.firebasestorage.app",
+      storageBucket: "youtubu-c770d.appspot.com",
       messagingSenderId: "727943010727",
       appId: "1:727943010727:web:44ce6a65c1887026523e82",
       measurementId: "G-82SBN9ZWZQ"
@@ -467,9 +474,11 @@
     const textInputContainer = document.getElementById('textInput-container');
     const fileInputContainer = document.getElementById('fileInput-container');
     const htmlInputContainer = document.getElementById('htmlInput-container');
+    const linkInputContainer = document.getElementById('linkInput-container'); // --- 추가된 부분 ---
     const textInput = document.getElementById('textInput');
     const fileInput = document.getElementById('fileInput');
     const htmlInput = document.getElementById('htmlInput');
+    const linkInput = document.getElementById('linkInput'); // --- 추가된 부분 ---
     const htmlPreviewModal = document.getElementById('htmlPreviewModal');
     const htmlPreview = document.getElementById('htmlPreview');
     const tabButtons = document.querySelectorAll('.tab-btn');
@@ -514,9 +523,11 @@
     function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
     function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
     function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
-
+    
+    // --- 수정된 부분 ---
     function getCategoryForItem(item) {
-        if (item.type === 'text' || item.type === 'html') {
+        // 링크 타입은 문서로 분류
+        if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
             return 'document';
         }
         if (item.type === 'file') {
@@ -529,10 +540,13 @@
             if (musicExtensions.includes(extension)) return 'music';
             if (docExtensions.includes(extension)) return 'document';
         }
-        return 'document';
+        return 'document'; // 기본값
     }
     
+    // --- 수정된 부분 ---
     function getIconForItem(item) {
+        if (item.type === 'link') return '🔗'; // 링크 아이콘 추가
+
         const category = item.category || getCategoryForItem(item);
         if (category === 'photo') return '🖼️';
         if (category === 'music') return '🎵';
@@ -588,6 +602,7 @@
     }
 
     // --- UI Rendering ---
+    // --- 수정된 부분 ---
     function renderList() {
         listContainer.innerHTML = '';
         const filteredItems = savedItems.filter(item => {
@@ -599,17 +614,19 @@
         filteredItems.forEach(item => {
             const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
             const icon = getIconForItem(item);
-            const fileNamePreview = item.type === 'file' ? (item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName) : '';
-            const textPreview = (item.type === 'text' || item.type === 'html') ? (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : '')) : '';
             const itemEl = document.createElement('div');
             itemEl.className = 'list-item';
             itemEl.dataset.id = item.id;
             let itemContentHTML = '';
-            if (item.type === 'text' || item.type === 'html') {
-                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${textPreview}</div></div>`;
+
+            if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
+                const preview = (item.content.substring(0, 40).replace(/\n/g, ' ') + (item.content.length > 40 ? '...' : ''));
+                itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${preview}</div></div>`;
             } else if (item.type === 'file') {
+                const fileNamePreview = item.fileName.length > 20 ? '...' + item.fileName.slice(-17) : item.fileName;
                 itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
             }
+            
             itemEl.innerHTML = `<div class="item-icon">${icon}${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}</div>${itemContentHTML}<div class="item-date">${formatTimestamp(item.timestamp)}</div><button class="delete-btn">&times;</button>`;
             listContainer.appendChild(itemEl);
         });
@@ -688,15 +705,19 @@
     function copyText(text) { navigator.clipboard.writeText(text).then(() => { modalActionBtn.textContent = '복사 완료!'; setTimeout(() => { modalActionBtn.textContent = '전체 복사'; }, 1500); }); }
 
     // --- Main App Logic ---
+    // --- 수정된 부분 ---
     function switchTab(tab) {
         currentTab = tab;
         tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
         textInputContainer.style.display = 'none';
         fileInputContainer.style.display = 'none';
         htmlInputContainer.style.display = 'none';
+        linkInputContainer.style.display = 'none'; // 숨기기
         titleInput.style.display = 'none';
         runHtmlBtn.style.display = 'none';
+
         if (tab === 'text') { textInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
+        else if (tab === 'link') { linkInputContainer.style.display = 'block'; titleInput.style.display = 'block'; } // 보이기
         else if (tab === 'file') { fileInputContainer.style.display = 'block'; titleInput.style.display = 'block'; }
         else if (tab === 'html') { htmlInputContainer.style.display = 'flex'; runHtmlBtn.style.display = 'block'; }
         updateSaveButtonState();
@@ -709,24 +730,36 @@
         htmlPreviewModal.style.display = 'flex';
     }
 
+    // --- 수정된 부분 ---
     function updateSaveButtonState() {
         let isDisabled = true;
         const title = titleInput.value.trim();
         if (currentTab === 'text') { if (title && textInput.value.trim()) isDisabled = false; }
+        else if (currentTab === 'link') { if (title && linkInput.value.trim()) isDisabled = false; } // 링크 탭 조건
         else if (currentTab === 'file') { if (title && fileInput.files[0]) isDisabled = false; }
         else if (currentTab === 'html') { if (htmlInput.value.trim()) isDisabled = false; }
         saveBtn.disabled = isDisabled;
     }
     
+    // --- 수정된 부분 ---
     function handleSave() {
         let title = titleInput.value.trim();
-        const resetForm = () => { titleInput.value = ''; textInput.value = ''; htmlInput.value = ''; fileInput.value = ''; dropZoneText.textContent = '드래그 또는 클릭'; updateSaveButtonState(); };
+        const resetForm = () => { titleInput.value = ''; textInput.value = ''; htmlInput.value = ''; fileInput.value = ''; linkInput.value = ''; dropZoneText.textContent = '드래그 또는 클릭'; updateSaveButtonState(); };
         if (currentTab === 'html') { title = prompt("저장할 이름을 입력하세요."); if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; } }
         else { if (!title) { showAlert('제목을 입력해주세요.'); return; } }
         let newItem;
         if (currentTab === 'text') {
             if (!textInput.value.trim()) { showAlert('내용을 입력해주세요.'); return; }
             newItem = { type: 'text', title, content: textInput.value.trim(), timestamp: new Date().toISOString() };
+        } else if (currentTab === 'link') {
+            const url = linkInput.value.trim();
+            if (!url) { showAlert('URL을 입력해주세요.'); return; }
+            // 간단한 URL 유효성 검사
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                showAlert('유효한 URL 형식이 아닙니다. (http:// 또는 https:// 로 시작해야 합니다)');
+                return;
+            }
+            newItem = { type: 'link', title, content: url, timestamp: new Date().toISOString() };
         } else if (currentTab === 'html') {
             if (!htmlInput.value.trim()) { showAlert('HTML 코드를 입력해주세요.'); return; }
             newItem = { type: 'html', title, content: htmlInput.value.trim(), timestamp: new Date().toISOString() };
@@ -808,10 +841,13 @@
         saveBtn.addEventListener('click', handleSave);
         runHtmlBtn.addEventListener('click', runHtml);
         htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+        
+        // --- 수정된 부분 ---
         listContainer.addEventListener('click', (e) => {
             const listItem = e.target.closest('.list-item');
             if (!listItem) return;
             const id = listItem.dataset.id;
+            
             if (e.target.classList.contains('delete-btn')) {
                 showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
                     const itemToDelete = savedItems.find(item => item.id === id);
@@ -822,13 +858,23 @@
                     }).catch(err => showAlert('삭제 실패: ' + err.message));
                 });
             } else {
-                openModal(id);
+                // 클릭한 아이템 정보 찾기
+                const itemToOpen = savedItems.find(item => item.id === id);
+                if (itemToOpen && itemToOpen.type === 'link') {
+                    // 타입이 'link'이면 새 탭에서 열기
+                    window.open(itemToOpen.content, '_blank');
+                } else {
+                    // 그 외에는 기존 모달 열기
+                    openModal(id);
+                }
             }
         });
+
         clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
         titleInput.addEventListener('input', updateSaveButtonState);
         textInput.addEventListener('input', updateSaveButtonState);
         htmlInput.addEventListener('input', updateSaveButtonState);
+        linkInput.addEventListener('input', updateSaveButtonState); // --- 추가된 부분 ---
         fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
         dropZone.addEventListener('click', () => fileInput.click());
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
@@ -870,4 +916,3 @@
 </script>
 </body>
 </html>
-
