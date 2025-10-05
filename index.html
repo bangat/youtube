@@ -336,10 +336,11 @@
                 <img id="modalImagePreview" />
                 <div id="modalFileInfo"></div>
             </div>
-            <div class="modal-actions">
-                <button class="modal-btn" id="modalToggleViewBtn">미리보기</button>
-                <button class="modal-btn" id="modalActionBtn"></button>
-            </div>
+<div class="modal-actions">
+    <button class="modal-btn" id="modalToggleViewBtn">미리보기</button>
+    <button class="modal-btn" id="modalDownloadHtmlBtn" style="display: none;">다운로드</button>
+    <button class="modal-btn" id="modalActionBtn"></button>
+</div>
         </div>
     </div>
     <div id="htmlPreviewModal" class="modal-overlay">
@@ -428,6 +429,7 @@ let secretRef;
     const ADMIN_UID = 'WZGm0K9WdaUl6J8hEjMYcHy5Hd42';
 
     // DOM Elements
+    const modalDownloadHtmlBtn = document.getElementById('modalDownloadHtmlBtn');
     const titleInput = document.getElementById('titleInput');
     const textInputContainer = document.getElementById('textInput-container');
     const fileInputContainer = document.getElementById('fileInput-container');
@@ -514,6 +516,19 @@ let secretRef;
         if (item.type === 'html' || (item.type === 'text' && isHtml(item.content))) return '💻';
         return '📄';
     }
+
+    function downloadHtmlFile(item) {
+    if (!item || !item.content) return;
+    const blob = new Blob([item.content], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${item.title}.html`; // '제목.html' 형식으로 파일 이름 설정
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
     
     async function downloadFile(item) {
         if (!item || !item.fileUrl) return;
@@ -745,36 +760,39 @@ let secretRef;
         });
     }
 
-    function openModal(id) {
-        currentItemInModal = savedItems.find(i => i.id === id);
-        if (!currentItemInModal) return;
-        modalTitle.textContent = currentItemInModal.title;
-        modalText.style.display = 'none';
-        modalHtmlPreview.style.display = 'none';
-        modalImagePreview.style.display = 'none';
-        modalFileInfo.style.display = 'none';
+   function openModal(id) {
+    currentItemInModal = savedItems.find(i => i.id === id);
+    if (!currentItemInModal) return;
+    modalTitle.textContent = currentItemInModal.title;
+    modalText.style.display = 'none';
+    modalHtmlPreview.style.display = 'none';
+    modalImagePreview.style.display = 'none';
+    modalFileInfo.style.display = 'none';
+    modalToggleViewBtn.style.display = 'none';
+    modalDownloadHtmlBtn.style.display = 'none'; // ✨ 버튼 기본적으로 숨기기
+    modalActionBtn.style.display = 'inline-block';
+    if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
+        modalToggleViewBtn.style.display = 'inline-block';
+        modalDownloadHtmlBtn.style.display = 'inline-block'; // ✨ HTML일때 다운로드 버튼 표시
+        modalDownloadHtmlBtn.onclick = () => downloadHtmlFile(currentItemInModal); // ✨ 다운로드 함수 연결
+        modalActionBtn.textContent = '전체 복사';
+        modalActionBtn.onclick = () => copyText(currentItemInModal.content);
+        showContentView();
+    } else if (currentItemInModal.type === 'file') {
         modalToggleViewBtn.style.display = 'none';
-        modalActionBtn.style.display = 'inline-block';
-        if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
-            modalToggleViewBtn.style.display = 'inline-block';
-            modalActionBtn.textContent = '전체 복사';
-            modalActionBtn.onclick = () => copyText(currentItemInModal.content);
-            showContentView();
-        } else if (currentItemInModal.type === 'file') {
-            modalToggleViewBtn.style.display = 'none';
-            modalActionBtn.textContent = '다운로드';
-            modalActionBtn.onclick = () => downloadFile(currentItemInModal);
-            if (currentItemInModal.isImage) {
-                modalImagePreview.src = currentItemInModal.fileUrl;
-                modalImagePreview.style.display = 'block';
-            } else {
-                modalFileInfo.innerHTML = `<div style="font-size: 5rem; line-height: 1;">${getIconForItem(currentItemInModal)}</div><p style="font-weight: 600; margin-top: 1rem;">${currentItemInModal.fileName}</p><p style="color: var(--secondary-text);">${formatFileSize(currentItemInModal.fileSize)}</p>`;
-                modalFileInfo.style.display = 'block';
-            }
+        modalActionBtn.textContent = '다운로드';
+        modalActionBtn.onclick = () => downloadFile(currentItemInModal);
+        if (currentItemInModal.isImage) {
+            modalImagePreview.src = currentItemInModal.fileUrl;
+            modalImagePreview.style.display = 'block';
+        } else {
+            modalFileInfo.innerHTML = `<div style="font-size: 5rem; line-height: 1;">${getIconForItem(currentItemInModal)}</div><p style="font-weight: 600; margin-top: 1rem;">${currentItemInModal.fileName}</p><p style="color: var(--secondary-text);">${formatFileSize(currentItemInModal.fileSize)}</p>`;
+            modalFileInfo.style.display = 'block';
         }
-        modal.style.display = 'flex';
-        history.pushState({ modalOpen: true }, '', '#modal');
     }
+    modal.style.display = 'flex';
+    history.pushState({ modalOpen: true }, '', '#modal');
+}
 
     function closeModal() {
         modal.style.display = 'none';
@@ -1364,3 +1382,4 @@ secretUploadBtn.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
