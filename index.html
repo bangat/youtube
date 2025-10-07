@@ -181,7 +181,36 @@
             .delete-btn { top: 50%; transform: translateY(-50%); font-size: 20px; }
             .modal-content { width: 100%; height: 100%; border-radius: 0; }
             #dropZone-text { padding: 0 10px; }
+
+/* ✨ 모바일에서 영상 플레이어를 전체 화면으로 표시 */
+            #videoPlayerModal .modal-content {
+                padding: 0;
+                background-color: #000;
+                justify-content: center;
+            }
+            #videoPlayerModal .modal-header {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                z-index: 1;
+                background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+                border: none;
+                padding-top: calc(env(safe-area-inset-top) + 10px); /* iPhone 노치 등 상단 여백 확보 */
+            }
+            #videoPlayerModal .modal-close-btn {
+                color: white;
+                background: transparent;
+                border: none;
+                font-weight: bold;
+            }
+            #videoPlayer {
+                max-height: 100%;
+                object-fit: contain; /* 영상 비율을 유지하며 꽉 채우기 */
+            }
         }
+
+
 
 /* 로그인/로그아웃 버튼 스타일 */
 #loginBtn, #logoutBtn {
@@ -626,11 +655,36 @@
         videoTitle.textContent = fileName;
         videoPlayer.src = fileUrl;
         videoModal.style.display = 'flex';
-        videoModal.querySelector('.modal-close-btn').onclick = () => {
+
+        // ✨ 비디오가 재생될 준비가 되면 기기의 전체 화면 모드를 요청합니다.
+        videoPlayer.oncanplay = () => {
+            if (videoPlayer.requestFullscreen) {
+                videoPlayer.requestFullscreen();
+            } else if (videoPlayer.webkitRequestFullscreen) { // Safari, Chrome
+                videoPlayer.webkitRequestFullscreen();
+            } else if (videoPlayer.msRequestFullscreen) { // IE11
+                videoPlayer.msRequestFullscreen();
+            }
+        };
+
+        const closeModalAndExitFullscreen = () => {
             videoPlayer.pause();
             videoPlayer.src = "";
             videoModal.style.display = 'none';
+            // 전체 화면 모드에서 나갑니다.
+            if (document.fullscreenElement && document.exitFullscreen) {
+                document.exitFullscreen();
+            }
         };
+        
+        videoModal.querySelector('.modal-close-btn').onclick = closeModalAndExitFullscreen;
+
+        // ✨ 전체 화면이 해제될 때 모달도 함께 닫히도록 이벤트 리스너를 추가합니다.
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                closeModalAndExitFullscreen();
+            }
+        }, { once: true }); // 이벤트가 한 번만 실행되도록 설정
     }
 
     function openSecretStash() {
