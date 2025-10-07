@@ -56,9 +56,10 @@
 }
 
 #auth-container {
-    display: flex; /* 내부 요소들을 정렬하기 위해 flex 추가 */
-    align-items: center; /* 세로 중앙 정렬 */
-    gap: 10px; /* 버튼과 텍스트 사이 간격 */
+    display: flex; 
+    align-items: center;
+    gap: 10px; 
+    margin-left: auto; /* ✨ 왼쪽 여백을 자동으로 설정해 오른쪽으로 밀어냅니다 */
 }
 .main-tab-btn {
     padding: 12px 16px; /* ✨ 좌우 여백을 늘려줍니다. */
@@ -246,7 +247,7 @@
 }.app-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+
     padding: 0 24px;
     background-color: var(--sidebar-color);
     border-bottom: 1px solid var(--border-color);
@@ -294,17 +295,18 @@
         min-width: 0;
     }
     #userInfo {
-        font-size: 14px; /* 이름 글씨 크기를 살짝 줄입니다. */
+        font-size: 10px; /* 이름 글씨 크기를 살짝 줄입니다. */
         
         /* 이름이 너무 길 경우 ... 으로 표시되도록 처리 */
-        max-width: 120px; 
+        /* max-width: 120px; 삭제 */
         overflow: hidden;
         text-overflow: ellipsis;
-        display: inline-block; /* ellipsis 처리를 위해 추가 */
+        white-space: nowrap; /* ✨ 줄바꿈 방지를 위해 추가 */
+        display: inline-block;
     }
     #logoutBtn {
-        font-size: 14px; /* 로그아웃 버튼 글씨 크기를 살짝 줄입니다. */
-        padding: 4px 8px; /* 버튼 크기를 조금 더 컴팩트하게 조절 */
+        font-size: 10px; /* 로그아웃 버튼 글씨 크기를 살짝 줄입니다. */
+        padding: 3px 8px; /* 버튼 크기를 조금 더 컴팩트하게 조절 */
     }
 }
 
