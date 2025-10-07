@@ -105,7 +105,7 @@
         .input-column > #textInput-container { display: flex; }
         #textInput { flex-grow: 1; resize: vertical; }
         .CodeMirror { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; height: 100%; font-size: 14px; }
-        #html-actions-container { display: none; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
+        #html-actions-container { display: none; flex-direction: row; gap: 10px; margin-bottom: 15px; flex-shrink: 0; }
         .html-action-btn { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--surface-color); font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
         .html-action-btn:hover { background-color: #e9ebee; }
         #runHtmlBtn { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
@@ -185,44 +185,36 @@
 
 /* 로그인/로그아웃 버튼 스타일 */
 #loginBtn, #logoutBtn {
-    padding: 6px 12px; /* 버튼 높이를 줄임 */
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background-color: var(--surface-color);
-    font-size: 14px;
+    padding: 4px 10px; /* 패딩 축소 */
+    border-radius: 6px;
+    font-size: 13px; /* 폰트 크기 축소 */
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s;
-}
-
-#loginBtn:hover, #logoutBtn:hover {
-    background-color: #e9ebee;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-color);
 }
 
 /* Google 로그인 버튼 전용 스타일 */
 #loginBtn {
-    display: inline-flex; /* 아이콘과 텍스트 정렬을 위해 flex 사용 */
+    display: inline-flex; 
     align-items: center;
-    gap: 8px;
+    gap: 6px; /* 아이콘-텍스트 간격 축소 */
     background-color: var(--accent-color);
     border-color: var(--accent-color);
     color: white;
-}
-#loginBtn:hover {
-    background-color: #1868cd;
 }
 
 /* 구글 로고 아이콘 (SVG) */
 #loginBtn::before {
     content: '';
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 15px; /* 아이콘 크기 축소 */
+    height: 15px; /* 아이콘 크기 축소 */
     background-color: white;
     -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="%23EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="%234285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="%23FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="%2334A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>') center/contain no-repeat;
     mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="%23EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="%234285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="%23FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="%2334A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>') center/contain no-repeat;
-}
-.app-header {
+}.app-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -235,6 +227,33 @@
 /* ✨ 라인 구간 선택 시작 지점 하이라이트 스타일 */
 .cm-start-line {
     background-color: rgba(66, 133, 244, 0.2);
+}
+
+/* ✨ 에디터 액션 모달 (복사/붙여넣기) 스타일 */
+#editor-action-modal {
+    display: none;
+    position: absolute;
+    z-index: 2000;
+    background-color: rgba(40, 40, 40, 0.85);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 5px;
+    gap: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+#editor-action-modal button {
+    background: none;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+#editor-action-modal button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 @media (max-width: 480px) {
@@ -407,8 +426,13 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
+<div id="editor-action-modal">
+        <button id="editor-copy-btn">복사</button>
+        <button id="editor-paste-btn">붙여넣기</button>
+    </div>
+
 <script>
-    // Firebase Config
+   // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDrCteXGRfo4Gm95r0fIQxc_f8NgU42X80",
       authDomain: "youtubu-c770d.firebaseapp.com",
@@ -424,8 +448,8 @@
     const auth = firebase.auth();
     const database = firebase.database();
     const storage = firebase.storage();
-const itemsRef = database.ref('items'); 
-let secretRef; 
+    const itemsRef = database.ref('items'); 
+    let secretRef; 
     const ADMIN_UID = 'WZGm0K9WdaUl6J8hEjMYcHy5Hd42';
 
     // DOM Elements
@@ -470,9 +494,12 @@ let secretRef;
     const searchBtn = document.getElementById('searchBtn');
     const clearHtmlBtn = document.getElementById('clearHtmlBtn');
     const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const editorActionModal = document.getElementById('editor-action-modal');
     
     // State Variables
     let htmlEditor;
+    let selectionInProgress = false;
+    let startLine = null; // ✨ 이 줄을 추가하세요
     let currentTab = 'text';
     let savedItems = [];
     let currentItemInModal = null;
@@ -489,6 +516,41 @@ let secretRef;
     function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
     function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
     function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
+
+// ✨ 액션 모달을 보여주고 상태를 초기화하는 함수들
+        function showEditorActionModal(x, y) {
+            const modal = editorActionModal;
+            const editorWrapper = htmlEditor.getWrapperElement();
+            const rect = editorWrapper.getBoundingClientRect();
+            
+            // 에디터 기준으로 위치 계산
+            let top = y - rect.top + 10;
+            let left = x - rect.left;
+
+            modal.style.display = 'flex'; // 먼저 표시해야 크기 계산 가능
+
+            // 모달이 에디터 밖으로 나가지 않도록 위치 보정
+            if (left + modal.offsetWidth > rect.width) {
+                left = rect.width - modal.offsetWidth - 5;
+            }
+             if (top + modal.offsetHeight > rect.height) {
+                top = y - rect.top - modal.offsetHeight - 10;
+            }
+
+            modal.style.top = `${top}px`;
+            modal.style.left = `${left}px`;
+            selectionInProgress = true;
+        }
+
+        function hideEditorActionModalAndReset() {
+            if (!selectionInProgress) return;
+            editorActionModal.style.display = 'none';
+            if (startLine !== null) {
+                htmlEditor.removeLineClass(startLine, 'background', 'cm-start-line');
+            }
+            startLine = null;
+            selectionInProgress = false;
+        }
 
     function getCategoryForItem(item) {
         if (item.type === 'text' || item.type === 'html' || item.type === 'link') { return 'document'; }
@@ -518,17 +580,17 @@ let secretRef;
     }
 
     function downloadHtmlFile(item) {
-    if (!item || !item.content) return;
-    const blob = new Blob([item.content], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${item.title}.html`; // '제목.html' 형식으로 파일 이름 설정
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
+        if (!item || !item.content) return;
+        const blob = new Blob([item.content], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${item.title}.html`; // '제목.html' 형식으로 파일 이름 설정
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
     
     async function downloadFile(item) {
         if (!item || !item.fileUrl) return;
@@ -645,58 +707,58 @@ let secretRef;
     }
 
     function uploadSecretFile(file) {
-    if (!file) return;
+        if (!file) return;
 
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-        showAlert('업로드를 위해 먼저 로그인해주세요.');
-        return;
-    }
-
-    const progressEl = document.getElementById('secretUploadProgress');
-    const uploadBtn = document.getElementById('secretUploadBtn');
-    uploadBtn.disabled = true;
-    const timestamp = Date.now();
-
-    const storagePath = `users/${currentUser.uid}/secret_files/${timestamp}_${file.name}`;
-
-    const fileRef = storage.ref(storagePath);
-    const uploadTask = fileRef.put(file);
-    uploadTask.on('state_changed', 
-        (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
-        },
-        (error) => {
-            showAlert('보안 파일 업로드 실패: ' + error.message);
-            progressEl.textContent = '';
-            uploadBtn.disabled = false;
-        },
-        () => {
-            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                const newItem = {
-                    fileName: file.name,
-                    fileUrl: downloadURL,
-                    storagePath: storagePath,
-                    timestamp: new Date().toISOString(),
-                    isPinned: false,
-                    sortOrder: Date.now()
-                };
-                secretRef.push(newItem)
-                    .then(() => {
-                        progressEl.textContent = '업로드 완료!';
-                        document.getElementById('secretUploadInput').value = '';
-                        setTimeout(() => { progressEl.textContent = ''; }, 2000); 
-                        uploadBtn.disabled = false; 
-                    })
-                    .catch(err => {
-                        showAlert('DB 저장 실패: ' + err.message);
-                        uploadBtn.disabled = false;
-                    });
-            });
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            showAlert('업로드를 위해 먼저 로그인해주세요.');
+            return;
         }
-    );
-}
+
+        const progressEl = document.getElementById('secretUploadProgress');
+        const uploadBtn = document.getElementById('secretUploadBtn');
+        uploadBtn.disabled = true;
+        const timestamp = Date.now();
+
+        const storagePath = `users/${currentUser.uid}/secret_files/${timestamp}_${file.name}`;
+
+        const fileRef = storage.ref(storagePath);
+        const uploadTask = fileRef.put(file);
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
+            },
+            (error) => {
+                showAlert('보안 파일 업로드 실패: ' + error.message);
+                progressEl.textContent = '';
+                uploadBtn.disabled = false;
+            },
+            () => {
+                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    const newItem = {
+                        fileName: file.name,
+                        fileUrl: downloadURL,
+                        storagePath: storagePath,
+                        timestamp: new Date().toISOString(),
+                        isPinned: false,
+                        sortOrder: Date.now()
+                    };
+                    secretRef.push(newItem)
+                        .then(() => {
+                            progressEl.textContent = '업로드 완료!';
+                            document.getElementById('secretUploadInput').value = '';
+                            setTimeout(() => { progressEl.textContent = ''; }, 2000); 
+                            uploadBtn.disabled = false; 
+                        })
+                        .catch(err => {
+                            showAlert('DB 저장 실패: ' + err.message);
+                            uploadBtn.disabled = false;
+                        });
+                });
+            }
+        );
+    }
 
     function loadItemsFromFirebase() {
         itemsRef.on('value', (snapshot) => {
@@ -760,39 +822,39 @@ let secretRef;
         });
     }
 
-   function openModal(id) {
-    currentItemInModal = savedItems.find(i => i.id === id);
-    if (!currentItemInModal) return;
-    modalTitle.textContent = currentItemInModal.title;
-    modalText.style.display = 'none';
-    modalHtmlPreview.style.display = 'none';
-    modalImagePreview.style.display = 'none';
-    modalFileInfo.style.display = 'none';
-    modalToggleViewBtn.style.display = 'none';
-    modalDownloadHtmlBtn.style.display = 'none'; // ✨ 버튼 기본적으로 숨기기
-    modalActionBtn.style.display = 'inline-block';
-    if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
-        modalToggleViewBtn.style.display = 'inline-block';
-        modalDownloadHtmlBtn.style.display = 'inline-block'; // ✨ HTML일때 다운로드 버튼 표시
-        modalDownloadHtmlBtn.onclick = () => downloadHtmlFile(currentItemInModal); // ✨ 다운로드 함수 연결
-        modalActionBtn.textContent = '전체 복사';
-        modalActionBtn.onclick = () => copyText(currentItemInModal.content);
-        showContentView();
-    } else if (currentItemInModal.type === 'file') {
+    function openModal(id) {
+        currentItemInModal = savedItems.find(i => i.id === id);
+        if (!currentItemInModal) return;
+        modalTitle.textContent = currentItemInModal.title;
+        modalText.style.display = 'none';
+        modalHtmlPreview.style.display = 'none';
+        modalImagePreview.style.display = 'none';
+        modalFileInfo.style.display = 'none';
         modalToggleViewBtn.style.display = 'none';
-        modalActionBtn.textContent = '다운로드';
-        modalActionBtn.onclick = () => downloadFile(currentItemInModal);
-        if (currentItemInModal.isImage) {
-            modalImagePreview.src = currentItemInModal.fileUrl;
-            modalImagePreview.style.display = 'block';
-        } else {
-            modalFileInfo.innerHTML = `<div style="font-size: 5rem; line-height: 1;">${getIconForItem(currentItemInModal)}</div><p style="font-weight: 600; margin-top: 1rem;">${currentItemInModal.fileName}</p><p style="color: var(--secondary-text);">${formatFileSize(currentItemInModal.fileSize)}</p>`;
-            modalFileInfo.style.display = 'block';
+        modalDownloadHtmlBtn.style.display = 'none';
+        modalActionBtn.style.display = 'inline-block';
+        if (currentItemInModal.type === 'text' || currentItemInModal.type === 'html') {
+            modalToggleViewBtn.style.display = 'inline-block';
+            modalDownloadHtmlBtn.style.display = 'inline-block';
+            modalDownloadHtmlBtn.onclick = () => downloadHtmlFile(currentItemInModal);
+            modalActionBtn.textContent = '전체 복사';
+            modalActionBtn.onclick = () => copyText(currentItemInModal.content);
+            showContentView();
+        } else if (currentItemInModal.type === 'file') {
+            modalToggleViewBtn.style.display = 'none';
+            modalActionBtn.textContent = '다운로드';
+            modalActionBtn.onclick = () => downloadFile(currentItemInModal);
+            if (currentItemInModal.isImage) {
+                modalImagePreview.src = currentItemInModal.fileUrl;
+                modalImagePreview.style.display = 'block';
+            } else {
+                modalFileInfo.innerHTML = `<div style="font-size: 5rem; line-height: 1;">${getIconForItem(currentItemInModal)}</div><p style="font-weight: 600; margin-top: 1rem;">${currentItemInModal.fileName}</p><p style="color: var(--secondary-text);">${formatFileSize(currentItemInModal.fileSize)}</p>`;
+                modalFileInfo.style.display = 'block';
+            }
         }
+        modal.style.display = 'flex';
+        history.pushState({ modalOpen: true }, '', '#modal');
     }
-    modal.style.display = 'flex';
-    history.pushState({ modalOpen: true }, '', '#modal');
-}
 
     function closeModal() {
         modal.style.display = 'none';
@@ -834,40 +896,40 @@ let secretRef;
         confirmCancelBtn.addEventListener('click', handleCancel);
     }
 
-   function copyText(text) {
-    const originalButtonText = '전체 복사';
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => {
-            modalActionBtn.textContent = '복사 완료!';
-            setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
-        }).catch(err => {
-            console.error('클립보드 복사 실패, 대체 방법 시도:', err);
+    function copyText(text) {
+        const originalButtonText = '전체 복사';
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                modalActionBtn.textContent = '복사 완료!';
+                setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
+            }).catch(err => {
+                console.error('클립보드 복사 실패, 대체 방법 시도:', err);
+                fallbackCopy(text);
+            });
+        } else {
             fallbackCopy(text);
-        });
-    } else {
-        fallbackCopy(text);
-    }
-    function fallbackCopy(textToCopy) {
-        const textArea = document.createElement("textarea");
-        textArea.value = textToCopy;
-        textArea.style.position = "fixed";
-        textArea.style.top = 0;
-        textArea.style.left = 0;
-        textArea.style.opacity = 0;
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-            const successful = document.execCommand('copy');
-            modalActionBtn.textContent = successful ? '복사 완료!' : '복사 실패';
-        } catch (err) {
-            modalActionBtn.textContent = '복사 실패';
-            console.error('대체 복사 방법 오류:', err);
         }
-        document.body.removeChild(textArea);
-        setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
+        function fallbackCopy(textToCopy) {
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            textArea.style.position = "fixed";
+            textArea.style.top = 0;
+            textArea.style.left = 0;
+            textArea.style.opacity = 0;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                const successful = document.execCommand('copy');
+                modalActionBtn.textContent = successful ? '복사 완료!' : '복사 실패';
+            } catch (err) {
+                modalActionBtn.textContent = '복사 실패';
+                console.error('대체 복사 방법 오류:', err);
+            }
+            document.body.removeChild(textArea);
+            setTimeout(() => { modalActionBtn.textContent = originalButtonText; }, 1500);
+        }
     }
-}
 
     function switchTab(tab) {
         currentTab = tab;
@@ -942,49 +1004,44 @@ let secretRef;
                 showAlert('유효한 URL 형식이 아닙니다.'); return;
             }
             newItem = { type: 'link', title, content: url, timestamp: new Date().toISOString(), isPinned: false, sortOrder: Date.now() };
-     } else if (currentTab === 'file') {
-    const files = fileInput.files; // ✨ files[0] 대신 files 전체를 가져옵니다.
-    if (files.length === 0) { showAlert('파일을 선택해주세요.'); return; }
+        } else if (currentTab === 'file') {
+            const files = fileInput.files;
+            if (files.length === 0) { showAlert('파일을 선택해주세요.'); return; }
 
-    // ✨ 선택된 모든 파일에 대해 반복 실행합니다.
-    for (const file of files) {
-        // ✨ 각 파일에 대해 업로드 로직을 실행하기 위해 즉시 실행 함수로 감쌉니다.
-        ((fileToProcess) => {
-            const isImage = fileToProcess.type.startsWith('image/');
-            const handleUpload = (fileBlob) => {
-                // 여러 파일 업로드 시, 제목 뒤에 파일명을 붙여 구분합니다.
-                const fileTitle = files.length > 1 ? `${title} (${fileToProcess.name})` : title;
-                // 마지막 파일 업로드 시에만 폼을 초기화하도록 콜백을 수정합니다.
-                const isLastFile = fileToProcess === files[files.length - 1];
-                uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, fileToProcess.type, isLastFile ? resetForm : () => {});
-            };
-
-            if (isImage) {
-                // 이미지 최적화 로직 (기존과 동일)
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1024, MAX_HEIGHT = 768;
-                        let { width, height } = img;
-                        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
-                        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
-                        canvas.width = width; canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob(blob => handleUpload(blob || fileToProcess), fileToProcess.type, 0.75);
+            for (const file of files) {
+                ((fileToProcess) => {
+                    const isImage = fileToProcess.type.startsWith('image/');
+                    const handleUpload = (fileBlob) => {
+                        const fileTitle = files.length > 1 ? `${title} (${fileToProcess.name})` : title;
+                        const isLastFile = fileToProcess === files[files.length - 1];
+                        uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, fileToProcess.type, isLastFile ? resetForm : () => {});
                     };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(fileToProcess);
-            } else {
-                handleUpload(fileToProcess);
+
+                    if (isImage) {
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 1024, MAX_HEIGHT = 768;
+                                let { width, height } = img;
+                                if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } }
+                                else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                                canvas.width = width; canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                canvas.toBlob(blob => handleUpload(blob || fileToProcess), fileToProcess.type, 0.75);
+                            };
+                            img.src = e.target.result;
+                        };
+                        reader.readAsDataURL(fileToProcess);
+                    } else {
+                        handleUpload(fileToProcess);
+                    }
+                })(file);
             }
-        })(file);
-    }
-    return; // 반복문이 끝난 후 함수 종료
-}
+            return;
+        }
 
         if (newItem) {
             newItem.category = getCategoryForItem(newItem);
@@ -998,7 +1055,7 @@ let secretRef;
             showAlert('업로드를 위해 먼저 로그인해주세요.');
             return;
         }
-const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
+        const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
         const fileRef = storage.ref(storagePath);
         const uploadTask = fileRef.put(fileToUpload);
         dropZone.classList.add('uploading');
@@ -1033,183 +1090,218 @@ const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
         );
     }
     
-function addEventListeners() {
-    tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-    saveBtn.addEventListener('click', handleSave);
-    runHtmlBtn.addEventListener('click', () => {
-        const code = htmlEditor.getValue();
-        if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
-        htmlPreview.srcdoc = code;
-        htmlPreviewModal.style.display = 'flex';
-    });
-    searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
-    htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
-    listContainer.addEventListener('click', (e) => {
-        const listItem = e.target.closest('.list-item');
-        if (!listItem) return;
-        const id = listItem.dataset.id;
-        const item = savedItems.find(i => i.id === id);
-        if (!item) return;
-        if (e.target.closest('.item-icon')) {
-            const newPinnedState = !item.isPinned;
-            itemsRef.child(id).update({ isPinned: newPinnedState })
-                .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
-            return;
-        }
-        if (e.target.classList.contains('delete-btn')) {
-            showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-                itemsRef.child(id).remove().then(() => {
-                    if (item.type === 'file' && item.storagePath) {
-                        storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
-                    }
-                }).catch(err => showAlert('삭제 실패: ' + err.message));
-            });
-            return;
-        }
-        if (item.type === 'link') {
-            window.open(item.content, '_blank');
-        } else {
-            openModal(id);
-        }
-    });
-    clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
-    [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
-    fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
-    modalClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-    modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
-    window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
-    listFilterTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            listFilterTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentListFilter = tab.dataset.filter;
-            renderList();
+    function addEventListeners() {
+        tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        saveBtn.addEventListener('click', handleSave);
+        runHtmlBtn.addEventListener('click', () => {
+            const code = htmlEditor.getValue();
+            if (!code.trim()) { showAlert("실행할 HTML 코드를 입력하세요."); return; }
+            htmlPreview.srcdoc = code;
+            htmlPreviewModal.style.display = 'flex';
         });
-    });
-    const secretTrigger = document.querySelector('.list-header h2');
-    if (secretTrigger) {
-        secretTrigger.style.cursor = 'pointer';
-        secretTrigger.addEventListener('click', () => {
-            tapCounter++;
-            clearTimeout(tapTimer);
-            if (tapCounter === 10) {
-                tapCounter = 0;
-                const currentUser = auth.currentUser;
-                if (currentUser && currentUser.uid === ADMIN_UID) {
-                    openSecretStash(); 
+        searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
+        htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+        listContainer.addEventListener('click', (e) => {
+            const listItem = e.target.closest('.list-item');
+            if (!listItem) return;
+            const id = listItem.dataset.id;
+            const item = savedItems.find(i => i.id === id);
+            if (!item) return;
+            if (e.target.closest('.item-icon')) {
+                const newPinnedState = !item.isPinned;
+                itemsRef.child(id).update({ isPinned: newPinnedState })
+                    .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
+                return;
+            }
+            if (e.target.classList.contains('delete-btn')) {
+                showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
+                    itemsRef.child(id).remove().then(() => {
+                        if (item.type === 'file' && item.storagePath) {
+                            storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
+                        }
+                    }).catch(err => showAlert('삭제 실패: ' + err.message));
+                });
+                return;
+            }
+            if (item.type === 'link') {
+                window.open(item.content, '_blank');
+            } else {
+                openModal(id);
+            }
+        });
+        clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
+        [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
+        fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; dropZoneText.textContent = fileInput.files[0].name; } updateSaveButtonState(); });
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        modalToggleViewBtn.addEventListener('click', () => { if (modalToggleViewBtn.textContent === '미리보기') showPreviewView(); else showContentView(); });
+        window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
+        listFilterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                listFilterTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentListFilter = tab.dataset.filter;
+                renderList();
+            });
+        });
+        const secretTrigger = document.querySelector('.list-header h2');
+        if (secretTrigger) {
+            secretTrigger.style.cursor = 'pointer';
+            secretTrigger.addEventListener('click', () => {
+                tapCounter++;
+                clearTimeout(tapTimer);
+                if (tapCounter === 10) {
+                    tapCounter = 0;
+                    const currentUser = auth.currentUser;
+                    if (currentUser && currentUser.uid === ADMIN_UID) {
+                        openSecretStash(); 
+                    }
+                } else {
+                    tapTimer = setTimeout(() => {
+                        tapCounter = 0;
+                    }, 2000);
+                }
+            });
+        }
+        const secretUploadInput = document.getElementById('secretUploadInput');
+        const secretUploadBtn = document.getElementById('secretUploadBtn');
+        secretUploadBtn.addEventListener('click', () => {
+            const files = secretUploadInput.files;
+            if (files.length > 0) {
+                for (const file of files) {
+                    uploadSecretFile(file);
                 }
             } else {
-                tapTimer = setTimeout(() => {
-                    tapCounter = 0;
-                }, 2000);
+                showAlert('업로드할 파일을 먼저 선택하세요.');
             }
         });
-    }
-    const secretUploadInput = document.getElementById('secretUploadInput');
-    const secretUploadBtn = document.getElementById('secretUploadBtn');
-secretUploadBtn.addEventListener('click', () => {
-    const files = secretUploadInput.files;
-    if (files.length > 0) {
-        for (const file of files) {
-            uploadSecretFile(file);
-        }
-    } else {
-        showAlert('업로드할 파일을 먼저 선택하세요.');
-    }
-});
-    const secretListContainer = document.getElementById('secretListContainer');
-    secretListContainer.addEventListener('click', (e) => {
-        const deleteBtn = e.target.closest('.secret-delete-btn');
-        const listItem = e.target.closest('.secret-list-item');
-        const icon = e.target.closest('.secret-item-icon');
+        const secretListContainer = document.getElementById('secretListContainer');
+        secretListContainer.addEventListener('click', (e) => {
+            const deleteBtn = e.target.closest('.secret-delete-btn');
+            const listItem = e.target.closest('.secret-list-item');
+            const icon = e.target.closest('.secret-item-icon');
 
-        if (icon) {
-            // ✨ [추가] 아이콘 클릭 시 핀 상태 변경
-            const id = listItem.dataset.id;
-            secretRef.child(id).once('value', snapshot => {
-                const currentItem = snapshot.val();
-                const newPinnedState = !(currentItem.isPinned || false);
-                secretRef.child(id).update({ isPinned: newPinnedState });
-            });
-        } else if (deleteBtn) {
-            // 삭제 버튼 로직
-            const id = deleteBtn.dataset.id;
-            const path = deleteBtn.dataset.path;
-            showConfirmModal('이 파일을 정말로 삭제하시겠습니까?', () => {
-                secretRef.child(id).remove().then(() => {
-                    if (path && path !== "undefined") {
-                        storage.ref(path).delete().then(() => {
-                            showAlert('파일이 성공적으로 삭제되었습니다.');
-                        }).catch((error) => {
-                            console.error('스토리지 파일 삭제 실패:', error);
-                            showAlert(`파일 삭제에 실패했습니다. 에러: ${error.code}`);
-                        });
-                    } else {
-                        showAlert('목록에서 항목이 삭제되었습니다.');
+            if (icon) {
+                const id = listItem.dataset.id;
+                secretRef.child(id).once('value', snapshot => {
+                    const currentItem = snapshot.val();
+                    const newPinnedState = !(currentItem.isPinned || false);
+                    secretRef.child(id).update({ isPinned: newPinnedState });
+                });
+            } else if (deleteBtn) {
+                const id = deleteBtn.dataset.id;
+                const path = deleteBtn.dataset.path;
+                showConfirmModal('이 파일을 정말로 삭제하시겠습니까?', () => {
+                    secretRef.child(id).remove().then(() => {
+                        if (path && path !== "undefined") {
+                            storage.ref(path).delete().then(() => {
+                                showAlert('파일이 성공적으로 삭제되었습니다.');
+                            }).catch((error) => {
+                                console.error('스토리지 파일 삭제 실패:', error);
+                                showAlert(`파일 삭제에 실패했습니다. 에러: ${error.code}`);
+                            });
+                        } else {
+                            showAlert('목록에서 항목이 삭제되었습니다.');
+                        }
+                    }).catch(err => showAlert('DB 정보 삭제 실패: ' + err.message));
+                });
+            } else if (listItem) {
+                playVideo(listItem.dataset.fileName, listItem.dataset.fileUrl);
+            }
+        });
+
+        new Sortable(secretListContainer, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            delay: 1000,
+            delayOnTouchOnly: true,
+            onEnd: function (evt) {
+                const items = secretListContainer.querySelectorAll('.secret-list-item');
+                const updates = {};
+                items.forEach((item, index) => {
+                    const itemId = item.dataset.id;
+                    if (itemId) {
+                    updates[`/${itemId}/sortOrder`] = index;
                     }
-                }).catch(err => showAlert('DB 정보 삭제 실패: ' + err.message));
-            });
-        } else if (listItem) {
-            // 재생 로직
-            playVideo(listItem.dataset.fileName, listItem.dataset.fileUrl);
-        }
-    });
-
-     new Sortable(secretListContainer, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        delay: 1000, // ✨ 터치스크린에서 스크롤이 가능하도록 1초 딜레이를 추가합니다.
-        delayOnTouchOnly: true, // ✨ 딜레이를 터치에만 적용합니다.
-        onEnd: function (evt) {
-            const items = secretListContainer.querySelectorAll('.secret-list-item');
-            const updates = {};
-            items.forEach((item, index) => {
-                const itemId = item.dataset.id;
-                if (itemId) {
-                   updates[`/${itemId}/sortOrder`] = index;
+                });
+                if (Object.keys(updates).length > 0) {
+                secretRef.update(updates).catch(err => {
+                    showAlert('순서 저장에 실패했습니다: ' + err.message);
+                });
                 }
-            });
-            if (Object.keys(updates).length > 0) {
-               secretRef.update(updates).catch(err => {
-                   showAlert('순서 저장에 실패했습니다: ' + err.message);
-               });
             }
-        }
-    });
-
-
-    clearHtmlBtn.addEventListener('click', () => {
-        if (htmlEditor) {
-            htmlEditor.setValue('');
-        }
-    });
-    themeToggleBtn.addEventListener('click', () => {
-        const currentTheme = htmlEditor.getOption('theme');
-        const newTheme = currentTheme === 'material-darker' ? 'eclipse' : 'material-darker';
-        htmlEditor.setOption('theme', newTheme); 
-        localStorage.setItem('editorTheme', newTheme); 
-        themeToggleBtn.innerHTML = newTheme === 'material-darker' ? '☀️' : '🌙';
-    });
-    document.getElementById('loginBtn').addEventListener('click', () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(error => {
-            console.error("로그인 실패:", error);
-            showAlert("로그인에 실패했습니다.");
         });
-    });
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        auth.signOut();
-    });
-    const mainTabBtns = document.querySelectorAll('.main-tab-btn');
-    mainTabBtns.forEach(btn => {
-        btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
-    });
-}
+
+        clearHtmlBtn.addEventListener('click', () => {
+            if (htmlEditor) {
+                htmlEditor.setValue('');
+            }
+        });
+        themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlEditor.getOption('theme');
+            const newTheme = currentTheme === 'material-darker' ? 'eclipse' : 'material-darker';
+            htmlEditor.setOption('theme', newTheme); 
+            localStorage.setItem('editorTheme', newTheme); 
+            themeToggleBtn.innerHTML = newTheme === 'material-darker' ? '☀️' : '🌙';
+        });
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => {
+                console.error("로그인 실패:", error);
+                showAlert("로그인에 실패했습니다.");
+            });
+        });
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // ✨ 에디터 액션 모달 버튼 이벤트
+        document.getElementById('editor-copy-btn').addEventListener('click', () => {
+            const selectedText = htmlEditor.getSelection();
+            if (selectedText) {
+                navigator.clipboard.writeText(selectedText).then(() => {
+                    showAlert('선택한 내용이 복사되었습니다.');
+                    hideEditorActionModalAndReset();
+                }).catch(err => {
+                    showAlert('복사에 실패했습니다.');
+                    hideEditorActionModalAndReset();
+                });
+            } else {
+                hideEditorActionModalAndReset();
+            }
+        });
+
+        document.getElementById('editor-paste-btn').addEventListener('click', () => {
+            navigator.clipboard.readText().then(text => {
+                if (text) {
+                    htmlEditor.replaceSelection(text);
+                } else {
+                    showAlert('클립보드가 비어있습니다.');
+                }
+            }).catch(err => {
+                console.error('Paste failed:', err);
+                showAlert('붙여넣기 권한이 없거나 클립보드가 비어있습니다.');
+            }).finally(() => {
+                hideEditorActionModalAndReset();
+            });
+        });
+
+        // ✨ 에디터의 다른 곳을 클릭하면 모달 숨기기
+        htmlEditor.on('mousedown', function(cm, event) {
+            if (selectionInProgress && !editorActionModal.contains(event.target)) {
+                hideEditorActionModalAndReset();
+            }
+        });
+
+        const mainTabBtns = document.querySelectorAll('.main-tab-btn');
+        mainTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
+        });
+    }
 
     function switchMainTab(tabToShow) {
         const inputColumn = document.querySelector('.input-column');
@@ -1228,28 +1320,28 @@ secretUploadBtn.addEventListener('click', () => {
     }
 
     function initializeApp() {
-    auth.onAuthStateChanged(user => {
-        const loginBtn = document.getElementById('loginBtn');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const userInfo = document.getElementById('userInfo');
+        auth.onAuthStateChanged(user => {
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfo = document.getElementById('userInfo');
 
-        if (user) {
-            // 사용자가 로그인한 경우
-            userInfo.textContent = `${user.displayName}님`;
-            userInfo.style.display = 'inline';
-            loginBtn.style.display = 'none';
-            logoutBtn.style.display = 'inline';
+            if (user) {
+                // 사용자가 로그인한 경우
+                userInfo.textContent = `${user.displayName}님`;
+                userInfo.style.display = 'inline';
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline';
 
-            secretRef = database.ref(`users/${user.uid}/secret_items`);
-        } else {
-            // 사용자가 로그아웃한 경우
-            userInfo.style.display = 'none';
-            loginBtn.style.display = 'inline';
-            logoutBtn.style.display = 'none';
-            secretRef = null; 
-        }
-        loadItemsFromFirebase();
-    });
+                secretRef = database.ref(`users/${user.uid}/secret_items`);
+            } else {
+                // 사용자가 로그아웃한 경우
+                userInfo.style.display = 'none';
+                loginBtn.style.display = 'inline';
+                logoutBtn.style.display = 'none';
+                secretRef = null; 
+            }
+            loadItemsFromFirebase();
+        });
 
         new Sortable(listContainer, {
             animation: 150,
@@ -1285,47 +1377,37 @@ secretUploadBtn.addEventListener('click', () => {
         });
         themeToggleBtn.innerHTML = savedTheme === 'material-darker' ? '☀️' : '🌙';
         htmlEditor.on('change', updateSaveButtonState);
-        let startLine = null; // 구간 선택 시작 라인을 저장하는 변수
+
+        
+
 
         htmlEditor.on('gutterClick', function(cm, line, gutter, clickEvent) {
+            if (selectionInProgress) {
+                hideEditorActionModalAndReset();
+                return;
+            }
+
             if (startLine === null) {
-                // 1. 첫 번째 클릭: 시작 라인 지정
                 startLine = line;
                 cm.addLineClass(line, 'background', 'cm-start-line');
-                showAlert('복사할 끝 라인을 선택하세요.');
             } else {
-                // 2. 두 번째 클릭: 구간 선택 및 복사
                 const endLine = line;
-                
-                // 만약 같은 라인을 다시 누르면 취소
                 if (startLine === endLine) {
                     cm.removeLineClass(startLine, 'background', 'cm-start-line');
                     startLine = null;
-                    showAlert('구간 복사가 취소되었습니다.');
                     return;
                 }
-
-                // 시작 라인과 끝 라인 정렬
                 const from = Math.min(startLine, endLine);
                 const to = Math.max(startLine, endLine);
 
-                // 해당 구간의 텍스트 가져오기
-                const textToCopy = cm.getRange(
+                // ✨ 복사 대신 텍스트 선택
+                cm.setSelection(
                     { line: from, ch: 0 },
                     { line: to, ch: cm.getLine(to).length }
                 );
-
-                // 클립보드에 복사
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    showAlert(`✅ ${from + 1} ~ ${to + 1} 라인이 복사되었습니다.`);
-                }).catch(err => {
-                    showAlert('❌ 복사에 실패했습니다.');
-                    console.error('Copy failed', err);
-                });
-
-                // 초기화
-                cm.removeLineClass(startLine, 'background', 'cm-start-line');
-                startLine = null;
+                
+                // ✨ 액션 모달 표시
+                showEditorActionModal(clickEvent.clientX, clickEvent.clientY);
             }
         });
 
@@ -1334,16 +1416,13 @@ secretUploadBtn.addEventListener('click', () => {
 
         // ✨ '내려서 새로고침' 기능 초기화
         PullToRefresh.init({
-            mainElement: '.list-column', // 새로고침 제스처를 감지할 기본 영역
-            triggerElement: '.list-column', // 제스처가 시작될 수 있는 영역
+            mainElement: '.list-column',
+            triggerElement: '.list-column',
             onRefresh: function(done) {
-                // 새로고침 시 실행될 함수
-                loadItemsFromFirebase(); // 파이어베이스에서 데이터를 다시 불러옵니다.
-                done(); // 새로고침 완료를 라이브러리에 알립니다.
+                loadItemsFromFirebase();
+                done();
             }
         });
-
-        // loadItemsFromFirebase(); // This should be called inside onAuthStateChanged
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -1354,7 +1433,6 @@ secretUploadBtn.addEventListener('click', () => {
         }
     }
     
-    // It's better to move this function outside initializeApp
     function handleSharedData() {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedTitle = urlParams.get('title');
