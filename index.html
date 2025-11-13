@@ -783,6 +783,27 @@
                 /* 버튼 크기를 조금 더 컴팩트하게 조절 */
             }
         }
+
+        /* ✨ [신규] 더블 탭 제스처 피드백 스타일 */
+.video-gesture-overlay {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    width: 100px; height: 100px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    color: white; font-weight: bold; font-size: 1.2rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 20;
+}
+.gesture-left { left: 15%; }
+.gesture-right { right: 15%; }
+.ripple-effect { animation: ripple 0.4s ease-out; }
+@keyframes ripple {
+    0% { transform: translateY(-50%) scale(0.8); opacity: 0.8; }
+    100% { transform: translateY(-50%) scale(1.5); opacity: 0; }
+}
     </style>
 </head>
 <body>
@@ -1109,37 +1130,107 @@
                 modalActionBtn.textContent = originalButtonText;
             }
         }
-        function playVideo(fileName, fileUrl) {
+       function playVideo(fileName, fileUrl) {
             const videoModal = document.getElementById('videoPlayerModal');
             const videoPlayer = document.getElementById('videoPlayer');
             const videoTitle = document.getElementById('videoTitle');
+            const container = document.getElementById('videoPlayerContainer');
+
             videoTitle.textContent = fileName;
             videoPlayer.src = fileUrl;
+            
+            // ✨ [설정] 반복 재생 & 백그라운드 재생 지원
+            videoPlayer.loop = true; 
             videoModal.style.display = 'flex';
-            // [신규 코드 추가]: 버퍼링 상태 모니터링
-videoPlayer.onwaiting = function() {
-    videoTitle.textContent = "로딩 중... 📡";
-};
-videoPlayer.onplaying = function() {
-    videoTitle.textContent = fileName; // 원래 제목으로 복구
-};
+
+            // ✨ [UI] 제스처 피드백 요소 생성 (없으면 만들기)
+            if (!document.querySelector('.gesture-left')) {
+                const leftOverlay = document.createElement('div');
+                leftOverlay.className = 'video-gesture-overlay gesture-left';
+                leftOverlay.innerHTML = '⏪ 10s';
+                
+                const rightOverlay = document.createElement('div');
+                rightOverlay.className = 'video-gesture-overlay gesture-right';
+                rightOverlay.innerHTML = '10s ⏩';
+                
+                // container는 relative여야 함
+                container.style.position = 'relative';
+                container.appendChild(leftOverlay);
+                container.appendChild(rightOverlay);
+            }
+
+            // 버퍼링 상태 표시
+            videoPlayer.onwaiting = function() { videoTitle.textContent = "로딩 중... 📡"; };
+            videoPlayer.onplaying = function() { videoTitle.textContent = fileName; };
+
+            // ✨ [핵심] 더블 탭 감지 로직
+            let lastTapTime = 0;
+            let lastTapX = 0;
+
+            const handleTap = (e) => {
+                const currentTime = new Date().getTime();
+                const tapGap = currentTime - lastTapTime;
+                const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                const screenWidth = window.innerWidth;
+                
+                // 300ms 이내에 두 번 탭하면 실행
+                if (tapGap < 300 && tapGap > 0) {
+                    e.preventDefault(); // 줌 확대 방지
+                    
+                    const leftIcon = document.querySelector('.gesture-left');
+                    const rightIcon = document.querySelector('.gesture-right');
+
+                    if (clientX < screenWidth * 0.4) {
+                        // 왼쪽 영역: -10초
+                        videoPlayer.currentTime = Math.max(0, videoPlayer.currentTime - 10);
+                        leftIcon.classList.add('ripple-effect');
+                        leftIcon.style.opacity = '1';
+                        setTimeout(() => { leftIcon.style.opacity = '0'; leftIcon.classList.remove('ripple-effect'); }, 400);
+                    } else if (clientX > screenWidth * 0.6) {
+                        // 오른쪽 영역: +10초
+                        videoPlayer.currentTime = Math.min(videoPlayer.duration, videoPlayer.currentTime + 10);
+                        rightIcon.classList.add('ripple-effect');
+                        rightIcon.style.opacity = '1';
+                        setTimeout(() => { rightIcon.style.opacity = '0'; rightIcon.classList.remove('ripple-effect'); }, 400);
+                    } else {
+                        // 가운데: 재생/일시정지 (기본 동작)
+                    }
+                }
+                lastTapTime = currentTime;
+            };
+
+            // 터치 이벤트 등록 (모바일)
+            videoPlayer.removeEventListener('touchstart', handleTap); // 중복 방지
+            videoPlayer.addEventListener('touchstart', handleTap);
+
+            // 키보드 이벤트 (PC/블루투스 키보드)
+            document.onkeydown = function(e) {
+                if(videoModal.style.display === 'flex') {
+                    if(e.key === 'ArrowLeft') videoPlayer.currentTime -= 10;
+                    if(e.key === 'ArrowRight') videoPlayer.currentTime += 10;
+                    if(e.key === ' ') { 
+                        e.preventDefault(); 
+                        videoPlayer.paused ? videoPlayer.play() : videoPlayer.pause(); 
+                    }
+                }
+            };
+
             const closeModalAndExitFullscreen = () => {
                 videoPlayer.pause();
                 videoPlayer.src = "";
                 videoModal.style.display = 'none';
-                // 전체 화면 모드에서 나갑니다.
                 if (document.fullscreenElement && document.exitFullscreen) {
                     document.exitFullscreen();
                 }
+                document.onkeydown = null; // 키보드 이벤트 해제
             };
+
             videoModal.querySelector('.modal-close-btn').onclick = closeModalAndExitFullscreen;
-            // ✨ 전체 화면이 해제될 때 모달도 함께 닫히도록 이벤트 리스너를 추가합니다.
             document.addEventListener('fullscreenchange', () => {
-                if (!document.fullscreenElement) {
-                    closeModalAndExitFullscreen();
-                }
-            }, { once: true }); // 이벤트가 한 번만 실행되도록 설정
+                if (!document.fullscreenElement) closeModalAndExitFullscreen();
+            }, { once: true });
         }
+        
         function openSecretStash() {
             const storedPasswordHash = localStorage.getItem('secretStashPassword');
             if (!storedPasswordHash) {
@@ -1212,54 +1303,67 @@ videoPlayer.onplaying = function() {
             });
         }
         function uploadSecretFile(file) {
-            if (!file) return;
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
-                showAlert('업로드를 위해 먼저 로그인해주세요.');
-                return;
-            }
-            const progressEl = document.getElementById('secretUploadProgress');
-            const uploadBtn = document.getElementById('secretUploadBtn');
-            uploadBtn.disabled = true;
-            const timestamp = Date.now();
-            const storagePath = `users/${currentUser.uid}/secret_files/${timestamp}_${file.name}`;
-            const fileRef = storage.ref(storagePath);
-            const uploadTask = fileRef.put(file);
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
-                },
-                (error) => {
-                    showAlert('보안 파일 업로드 실패: ' + error.message);
-                    progressEl.textContent = '';
-                    uploadBtn.disabled = false;
-                },
-                () => {
-                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                        const newItem = {
-                            fileName: file.name,
-                            fileUrl: downloadURL,
-                            storagePath: storagePath,
-                            timestamp: new Date().toISOString(),
-                            isPinned: false,
-                            sortOrder: Date.now()
-                        };
-                        secretRef.push(newItem)
-                            .then(() => {
-                                progressEl.textContent = '업로드 완료!';
-                                document.getElementById('secretUploadInput').value = '';
-                                setTimeout(() => { progressEl.textContent = ''; }, 2000);
-                                uploadBtn.disabled = false;
-                            })
-                            .catch(err => {
-                                showAlert('DB 저장 실패: ' + err.message);
-                                uploadBtn.disabled = false;
-                            });
-                    });
-                }
-            );
+        if (!file) return;
+
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            showAlert('업로드를 위해 먼저 로그인해주세요.');
+            return;
         }
+
+        const progressEl = document.getElementById('secretUploadProgress');
+        const uploadBtn = document.getElementById('secretUploadBtn');
+        uploadBtn.disabled = true;
+
+        const timestamp = Date.now();
+        const storagePath = `users/${currentUser.uid}/secret_files/${timestamp}_${file.name}`;
+        const fileRef = storage.ref(storagePath);
+
+        const metadata = {
+            contentType: file.type,
+            cacheControl: 'public, max-age=31536000'
+        };
+
+        // 메타데이터와 함께 업로드
+        const uploadTask = fileRef.put(file, metadata);
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                progressEl.textContent = `업로드 중: ${Math.round(progress)}%`;
+            },
+            (error) => {
+                showAlert('보안 파일 업로드 실패: ' + error.message);
+                progressEl.textContent = '';
+                uploadBtn.disabled = false;
+            },
+            () => {
+                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                    const newItem = {
+                        fileName: file.name,
+                        fileUrl: downloadURL,
+                        storagePath: storagePath,
+                        timestamp: new Date().toISOString(),
+                        isPinned: false,
+                        sortOrder: Date.now()
+                    };
+                    
+                    secretRef.push(newItem)
+                        .then(() => {
+                            progressEl.textContent = '업로드 완료!';
+                            document.getElementById('secretUploadInput').value = '';
+                            setTimeout(() => { progressEl.textContent = ''; }, 2000); 
+                            uploadBtn.disabled = false; 
+                        })
+                        .catch(err => {
+                            showAlert('DB 저장 실패: ' + err.message);
+                            uploadBtn.disabled = false;
+                        });
+                });
+            }
+        );
+    }
+
         function loadItemsFromFirebase() {
             itemsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
