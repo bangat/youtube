@@ -833,7 +833,24 @@
         padding: 5px 10px !important;
         font-weight: bold;
     }
+
+    /* ✨ [추가] 탭 버튼 숨기기 (HTML 탭만 남기고 싶으면 nth-child 조절, 여기선 다 숨김) */
+    .tab-buttons {
+        display: none !important; 
+    }
+
+    /* ✨ [추가] 텍스트 입력창과 파일 드롭존을 항상 표시 */
+    #textInput-container,
+    #fileInput-container {
+        display: flex !important; /* 강제로 보이게 함 */
+        margin-bottom: 15px;
+    }
     
+    /* 링크 입력창은 이제 필요 없음 (텍스트 창이랑 통합) */
+    #linkInput-container {
+        display: none !important;
+    }
+
     </style>
 </head>
 <body>
@@ -880,6 +897,14 @@
             <div id="htmlInput-container">
                 <textarea id="htmlInput" placeholder="HTML 코드를 입력하세요"></textarea>
             </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 0 5px;">
+    <input type="checkbox" id="vehicleCheckbox" style="width: 18px; height: 18px; cursor: pointer;">
+    <label for="vehicleCheckbox" style="font-weight: 600; color: var(--secondary-text); cursor: pointer; font-size: 15px;">
+        차량관련 정보
+    </label>
+</div>
+
             <button id="saveBtn" disabled>저장하기</button>
         </section>
         <section class="list-column">
@@ -891,7 +916,7 @@
                 <button class="list-filter-tab active" data-filter="all">전체</button>
                 <button class="list-filter-tab" data-filter="document">문서</button>
                 <button class="list-filter-tab" data-filter="photo">사진</button>
-                <button class="list-filter-tab" data-filter="music">음악</button>
+                <button class="list-filter-tab" data-filter="vehicle">차량</button>
             </div>
             <div id="listContainer" class="list-container"></div>
         </section>
@@ -1097,23 +1122,27 @@
             startLine = null;
             selectionInProgress = false;
         }
-        function getCategoryForItem(item) {
-            if (item.type === 'text' || item.type === 'html' || item.type === 'link') { return 'document'; }
+       function getCategoryForItem(item) {
+            // 1. DB에 이미 'vehicle'이라고 저장된 놈은 무조건 차량 탭으로 보냄
+            if (item.category === 'vehicle') return 'vehicle';
+
+            // 2. 그 외 기존 로직
+            if (item.type === 'text' || item.type === 'html' || item.type === 'link') return 'document';
             if (item.type === 'file') {
-                if (item.isImage) { return 'photo'; }
-                const extension = item.fileName.split('.').pop().toLowerCase();
-                const musicExtensions = ['mp3', 'wav', 'm4a', 'ogg', 'flac'];
-                const docExtensions = ['pdf', 'txt', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'hwp'];
-                if (musicExtensions.includes(extension)) return 'music';
-                if (docExtensions.includes(extension)) return 'document';
+                if (item.isImage) return 'photo';
+                return 'document';
             }
             return 'document';
         }
+
         function getIconForItem(item) {
+            // ✨ 차량 카테고리면 자동차 아이콘 리턴
+            if (item.category === 'vehicle') return '🚗';
+
             if (item.type === 'link') return '🔗';
             const category = item.category || getCategoryForItem(item);
             if (category === 'photo') return '🖼️';
-            if (category === 'music') return '🎵';
+            // if (category === 'music') return '🎵'; // 삭제됨
             if (item.type === 'file') {
                 const fileExtension = item.fileName.split('.').pop().toLowerCase();
                 if (['mp4', 'mov', 'avi'].includes(fileExtension)) return '🎬';
@@ -1583,60 +1612,52 @@
             updateSaveButtonState();
         }
         function updateSaveButtonState() {
-            let isDisabled = true;
             const title = titleInput.value.trim();
-            if (currentTab === 'text') { if (title && textInput.value.trim()) isDisabled = false; }
-            else if (currentTab === 'link') { if (title && linkInput.value.trim()) isDisabled = false; }
-            else if (currentTab === 'file') { if (title && fileInput.files[0]) isDisabled = false; }
-            else if (currentTab === 'html') { if (htmlEditor && htmlEditor.getValue().trim()) isDisabled = false; }
-            saveBtn.disabled = isDisabled;
+            const content = textInput.value.trim();
+            const hasFile = fileInput.files.length > 0;
+
+            // 제목이 있고, (내용이 있거나 OR 파일이 있으면) -> 버튼 활성화
+            if (title && (content || hasFile)) {
+                saveBtn.disabled = false;
+            } else {
+                saveBtn.disabled = true;
+            }
         }
+       // ==========================================
+        // [스마트 업로드] 입력 내용에 따라 자동 분류 저장
+        // ==========================================
         function handleSave() {
-            let title = titleInput.value.trim();
+            const title = titleInput.value.trim();
+            const content = textInput.value.trim();
+            const files = fileInput.files;
+            // ✨ 1. 체크박스 값 가져오기
+            const isVehicle = document.getElementById('vehicleCheckbox').checked;
+
+            const currentUser = auth.currentUser;
+            if (!currentUser) { showAlert('로그인이 필요합니다.'); return; }
+            if (!title) { showAlert('제목을 입력해주세요.'); return; }
+
             const resetForm = () => {
-                titleInput.value = ''; textInput.value = ''; linkInput.value = ''; fileInput.value = '';
-                if (htmlEditor) htmlEditor.setValue('');
+                titleInput.value = ''; textInput.value = ''; fileInput.value = '';
+                document.getElementById('vehicleCheckbox').checked = false; 
                 dropZoneText.textContent = '드래그 또는 클릭';
                 updateSaveButtonState();
             };
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
-                showAlert('저장을 위해 먼저 로그인해주세요.');
-                return;
-            }
-            if (currentTab === 'html') {
-                const content = htmlEditor.getValue().trim();
-                if (!content) { showAlert('HTML 코드를 입력해주세요.'); return; }
-                title = prompt("저장할 이름을 입력하세요.");
-                if (!title) { showAlert('저장할 이름이 입력되지 않았습니다.'); return; }
-                const newItem = { type: 'html', title, content, timestamp: new Date().toISOString(), isPinned: false, sortOrder: Date.now() };
-                newItem.category = getCategoryForItem(newItem);
-                itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
-                return;
-            }
-            if (!title) { showAlert('제목을 입력해주세요.'); return; }
-            let newItem;
-            if (currentTab === 'text') {
-                if (!textInput.value.trim()) { showAlert('내용을 입력해주세요.'); return; }
-                newItem = { type: 'text', title, content: textInput.value.trim(), timestamp: new Date().toISOString(), isPinned: false, sortOrder: Date.now() };
-            } else if (currentTab === 'link') {
-                const url = linkInput.value.trim();
-                if (!url) { showAlert('URL을 입력해주세요.'); return; }
-                if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                    showAlert('유효한 URL 형식이 아닙니다.'); return;
-                }
-                newItem = { type: 'link', title, content: url, timestamp: new Date().toISOString(), isPinned: false, sortOrder: Date.now() };
-            } else if (currentTab === 'file') {
-                const files = fileInput.files;
-                if (files.length === 0) { showAlert('파일을 선택해주세요.'); return; }
+
+            // [CASE 1] 파일 업로드
+            if (files.length > 0) {
                 for (const file of files) {
                     ((fileToProcess) => {
                         const isImage = fileToProcess.type.startsWith('image/');
                         const handleUpload = (fileBlob) => {
                             const fileTitle = files.length > 1 ? `${title} (${fileToProcess.name})` : title;
                             const isLastFile = fileToProcess === files[files.length - 1];
-                            uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, fileToProcess.type, isLastFile ? resetForm : () => { });
+                            
+                            // ✨✨✨ [여기가 핵심입니다] ✨✨✨
+                            // 맨 뒤에 isVehicle 변수를 괄호 안에 꼭 넣어야 합니다!
+                            uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, fileToProcess.type, isLastFile ? resetForm : () => { }, isVehicle);
                         };
+
                         if (isImage) {
                             const reader = new FileReader();
                             reader.onload = e => {
@@ -1662,22 +1683,51 @@
                 }
                 return;
             }
-            if (newItem) {
-                newItem.category = getCategoryForItem(newItem);
-                itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
+
+            // [CASE 2, 3] 텍스트/링크 업로드
+            let newItem = {
+                title: title,
+                content: content,
+                timestamp: new Date().toISOString(),
+                isPinned: false,
+                sortOrder: Date.now()
+            };
+
+            // ✨ 차량 체크되면 무조건 vehicle
+            if (isVehicle) {
+                newItem.category = 'vehicle';
+                newItem.type = /^(http|https):\/\/[^ "]+$/.test(content) ? 'link' : 'text';
+            } else {
+                // 체크 안 되면 자동 분류
+                const urlRegex = /^(http|https):\/\/[^ "]+$/;
+                if (urlRegex.test(content)) {
+                    newItem.type = 'link';
+                    newItem.category = 'document';
+                } else if (content) {
+                    newItem.type = 'text';
+                    newItem.category = 'document';
+                } else {
+                    showAlert('내용이나 파일을 입력해주세요.');
+                    return;
+                }
             }
+
+            itemsRef.push(newItem).then(resetForm).catch(err => showAlert('저장 실패: ' + err.message));
         }
-        function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback) {
+       // ✨ 맨 뒤에 isVehicle 파라미터 추가됨
+        // ✨ 맨 뒤에 isVehicle 파라미터가 반드시 있어야 합니다!
+        // ✨ 맨 뒤에 isVehicle 추가 확인!
+        function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback, isVehicle) {
             const currentUser = auth.currentUser;
-            if (!currentUser) {
-                showAlert('업로드를 위해 먼저 로그인해주세요.');
-                return;
-            }
+            if (!currentUser) { showAlert('로그인이 필요합니다.'); return; }
+
             const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
             const fileRef = storage.ref(storagePath);
             const uploadTask = fileRef.put(fileToUpload);
+
             dropZone.classList.add('uploading');
             progressBar.style.width = '0%';
+
             uploadTask.on('state_changed',
                 (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -1685,25 +1735,34 @@
                     progressBar.style.width = `${progress}%`;
                 },
                 (error) => {
-                    showAlert('파일 업로드 실패: ' + error.message);
+                    showAlert('업로드 실패: ' + error.message);
                     dropZone.classList.remove('uploading');
-                    progressBar.style.width = '0%';
                 },
                 () => {
                     progressBar.style.width = '100%';
                     dropZone.classList.remove('uploading');
-                    dropZoneText.textContent = '업로드 완료!';
+                    dropZoneText.textContent = '완료!';
+                    
                     uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                         const newItem = {
-                            type: 'file', title, fileName: originalFileName, fileSize: fileToUpload.size,
-                            isImage: fileType.startsWith('image/'), fileUrl: downloadURL, storagePath: storagePath,
-                            timestamp: new Date().toISOString(), isPinned: false, sortOrder: Date.now()
+                            type: 'file',
+                            title: title,
+                            fileName: originalFileName,
+                            fileSize: fileToUpload.size,
+                            isImage: fileType.startsWith('image/'),
+                            fileUrl: downloadURL,
+                            storagePath: storagePath,
+                            timestamp: new Date().toISOString(),
+                            isPinned: false,
+                            sortOrder: Date.now(),
+                            // ✨✨✨ [여기가 핵심] isVehicle이 true면 무조건 'vehicle'로 저장 ✨✨✨
+                            category: isVehicle ? 'vehicle' : getCategoryForItem({ type: 'file', isImage: fileType.startsWith('image/'), fileName: originalFileName })
                         };
-                        newItem.category = getCategoryForItem(newItem);
+                        
                         itemsRef.push(newItem).then(() => {
                             setTimeout(() => { progressBar.style.width = '0%'; resetFormCallback(); }, 500);
-                        }).catch(error => showAlert('DB 저장 실패: ' + error.message));
-                    }).catch(error => showAlert('URL 가져오기 실패: ' + error.message));
+                        });
+                    });
                 }
             );
         }
