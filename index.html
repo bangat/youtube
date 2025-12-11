@@ -908,10 +908,15 @@
             <button id="saveBtn" disabled>저장하기</button>
         </section>
         <section class="list-column">
-            <div class="list-header">
-                <h2>내 저장공간</h2>
-                <button id="clearAllBtn">모두 지우기</button>
-            </div>
+         <div class="list-header">
+    <h2>내 저장공간</h2>
+    <div style="display: flex; gap: 5px;">
+        <button id="migrateBtn" style="font-size: 13px; padding: 5px 10px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+            🚗 기존자료 옮기기
+        </button>
+        <button id="clearAllBtn">모두 지우기</button>
+    </div>
+</div>
             <div class="list-filter-tabs">
                 <button class="list-filter-tab active" data-filter="all">전체</button>
                 <button class="list-filter-tab" data-filter="document">문서</button>
@@ -1075,6 +1080,68 @@
         const themeToggleBtn = document.getElementById('themeToggleBtn');
         const editorActionModal = document.getElementById('editor-action-modal');
         // State Variables
+
+        // ==========================================
+        // [임시 기능] 기존 자료 차량 탭으로 이사시키기
+        // ==========================================
+        const migrateBtn = document.getElementById('migrateBtn');
+        
+        migrateBtn.addEventListener('click', () => {
+            const keywords = [
+                '카니발', '다이', 'DIY', 'diy', '레일', '엠비언트', '모니터', 
+                '브라켓', '요트', '바닥', '대리석', '철판', '평탄화', 
+                '배선', '도어', '하브', '아크릴', '선반', '탈거', '천장', '슬라이딩'
+            ]; // ✨ 스크린샷에 있는 차량 관련 단어들
+
+            if(!confirm('기존 자료 중 차량 관련 단어나 동영상을 찾아 [차량] 탭으로 이동시킬까요?')) return;
+
+            itemsRef.once('value', snapshot => {
+                const data = snapshot.val();
+                if (!data) return showAlert('저장된 자료가 없습니다.');
+
+                const updates = {};
+                let count = 0;
+
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    let shouldMove = false;
+
+                    // 1. 제목에 키워드가 있는지 검사
+                    if (item.title) {
+                        for (const word of keywords) {
+                            if (item.title.includes(word)) {
+                                shouldMove = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 2. 동영상 파일(.mp4)인지 검사 (동영상은 다 차량인거 같아서)
+                    if (item.fileName && item.fileName.toLowerCase().endsWith('.mp4')) {
+                        shouldMove = true;
+                    }
+
+                    // 3. 옮겨야 할 대상이면 업데이트 목록에 추가
+                    if (shouldMove) {
+                        updates[`/${key}/category`] = 'vehicle';
+                        count++;
+                    }
+                });
+
+                if (count > 0) {
+                    itemsRef.update(updates)
+                        .then(() => {
+                            showAlert(`성공! ${count}개의 자료를 차량 탭으로 옮겼습니다.`);
+                            loadItemsFromFirebase(); // 목록 새로고침
+                        })
+                        .catch(err => showAlert('오류 발생: ' + err.message));
+                } else {
+                    showAlert('옮길만한 자료를 못 찾았습니다.');
+                }
+            });
+        });
+
+        
         let htmlEditor;
         let selectionInProgress = false;
         let startLine = null; // ✨ 이 줄을 추가하세요
