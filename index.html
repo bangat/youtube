@@ -804,6 +804,36 @@
     0% { transform: translateY(-50%) scale(0.8); opacity: 0.8; }
     100% { transform: translateY(-50%) scale(1.5); opacity: 0; }
 }
+
+/* 1. 닫기 버튼이 절대 화면 밖으로 밀리지 않게 고정 */
+    #videoPlayerModal .modal-header {
+        z-index: 9999 !important; /* 비디오보다 무조건 위에 */
+        display: flex !important;
+        width: 100% !important;
+        padding-right: 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 2. 제목이 너무 길면 ... 으로 줄여버리기 */
+    #videoPlayerModal #videoTitle {
+        flex: 1; /* 남은 공간만 차지 */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* 글자 넘치면 ... 처리 */
+        margin-right: 10px;
+        font-size: 14px; /* 폴드 좁은 화면 배려 */
+    }
+
+    /* 3. 닫기 버튼 눈에 확 띄게 만들기 */
+    #videoPlayerModal .modal-close-btn {
+        flex-shrink: 0; /* 절대 찌그러지지 않음 */
+        background-color: rgba(255, 0, 0, 0.8) !important; /* 잘 보이게 빨간 반투명 배경 */
+        color: white !important;
+        border: 1px solid white !important;
+        padding: 5px 10px !important;
+        font-weight: bold;
+    }
+    
     </style>
 </head>
 <body>
@@ -2017,6 +2047,153 @@
             }
         }
         initializeApp();
+
+        // ==========================================
+    // [비밀 금고] 1. IndexedDB 설정 (이게 있어야 돈이 안 듬)
+    // ==========================================
+    let db;
+    const DB_NAME = 'SecretVideoVault';
+    const STORE_NAME = 'videos';
+
+    const initDB = () => {
+        return new Promise((resolve, reject) => {
+            if (db) return resolve(db);
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                resolve(db);
+            };
+            request.onerror = (event) => reject(event.target.error);
+        });
+    };
+
+    async function getCachedVideo(url) {
+        try {
+            const db = await initDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(url);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (e) { return null; }
+    }
+
+    async function saveVideoToCache(url, blob) {
+        try {
+            const db = await initDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(blob, url);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // ==========================================
+    // [비밀 금고] 2. 스마트 재생 함수 (기존 playVideo 대체)
+    // ==========================================
+    async function playVideo(fileName, fileUrl) {
+        const videoModal = document.getElementById('videoPlayerModal');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoTitle = document.getElementById('videoTitle');
+        const container = document.getElementById('videoPlayerContainer');
+
+        // 모달 열기
+        videoModal.style.display = 'flex';
+        videoTitle.textContent = "비밀 금고 확인 중...🕵️";
+        videoPlayer.src = ""; 
+
+        // 제스처 UI (없으면 생성)
+        if (!document.querySelector('.gesture-left')) {
+            const leftOverlay = document.createElement('div');
+            leftOverlay.className = 'video-gesture-overlay gesture-left';
+            leftOverlay.innerHTML = '⏪ 10s';
+            const rightOverlay = document.createElement('div');
+            rightOverlay.className = 'video-gesture-overlay gesture-right';
+            rightOverlay.innerHTML = '10s ⏩';
+            container.style.position = 'relative';
+            container.appendChild(leftOverlay);
+            container.appendChild(rightOverlay);
+        }
+
+        try {
+            // 1. 금고 확인
+            const cachedBlob = await getCachedVideo(fileUrl);
+
+            if (cachedBlob) {
+                // 금고에 있음 -> 무료 재생
+                videoTitle.textContent = "🔒 시크릿 모드 (데이터 무료)";
+                videoPlayer.src = URL.createObjectURL(cachedBlob);
+            } else {
+                // 금고에 없음 -> 다운로드(1회 비용) 후 저장
+                videoTitle.textContent = "📥 금고로 다운로드 중... (1회만 소모)";
+                const response = await fetch(fileUrl);
+                const blob = await response.blob();
+                await saveVideoToCache(fileUrl, blob);
+                
+                videoTitle.textContent = "🔒 저장 완료! 이제 평생 무료";
+                videoPlayer.src = URL.createObjectURL(blob);
+            }
+            
+            videoPlayer.play();
+            videoPlayer.loop = true;
+
+        } catch (error) {
+            console.error("재생 오류:", error);
+            videoTitle.textContent = fileName;
+            videoPlayer.src = fileUrl; // 오류나면 그냥 스트리밍
+        }
+
+        // 제스처 및 키보드 이벤트 복구
+        let lastTapTime = 0;
+        const handleTap = (e) => {
+            const currentTime = new Date().getTime();
+            const tapGap = currentTime - lastTapTime;
+            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            
+            if (tapGap < 300 && tapGap > 0) {
+                e.preventDefault(); 
+                if (clientX < window.innerWidth * 0.4) {
+                    videoPlayer.currentTime = Math.max(0, videoPlayer.currentTime - 10);
+                    showRipple('.gesture-left');
+                } else if (clientX > window.innerWidth * 0.6) {
+                    videoPlayer.currentTime = Math.min(videoPlayer.duration, videoPlayer.currentTime + 10);
+                    showRipple('.gesture-right');
+                }
+            }
+            lastTapTime = currentTime;
+        };
+
+        function showRipple(selector) {
+            const el = document.querySelector(selector);
+            if(el) {
+                el.classList.add('ripple-effect');
+                el.style.opacity = '1';
+                setTimeout(() => { el.style.opacity = '0'; el.classList.remove('ripple-effect'); }, 400);
+            }
+        }
+
+        videoPlayer.removeEventListener('touchstart', handleTap);
+        videoPlayer.addEventListener('touchstart', handleTap);
+
+        // 닫기 버튼 이벤트
+        const closeBtn = videoModal.querySelector('.modal-close-btn');
+        closeBtn.onclick = () => {
+            videoPlayer.pause();
+            videoPlayer.src = "";
+            videoModal.style.display = 'none';
+        };
+    }
     </script>
 </body>
 </html>
