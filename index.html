@@ -1141,7 +1141,7 @@
             });
         });
 
-        
+
         let htmlEditor;
         let selectionInProgress = false;
         let startLine = null; // ✨ 이 줄을 추가하세요
@@ -2150,26 +2150,84 @@
                 });
             }
         }
+        // ==========================================
+        // [공유 타겟] 외부 앱에서 공유받으면 자동 저장
+        // ==========================================
         function handleSharedData() {
             const urlParams = new URLSearchParams(window.location.search);
             const sharedTitle = urlParams.get('title');
-            const sharedText = urlParams.get('text');
+            const sharedText = urlParams.get('text'); // 네이버 카페는 여기에 링크가 섞여 옴
             const sharedUrl = urlParams.get('url');
+
+            // 공유된 데이터가 있을 때만 실행
             if (sharedTitle || sharedText || sharedUrl) {
+                console.log("공유 데이터 감지:", sharedTitle, sharedText, sharedUrl);
+
+                // 1. 데이터 정제 (네이버 카페 등은 제목/내용이 섞여서 옴)
+                let finalTitle = sharedTitle || '';
+                let finalContent = sharedText || '';
+                
+                // URL이 text 필드에 섞여있는 경우 추출 (링크 탭으로 보내기 위함)
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const foundUrl = sharedText ? sharedText.match(urlRegex) : null;
+                
                 if (sharedUrl) {
+                    finalContent = sharedUrl;
+                    switchTab('link'); // 링크 탭으로 전환
+                } else if (foundUrl) {
+                    finalContent = foundUrl[0]; // 텍스트에서 링크만 뽑음
+                    // 제목이 없으면 텍스트의 앞부분을 제목으로 씀
+                    if (!finalTitle) finalTitle = sharedText.replace(finalContent, '').trim().substring(0, 30);
                     switchTab('link');
-                    titleInput.value = sharedTitle || '';
-                    linkInput.value = sharedUrl || '';
                 } else {
                     switchTab('text');
-                    titleInput.value = sharedTitle || '';
-                    textInput.value = sharedText || '';
                 }
+
+                // 2. 입력창에 값 채우기
+                titleInput.value = finalTitle || '공유된 자료';
+                if (currentTab === 'link') linkInput.value = finalContent;
+                else textInput.value = finalContent;
+
+                // 3. [핵심] 차량 관련 내용인지 자동 탐지 (아까 만든 키워드 활용)
+                const vehicleKeywords = [
+                    '카니발', '다이', 'DIY', 'diy', '레일', '엠비언트', '모니터', 
+                    '브라켓', '요트', '바닥', '대리석', '철판', '평탄화', 
+                    '배선', '도어', '하브', '아크릴', '선반', '탈거', '천장', '슬라이딩'
+                ];
+                
+                let isVehicleRelated = false;
+                const fullText = (finalTitle + " " + finalContent).toLowerCase();
+                
+                for (const word of vehicleKeywords) {
+                    if (fullText.includes(word.toLowerCase())) {
+                        isVehicleRelated = true;
+                        break;
+                    }
+                }
+
+                // 차량 관련이면 체크박스 켜기
+                const vehicleCheckbox = document.getElementById('vehicleCheckbox');
+                if (isVehicleRelated) {
+                    vehicleCheckbox.checked = true;
+                    showAlert(`🚗 차량 관련 자료가 감지되어\n자동으로 [차량] 탭에 저장합니다.`);
+                } else {
+                    vehicleCheckbox.checked = false;
+                    showAlert(`⚡ 공유된 자료를 저장합니다.`);
+                }
+
+                // 4. 저장 버튼 활성화 및 0.5초 뒤 자동 클릭
+                updateSaveButtonState();
+                
                 setTimeout(() => {
-                    titleInput.focus();
-                    updateSaveButtonState();
-                }, 100);
-                history.replaceState(null, '', window.location.pathname);
+                    // 로그인 상태 체크 후 저장
+                    if (auth.currentUser) {
+                        handleSave();
+                        // URL 파라미터 청소 (새로고침 시 중복 저장 방지)
+                        history.replaceState(null, '', window.location.pathname);
+                    } else {
+                        showAlert("로그인이 안 되어 있어 자동 저장을 못했습니다.\n로그인 후 저장 버튼을 눌러주세요.");
+                    }
+                }, 800); // 0.8초 딜레이 (로그인 로딩 시간 고려)
             }
         }
         initializeApp();
