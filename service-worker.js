@@ -1,80 +1,94 @@
-const CACHE_NAME = 'cloudbox-cache-v1';
-const urlsToCache = [
-    // ⚠️ 1. 리포지토리 이름을 포함한 시작 URL로 수정
-    '/youtube/', 
-    // ⚠️ 2. 파일 경로도 리포지토리 이름을 포함하여 수정
-    '/youtube/index.html',
+const CACHE_NAME = 'cloudbox-cache-v3';
+const STATIC_ASSETS = [
     '/youtube/manifest.json',
-    // 아이콘도 반드시 경로를 정확히 지정해야 합니다.
     '/youtube/icons/icon-192x192.png',
     '/youtube/icons/icon-512x512.png'
-    // 만약 icons 폴더가 없다면, 이 두 줄을 제거하거나 폴더를 만드세요.
 ];
 
-// 설치 이벤트: 서비스 워커를 설치하고 파일들을 캐시에 저장
+function isFirebaseRequest(url) {
+    return url.includes('firebaseio.com')
+        || url.includes('firebasestorage.googleapis.com')
+        || url.includes('firebasestorage.app');
+}
+
+function isAppShellRequest(requestUrl, request) {
+    const pathname = requestUrl.pathname;
+    return request.mode === 'navigate'
+        || pathname === '/youtube/'
+        || pathname === '/youtube/index.html'
+        || pathname.endsWith('/index.html')
+        || pathname.endsWith('/service-worker.js')
+        || pathname.endsWith('/manifest.json');
+}
+
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
+        caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
     );
-    self.skipWaiting(); // 설치 후 바로 활성화
+    self.skipWaiting();
 });
 
-// 페치 이벤트: 네트워크 요청을 가로채서 캐시 또는 네트워크에서 응답
 self.addEventListener('fetch', event => {
-    // Firebase Realtime DB 및 Storage 요청은 캐시하지 않고 네트워크로 바로 보냄
-    if (event.request.url.includes('firebaseio.com') || event.request.url.includes('firebasestorage.googleapis.com')) {
-        return fetch(event.request);
+    if (event.request.method !== 'GET') {
+        return;
     }
-    
-    // 캐시-우선 전략: 캐시에서 찾고, 없으면 네트워크에서 가져와 캐시에 저장
+
+    const requestUrl = new URL(event.request.url);
+
+    if (isFirebaseRequest(event.request.url)) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
+    if (isAppShellRequest(requestUrl, event.request)) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    if (response && response.status === 200) {
+                        const responseToCache = response.clone();
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(event.request, responseToCache);
+                        });
+                    }
+                    return response;
+                })
+                .catch(() => caches.match(event.request))
+        );
+        return;
+    }
+
     event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // 캐시에 있으면 캐시 응답 반환
-                if (response) {
+        caches.match(event.request).then(cachedResponse => {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+
+            return fetch(event.request).then(response => {
+                if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
-                
-                // 캐시에 없으면 네트워크 요청
-                return fetch(event.request).then(
-                    response => {
-                        // 유효한 응답이 아니면 반환
-                        if(!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
-                        
-                        // 응답을 복제하여 캐시에 저장
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
-                            
-                        return response;
-                    }
-                );
-            })
+
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseToCache);
+                });
+
+                return response;
+            });
+        })
     );
 });
 
-// 활성화 이벤트: 오래된 캐시 제거
 self.addEventListener('activate', event => {
-    const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheWhitelist.indexOf(cacheName) === -1) {
-                        return caches.delete(cacheName); // 화이트리스트에 없는 캐시 삭제
-                    }
-                })
-            );
-        })
+        caches.keys().then(cacheNames => Promise.all(
+            cacheNames.map(cacheName => {
+                if (cacheName !== CACHE_NAME) {
+                    return caches.delete(cacheName);
+                }
+                return Promise.resolve();
+            })
+        ))
     );
-    return self.clients.claim();
-
+    self.clients.claim();
 });
