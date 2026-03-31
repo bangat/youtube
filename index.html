@@ -1036,6 +1036,9 @@
         const itemsRef = database.ref('items');
         let secretRef;
         const ADMIN_UID = 'WZGm0K9WdaUl6J8hEjMYcHy5Hd42';
+        const LOCAL_UPLOAD_AGENT_PORTS = [48621, 48622, 48623, 48624, 48625, 48626, 48627, 48628, 48629, 48630];
+        const LOCAL_UPLOAD_AGENT_TIMEOUT_MS = 5000;
+        let localUploadAgentBase = null;
         // DOM Elements
         const modalDownloadHtmlBtn = document.getElementById('modalDownloadHtmlBtn');
         const titleInput = document.getElementById('titleInput');
@@ -1722,7 +1725,7 @@
                             
                             // ✨✨✨ [여기가 핵심입니다] ✨✨✨
                             // 맨 뒤에 isVehicle 변수를 괄호 안에 꼭 넣어야 합니다!
-                            uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, normalizedFileType, isLastFile ? resetForm : () => { }, isVehicle);
+                            uploadFileToPreferredTarget(fileBlob, fileTitle, fileToProcess.name, normalizedFileType, isLastFile ? resetForm : () => { }, isVehicle);
                         };
 
                         if (isImage) {
@@ -1784,6 +1787,130 @@
        // ✨ 맨 뒤에 isVehicle 파라미터 추가됨
         // ✨ 맨 뒤에 isVehicle 파라미터가 반드시 있어야 합니다!
         // ✨ 맨 뒤에 isVehicle 추가 확인!
+        function getUploadCategory(fileType, originalFileName, isVehicle) {
+            if (isVehicle) return 'vehicle';
+            return getCategoryForItem({
+                type: 'file',
+                isImage: fileType.startsWith('image/'),
+                fileName: originalFileName
+            });
+        }
+
+        async function resolveLocalUploadAgentBase(forceRefresh = false) {
+            if (localUploadAgentBase && !forceRefresh) {
+                return localUploadAgentBase;
+            }
+
+            for (const port of LOCAL_UPLOAD_AGENT_PORTS) {
+                const candidateBase = `http://127.0.0.1:${port}`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1200);
+                try {
+                    const response = await fetch(`${candidateBase}/api/health`, {
+                        method: 'GET',
+                        signal: controller.signal
+                    });
+
+                    if (response.ok) {
+                        localUploadAgentBase = candidateBase;
+                        return candidateBase;
+                    }
+                } catch (error) {
+                    void error;
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            }
+
+            return null;
+        }
+
+        async function deleteLocalAgentFile(item) {
+            if (!item || !item.localAgentFileId) return;
+            try {
+                const baseUrl = await resolveLocalUploadAgentBase();
+                if (!baseUrl) return;
+                await fetch(`${baseUrl}/api/files/${item.localAgentFileId}`, { method: 'DELETE' });
+            } catch (error) {
+                console.warn('Local agent delete failed:', error);
+            }
+        }
+
+        async function uploadFileToLocalAgent(fileToUpload, title, originalFileName, fileType, isVehicle) {
+            const baseUrl = await resolveLocalUploadAgentBase();
+            if (!baseUrl) {
+                return null;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileToUpload, originalFileName);
+            formData.append('title', title);
+            formData.append('category', getUploadCategory(fileType, originalFileName, isVehicle));
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), LOCAL_UPLOAD_AGENT_TIMEOUT_MS);
+
+            try {
+                const response = await fetch(`${baseUrl}/api/upload`, {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+
+                if (!response.ok) {
+                    return null;
+                }
+
+                const result = await response.json();
+                if (!result || !result.ok) {
+                    return null;
+                }
+
+                return {
+                    type: 'file',
+                    title: title,
+                    fileName: originalFileName,
+                    fileSize: fileToUpload.size,
+                    isImage: fileType.startsWith('image/'),
+                    fileUrl: result.downloadUrl || `${baseUrl}/api/files/${result.id}/download`,
+                    localAgentFileId: result.id,
+                    storageProvider: 'local-agent',
+                    timestamp: new Date().toISOString(),
+                    isPinned: false,
+                    sortOrder: Date.now(),
+                    category: getUploadCategory(fileType, originalFileName, isVehicle)
+                };
+            } catch (error) {
+                console.warn('Local upload agent failed:', error);
+                return null;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        async function uploadFileToPreferredTarget(fileToUpload, title, originalFileName, fileType, resetFormCallback, isVehicle) {
+            const normalizedFileType = fileType || 'application/octet-stream';
+
+            dropZone.classList.add('uploading');
+            progressBar.style.width = '35%';
+            dropZoneText.textContent = '로컬 업로드 에이전트 전송 중...';
+
+            const localAgentItem = await uploadFileToLocalAgent(fileToUpload, title, originalFileName, normalizedFileType, isVehicle);
+            if (localAgentItem) {
+                progressBar.style.width = '100%';
+                dropZone.classList.remove('uploading');
+                dropZoneText.textContent = '완료!';
+                itemsRef.push(localAgentItem).then(() => {
+                    setTimeout(() => { progressBar.style.width = '0%'; resetFormCallback(); }, 500);
+                });
+                return;
+            }
+
+            progressBar.style.width = '0%';
+            dropZoneText.textContent = 'Firebase 업로드로 전환 중...';
+            uploadFileToFirebase(fileToUpload, title, originalFileName, normalizedFileType, resetFormCallback, isVehicle);
+        }
+
         function uploadFileToFirebase(fileToUpload, title, originalFileName, fileType, resetFormCallback, isVehicle) {
             const currentUser = auth.currentUser;
             if (!currentUser) { showAlert('로그인이 필요합니다.'); return; }
@@ -1864,8 +1991,12 @@
                 if (e.target.classList.contains('delete-btn')) {
                     showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
                         itemsRef.child(id).remove().then(() => {
-                            if (item.type === 'file' && item.storagePath) {
-                                storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
+                            if (item.type === 'file') {
+                                if (item.storageProvider === 'local-agent' && item.localAgentFileId) {
+                                    deleteLocalAgentFile(item);
+                                } else if (item.storagePath) {
+                                    storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
+                                }
                             }
                         }).catch(err => showAlert('삭제 실패: ' + err.message));
                     });
