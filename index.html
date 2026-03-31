@@ -1404,7 +1404,9 @@
                 if (orderA !== orderB) {
                     return orderA - orderB;
                 }
-                return b.timestamp - a.timestamp;
+                const timeA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp || 0).getTime();
+                const timeB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp || 0).getTime();
+                return timeB - timeA;
             });
             if (items.length === 0) {
                 container.innerHTML += '<p style="color: var(--secondary-text); margin-top: 10px;">저장된 파일이 없습니다.</p>';
@@ -1416,7 +1418,8 @@
                 if (item.isPinned) {
                     itemEl.classList.add('pinned');
                 }
-                itemEl.dataset.fileUrl = item.fileUrl;
+                itemEl.dataset.fileUrl = item.fileUrl || '';
+                itemEl.dataset.storagePath = item.storagePath || '';
                 itemEl.dataset.fileName = item.fileName;
                 itemEl.dataset.id = item.id;
                 itemEl.innerHTML = `
@@ -1466,28 +1469,25 @@
                 uploadBtn.disabled = false;
             },
             () => {
-                uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-                    const newItem = {
-                        fileName: file.name,
-                        fileUrl: downloadURL,
-                        storagePath: storagePath,
-                        timestamp: new Date().toISOString(),
-                        isPinned: false,
-                        sortOrder: Date.now()
-                    };
-                    
-                    secretRef.push(newItem)
-                        .then(() => {
-                            progressEl.textContent = '업로드 완료!';
-                            document.getElementById('secretUploadInput').value = '';
-                            setTimeout(() => { progressEl.textContent = ''; }, 2000); 
-                            uploadBtn.disabled = false; 
-                        })
-                        .catch(err => {
-                            showAlert('DB 저장 실패: ' + err.message);
-                            uploadBtn.disabled = false;
-                        });
-                });
+                const newItem = {
+                    fileName: file.name,
+                    storagePath: storagePath,
+                    timestamp: Date.now(),
+                    isPinned: false,
+                    sortOrder: Date.now()
+                };
+
+                secretRef.push(newItem)
+                    .then(() => {
+                        progressEl.textContent = '업로드 완료!';
+                        document.getElementById('secretUploadInput').value = '';
+                        setTimeout(() => { progressEl.textContent = ''; }, 2000);
+                        uploadBtn.disabled = false;
+                    })
+                    .catch(err => {
+                        showAlert('DB 저장 실패: ' + err.message);
+                        uploadBtn.disabled = false;
+                    });
             }
         );
     }
@@ -2088,7 +2088,11 @@
                         }).catch(err => showAlert('DB 정보 삭제 실패: ' + err.message));
                     });
                 } else if (listItem) {
-                    playVideo(listItem.dataset.fileName, listItem.dataset.fileUrl);
+                    playVideo(
+                        listItem.dataset.fileName,
+                        listItem.dataset.fileUrl || '',
+                        listItem.dataset.storagePath || ''
+                    );
                 }
             });
             new Sortable(secretListContainer, {
@@ -2422,11 +2426,12 @@
     // ==========================================
     // [비밀 금고] 2. 스마트 재생 함수 (기존 playVideo 대체)
     // ==========================================
-    async function playVideo(fileName, fileUrl) {
+    async function playVideo(fileName, fileUrl, storagePath) {
         const videoModal = document.getElementById('videoPlayerModal');
         const videoPlayer = document.getElementById('videoPlayer');
         const videoTitle = document.getElementById('videoTitle');
         const container = document.getElementById('videoPlayerContainer');
+        const cacheKey = storagePath ? `secret:${storagePath}` : fileUrl;
 
         // 모달 열기
         videoModal.style.display = 'flex';
@@ -2448,7 +2453,7 @@
 
         try {
             // 1. 금고 확인
-            const cachedBlob = await getCachedVideo(fileUrl);
+            const cachedBlob = cacheKey ? await getCachedVideo(cacheKey) : null;
 
             if (cachedBlob) {
                 // 금고에 있음 -> 무료 재생
@@ -2457,9 +2462,17 @@
             } else {
                 // 금고에 없음 -> 다운로드(1회 비용) 후 저장
                 videoTitle.textContent = "📥 금고로 다운로드 중... (1회만 소모)";
-                const response = await fetch(fileUrl);
+                const resolvedUrl = storagePath
+                    ? await storage.ref(storagePath).getDownloadURL()
+                    : fileUrl;
+                if (!resolvedUrl) {
+                    throw new Error('재생 가능한 파일 경로를 찾지 못했습니다.');
+                }
+                const response = await fetch(resolvedUrl);
                 const blob = await response.blob();
-                await saveVideoToCache(fileUrl, blob);
+                if (cacheKey) {
+                    await saveVideoToCache(cacheKey, blob);
+                }
                 
                 videoTitle.textContent = "🔒 저장 완료! 이제 평생 무료";
                 videoPlayer.src = URL.createObjectURL(blob);
@@ -2471,7 +2484,7 @@
         } catch (error) {
             console.error("재생 오류:", error);
             videoTitle.textContent = fileName;
-            videoPlayer.src = fileUrl; // 오류나면 그냥 스트리밍
+            videoPlayer.src = fileUrl || ""; // 오류나면 기존 링크 fallback
         }
 
         // 제스처 및 키보드 이벤트 복구
