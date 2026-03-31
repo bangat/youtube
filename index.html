@@ -891,7 +891,7 @@
                 <div class="drop-zone" id="dropZone">
                     <div id="upload-progress-bar"></div>
                     <span id="dropZone-text">드래그 또는 클릭</span>
-                    <input type="file" id="fileInput" multiple>
+                    <input type="file" id="fileInput" accept="*/*" multiple>
                 </div>
             </div>
             <div id="htmlInput-container">
@@ -1242,8 +1242,7 @@
                 const blobUrl = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = blobUrl;
-                const fileExtension = item.fileName.split('.').pop();
-                link.download = `${item.title}.${fileExtension}`;
+                link.download = item.fileName || item.title || 'download';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -1715,14 +1714,15 @@
             if (files.length > 0) {
                 for (const file of files) {
                     ((fileToProcess) => {
-                        const isImage = fileToProcess.type.startsWith('image/');
+                        const normalizedFileType = fileToProcess.type || 'application/octet-stream';
+                        const isImage = normalizedFileType.startsWith('image/');
                         const handleUpload = (fileBlob) => {
                             const fileTitle = files.length > 1 ? `${title} (${fileToProcess.name})` : title;
                             const isLastFile = fileToProcess === files[files.length - 1];
                             
                             // ✨✨✨ [여기가 핵심입니다] ✨✨✨
                             // 맨 뒤에 isVehicle 변수를 괄호 안에 꼭 넣어야 합니다!
-                            uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, fileToProcess.type, isLastFile ? resetForm : () => { }, isVehicle);
+                            uploadFileToFirebase(fileBlob, fileTitle, fileToProcess.name, normalizedFileType, isLastFile ? resetForm : () => { }, isVehicle);
                         };
 
                         if (isImage) {
@@ -1790,7 +1790,12 @@
 
             const storagePath = `files/${title}_${Date.now()}_${originalFileName}`;
             const fileRef = storage.ref(storagePath);
-            const uploadTask = fileRef.put(fileToUpload);
+            const normalizedFileType = fileType || 'application/octet-stream';
+            const metadata = {
+                contentType: normalizedFileType,
+                cacheControl: 'public, max-age=31536000'
+            };
+            const uploadTask = fileRef.put(fileToUpload, metadata);
 
             dropZone.classList.add('uploading');
             progressBar.style.width = '0%';
@@ -1816,7 +1821,7 @@
                             title: title,
                             fileName: originalFileName,
                             fileSize: fileToUpload.size,
-                            isImage: fileType.startsWith('image/'),
+                            isImage: normalizedFileType.startsWith('image/'),
                             fileUrl: downloadURL,
                             storagePath: storagePath,
                             timestamp: new Date().toISOString(),
