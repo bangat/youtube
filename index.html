@@ -1418,7 +1418,7 @@
                 if (item.isPinned) {
                     itemEl.classList.add('pinned');
                 }
-                itemEl.dataset.fileUrl = item.fileUrl || '';
+                itemEl.dataset.fileUrl = item.storagePath ? '' : (item.fileUrl || '');
                 itemEl.dataset.storagePath = item.storagePath || '';
                 itemEl.dataset.fileName = item.fileName;
                 itemEl.dataset.id = item.id;
@@ -1468,26 +1468,25 @@
                 progressEl.textContent = '';
                 uploadBtn.disabled = false;
             },
-            () => {
-                const newItem = {
-                    fileName: file.name,
-                    storagePath: storagePath,
-                    timestamp: Date.now(),
-                    isPinned: false,
-                    sortOrder: Date.now()
-                };
+            async () => {
+                try {
+                    const newItem = {
+                        fileName: file.name,
+                        storagePath: storagePath,
+                        timestamp: Date.now(),
+                        isPinned: false,
+                        sortOrder: Date.now()
+                    };
 
-                secretRef.push(newItem)
-                    .then(() => {
-                        progressEl.textContent = '업로드 완료!';
-                        document.getElementById('secretUploadInput').value = '';
-                        setTimeout(() => { progressEl.textContent = ''; }, 2000);
-                        uploadBtn.disabled = false;
-                    })
-                    .catch(err => {
-                        showAlert('DB 저장 실패: ' + err.message);
-                        uploadBtn.disabled = false;
-                    });
+                    await secretRef.push(newItem);
+                    progressEl.textContent = '업로드 완료!';
+                    document.getElementById('secretUploadInput').value = '';
+                    setTimeout(() => { progressEl.textContent = ''; }, 2000);
+                } catch (err) {
+                    showAlert('DB 저장 실패: ' + err.message);
+                } finally {
+                    uploadBtn.disabled = false;
+                }
             }
         );
     }
@@ -2420,10 +2419,74 @@
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
                 const request = store.put(blob, url);
-                request.onsuccess = () => resolve();
+                request.onsuccess = () => resolve(true);
                 request.onerror = () => reject(request.error);
             });
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    }
+
+    async function resolveSecretVideoUrl(fileUrl, storagePath) {
+        if (storagePath) {
+            return storage.ref(storagePath).getDownloadURL();
+        }
+
+        return fileUrl || '';
+    }
+
+    function resetVideoPlayerSource(videoPlayer) {
+        if (videoPlayer.dataset.objectUrl) {
+            URL.revokeObjectURL(videoPlayer.dataset.objectUrl);
+            delete videoPlayer.dataset.objectUrl;
+        }
+
+        videoPlayer.pause();
+        videoPlayer.removeAttribute('src');
+        videoPlayer.load();
+    }
+
+    async function cacheSecretVideoInBackground(cacheKey, resolvedUrl) {
+        if (!cacheKey || !resolvedUrl) {
+            return;
+        }
+
+        const existingBlob = await getCachedVideo(cacheKey);
+        if (existingBlob) {
+            return;
+        }
+
+        const response = await fetch(resolvedUrl);
+        if (!response.ok) {
+            throw new Error(`비밀 동영상을 내려받지 못했습니다. (${response.status})`);
+        }
+
+        const blob = await response.blob();
+        if (!blob || blob.size === 0) {
+            throw new Error('비밀 동영상 데이터가 비어 있습니다.');
+        }
+
+        await saveVideoToCache(cacheKey, blob);
+    }
+
+    function getVideoPlaybackErrorMessage(videoPlayer) {
+        if (!videoPlayer.error) {
+            return '동영상을 재생하지 못했습니다.';
+        }
+
+        switch (videoPlayer.error.code) {
+            case MediaError.MEDIA_ERR_ABORTED:
+                return '동영상 재생이 중단되었습니다.';
+            case MediaError.MEDIA_ERR_NETWORK:
+                return '동영상을 불러오는 중 네트워크 오류가 발생했습니다.';
+            case MediaError.MEDIA_ERR_DECODE:
+                return '브라우저가 이 동영상 형식을 해석하지 못했습니다.';
+            case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                return '이 동영상 코덱 또는 파일 형식은 현재 브라우저에서 지원되지 않습니다.';
+            default:
+                return '동영상을 재생하지 못했습니다.';
+        }
     }
 
     // ==========================================
@@ -2435,11 +2498,15 @@
         const videoTitle = document.getElementById('videoTitle');
         const container = document.getElementById('videoPlayerContainer');
         const cacheKey = storagePath ? `secret:${storagePath}` : fileUrl;
+        let resolvedUrl = '';
 
         // 모달 열기
         videoModal.style.display = 'flex';
         videoTitle.textContent = "비밀 금고 확인 중...🕵️";
-        videoPlayer.src = ""; 
+        resetVideoPlayerSource(videoPlayer);
+        videoPlayer.onerror = () => {
+            showAlert(getVideoPlaybackErrorMessage(videoPlayer));
+        };
 
         // 제스처 UI (없으면 생성)
         if (!document.querySelector('.gesture-left')) {
@@ -2455,39 +2522,51 @@
         }
 
         try {
-            // 1. 금고 확인
+            resolvedUrl = await resolveSecretVideoUrl(fileUrl, storagePath);
+            if (!resolvedUrl) {
+                throw new Error('재생 가능한 파일 경로를 찾지 못했습니다.');
+            }
+
             const cachedBlob = cacheKey ? await getCachedVideo(cacheKey) : null;
 
             if (cachedBlob) {
-                // 금고에 있음 -> 무료 재생
                 videoTitle.textContent = "🔒 시크릿 모드 (데이터 무료)";
-                videoPlayer.src = URL.createObjectURL(cachedBlob);
+                const objectUrl = URL.createObjectURL(cachedBlob);
+                videoPlayer.dataset.objectUrl = objectUrl;
+                videoPlayer.src = objectUrl;
             } else {
-                // 금고에 없음 -> 다운로드(1회 비용) 후 저장
-                videoTitle.textContent = "📥 금고로 다운로드 중... (1회만 소모)";
-                const resolvedUrl = storagePath
-                    ? await storage.ref(storagePath).getDownloadURL()
-                    : fileUrl;
-                if (!resolvedUrl) {
-                    throw new Error('재생 가능한 파일 경로를 찾지 못했습니다.');
-                }
-                const response = await fetch(resolvedUrl);
-                const blob = await response.blob();
-                if (cacheKey) {
-                    await saveVideoToCache(cacheKey, blob);
-                }
-                
-                videoTitle.textContent = "🔒 저장 완료! 이제 평생 무료";
-                videoPlayer.src = URL.createObjectURL(blob);
-            }
-            
-            videoPlayer.play();
-            videoPlayer.loop = true;
+                videoTitle.textContent = '동영상 준비 중...';
+                videoPlayer.src = resolvedUrl;
 
+                if (cacheKey) {
+                    cacheSecretVideoInBackground(cacheKey, resolvedUrl).catch(error => {
+                        console.warn('비밀 동영상 캐시 저장 실패:', error);
+                    });
+                }
+            }
+
+            await videoPlayer.play();
+            videoPlayer.loop = true;
+            videoTitle.textContent = fileName;
         } catch (error) {
             console.error("재생 오류:", error);
-            videoTitle.textContent = fileName;
-            videoPlayer.src = fileUrl || ""; // 오류나면 기존 링크 fallback
+
+            if (resolvedUrl && videoPlayer.src !== resolvedUrl) {
+                try {
+                    resetVideoPlayerSource(videoPlayer);
+                    videoPlayer.src = resolvedUrl;
+                    await videoPlayer.play();
+                    videoPlayer.loop = true;
+                    videoTitle.textContent = fileName;
+                    showAlert('캐시 재생에 실패해 직접 스트리밍으로 전환했습니다.');
+                    return;
+                } catch (fallbackError) {
+                    console.error('스트리밍 폴백 실패:', fallbackError);
+                }
+            }
+
+            videoTitle.textContent = '재생 실패';
+            showAlert('이 동영상은 네트워크 오류이거나 현재 브라우저에서 지원하지 않는 형식입니다.');
         }
 
         // 제스처 및 키보드 이벤트 복구
@@ -2525,8 +2604,7 @@
         // 닫기 버튼 이벤트
         const closeBtn = videoModal.querySelector('.modal-close-btn');
         closeBtn.onclick = () => {
-            videoPlayer.pause();
-            videoPlayer.src = "";
+            resetVideoPlayerSource(videoPlayer);
             videoModal.style.display = 'none';
         };
     }
