@@ -28,8 +28,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/search/jump-to-line.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/pulltorefreshjs@0.1.22/dist/index.css">
-    <script src="https://unpkg.com/pulltorefreshjs@0.1.22/dist/index.umd.js"></script>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -60,6 +58,7 @@
         body {
             height: 100%;
             overflow: hidden;
+            overscroll-behavior: none;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -349,6 +348,8 @@
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
             flex-grow: 1;
             padding-right: 10px;
         }
@@ -2680,15 +2681,6 @@
                 }
             });
             addEventListeners();
-            // ✨ '내려서 새로고침' 기능 초기화
-            PullToRefresh.init({
-                mainElement: '.list-column',
-                triggerElement: '.list-column',
-                onRefresh: function (done) {
-                    loadItemsFromFirebase();
-                    done();
-                }
-            });
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('service-worker.js')
