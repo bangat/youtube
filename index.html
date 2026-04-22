@@ -429,6 +429,89 @@
         .delete-btn:hover {
             color: var(--danger-color);
         }
+        .selection-actions {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding: 10px 12px;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .list-column.selection-mode .selection-actions {
+            display: flex;
+        }
+        .selection-count {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-text);
+        }
+        .selection-actions button {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--primary-text);
+            background-color: var(--surface-active);
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .selection-actions button:disabled {
+            color: var(--disabled-text);
+            background-color: var(--disabled-bg);
+            cursor: not-allowed;
+        }
+        .selection-delete-btn {
+            background-color: var(--danger-color) !important;
+            border-color: var(--danger-color) !important;
+            color: white !important;
+        }
+        .selection-check {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            flex: 0 0 26px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            color: transparent;
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1;
+            user-select: none;
+        }
+        .list-column.selection-mode .selection-check {
+            display: flex;
+        }
+        .list-column.selection-mode .delete-btn {
+            display: none;
+        }
+        .list-column.selection-mode #migrateBtn,
+        .list-column.selection-mode #clearAllBtn {
+            display: none;
+        }
+        .list-column.selection-mode .item-date {
+            right: 15px;
+        }
+        .list-item.selected {
+            background-color: var(--drop-active-bg);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+        .list-item.selected .selection-check {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+        .list-item {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+        }
         .pin-indicator {
             position: absolute;
             bottom: -5px;
@@ -1039,6 +1122,11 @@
         <button id="clearAllBtn">모두 지우기</button>
     </div>
 </div>
+            <div id="selectionActions" class="selection-actions">
+                <span id="selectionCount" class="selection-count">0개 선택</span>
+                <button id="deleteSelectedBtn" class="selection-delete-btn" type="button">선택 삭제</button>
+                <button id="cancelSelectionBtn" class="selection-cancel-btn" type="button">취소</button>
+            </div>
             <div class="list-filter-tabs">
                 <button class="list-filter-tab active" data-filter="all">전체</button>
                 <button class="list-filter-tab" data-filter="link">링크</button>
@@ -1180,6 +1268,11 @@
         const tabButtons = document.querySelectorAll('.tab-btn');
         const saveBtn = document.getElementById('saveBtn');
         const listContainer = document.getElementById('listContainer');
+        const listColumn = document.querySelector('.list-column');
+        const selectionActions = document.getElementById('selectionActions');
+        const selectionCount = document.getElementById('selectionCount');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const cancelSelectionBtn = document.getElementById('cancelSelectionBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
         const modal = document.getElementById('modal');
         const modalClose = modal.querySelector('.modal-close-btn');
@@ -1277,6 +1370,13 @@
         let savedItems = [];
         let currentItemInModal = null;
         let currentListFilter = 'all';
+        const LIST_LONG_PRESS_MS = 550;
+        let selectedItemIds = new Set();
+        let listSelectionMode = false;
+        let listLongPressTimer = null;
+        let listLongPressStart = null;
+        let listLongPressFired = false;
+        let listSortable = null;
         let tapCounter = 0;
         let tapTimer = null;
         // Utility Functions
@@ -1644,7 +1744,152 @@
                 renderList();
             }, (error) => console.error("Firebase 데이터 로드 오류:", error));
         }
+        function syncSelectedItemsWithSavedItems() {
+            const availableIds = new Set(savedItems.map(item => item.id));
+            selectedItemIds = new Set([...selectedItemIds].filter(id => availableIds.has(id)));
+            if (selectedItemIds.size === 0) {
+                listSelectionMode = false;
+            }
+        }
+        function updateSelectionUi() {
+            const selectedTotal = selectedItemIds.size;
+            if (listColumn) {
+                listColumn.classList.toggle('selection-mode', listSelectionMode);
+            }
+            if (selectionActions) {
+                selectionActions.setAttribute('aria-hidden', String(!listSelectionMode));
+            }
+            if (selectionCount) {
+                selectionCount.textContent = `${selectedTotal}개 선택`;
+            }
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.disabled = selectedTotal === 0;
+            }
+            if (listSortable) {
+                listSortable.option('disabled', listSelectionMode);
+            }
+            listContainer.querySelectorAll('.list-item').forEach(itemEl => {
+                itemEl.classList.toggle('selected', selectedItemIds.has(itemEl.dataset.id));
+            });
+        }
+        function setListSelectionMode(enabled) {
+            listSelectionMode = enabled;
+            if (!enabled) {
+                selectedItemIds.clear();
+            }
+            updateSelectionUi();
+        }
+        function toggleSelectedItem(id, forceSelected) {
+            if (!id) return;
+            if (!listSelectionMode) {
+                listSelectionMode = true;
+            }
+            const shouldSelect = typeof forceSelected === 'boolean' ? forceSelected : !selectedItemIds.has(id);
+            if (shouldSelect) {
+                selectedItemIds.add(id);
+            } else {
+                selectedItemIds.delete(id);
+            }
+            if (selectedItemIds.size === 0) {
+                setListSelectionMode(false);
+            } else {
+                updateSelectionUi();
+            }
+        }
+        function clearListLongPressTimer() {
+            if (listLongPressTimer) {
+                clearTimeout(listLongPressTimer);
+            }
+            listLongPressTimer = null;
+            listLongPressStart = null;
+        }
+        function handleListLongPressStart(e) {
+            if (listSelectionMode) return;
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            const listItem = e.target.closest('.list-item');
+            if (!listItem || e.target.closest('.delete-btn')) return;
+
+            clearListLongPressTimer();
+            listLongPressStart = {
+                id: listItem.dataset.id,
+                pointerId: e.pointerId,
+                x: e.clientX,
+                y: e.clientY
+            };
+            listLongPressTimer = setTimeout(() => {
+                const id = listLongPressStart && listLongPressStart.id;
+                clearListLongPressTimer();
+                listLongPressFired = true;
+                toggleSelectedItem(id, true);
+                if (navigator.vibrate) {
+                    navigator.vibrate(15);
+                }
+            }, LIST_LONG_PRESS_MS);
+        }
+        function handleListLongPressMove(e) {
+            if (!listLongPressTimer || !listLongPressStart || e.pointerId !== listLongPressStart.pointerId) return;
+            const moveX = Math.abs(e.clientX - listLongPressStart.x);
+            const moveY = Math.abs(e.clientY - listLongPressStart.y);
+            if (moveX > 8 || moveY > 8) {
+                clearListLongPressTimer();
+            }
+        }
+        function handleListLongPressEnd() {
+            clearListLongPressTimer();
+            if (listLongPressFired) {
+                setTimeout(() => {
+                    listLongPressFired = false;
+                }, 500);
+            }
+        }
+        async function deleteStoredFileForItem(item) {
+            if (!item || item.type !== 'file') return;
+            if (item.storageProvider === 'local-agent' && item.localAgentFileId) {
+                await deleteLocalAgentFile(item);
+                return;
+            }
+            if (item.storagePath) {
+                try {
+                    await storage.ref(item.storagePath).delete();
+                } catch (err) {
+                    console.warn('Storage 파일 삭제 실패:', err);
+                }
+            }
+        }
+        function deleteSingleItem(item) {
+            if (!item) return;
+            itemsRef.child(item.id).remove().then(() => {
+                deleteStoredFileForItem(item);
+            }).catch(err => showAlert('삭제 실패: ' + err.message));
+        }
+        function deleteItemsByIds(ids) {
+            const itemsToDelete = ids
+                .map(id => savedItems.find(item => item.id === id))
+                .filter(Boolean);
+            if (itemsToDelete.length === 0) {
+                setListSelectionMode(false);
+                return;
+            }
+
+            const updates = {};
+            itemsToDelete.forEach(item => {
+                updates[`/${item.id}`] = null;
+            });
+
+            itemsRef.update(updates).then(() => {
+                setListSelectionMode(false);
+                Promise.allSettled(itemsToDelete.map(deleteStoredFileForItem));
+            }).catch(err => showAlert('선택 삭제 실패: ' + err.message));
+        }
+        function deleteSelectedItems() {
+            const ids = [...selectedItemIds];
+            if (ids.length === 0) return;
+            showConfirmModal(`${ids.length}개 항목을 삭제하시겠습니까?`, () => {
+                deleteItemsByIds(ids);
+            });
+        }
         function renderList() {
+            syncSelectedItemsWithSavedItems();
             listContainer.innerHTML = '';
             const sortedItems = savedItems.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
@@ -1668,6 +1913,9 @@
                 if (item.isPinned) {
                     itemEl.classList.add('pinned');
                 }
+                if (selectedItemIds.has(item.id)) {
+                    itemEl.classList.add('selected');
+                }
                 itemEl.dataset.id = item.id;
                 let itemContentHTML = '';
                 if (item.type === 'text' || item.type === 'html' || item.type === 'link') {
@@ -1678,6 +1926,7 @@
                     itemContentHTML = `<div class="item-details"><div class="item-title">${item.title}</div><div class="item-preview">${fileNamePreview} (${formatFileSize(item.fileSize)})</div></div>`;
                 }
                 itemEl.innerHTML = `
+                <span class="selection-check" aria-hidden="true">&#10003;</span>
                 <div class="item-icon">
                     ${icon}
                     ${isHtmlItem ? '<span class="html-badge">&lt;/&gt;</span>' : ''}
@@ -1689,6 +1938,7 @@
             `;
                 listContainer.appendChild(itemEl);
             });
+            updateSelectionUi();
         }
         function openModal(id) {
             currentItemInModal = savedItems.find(i => i.id === id);
@@ -2114,29 +2364,40 @@
             });
             searchBtn.addEventListener('click', () => { htmlEditor.execCommand("findPersistent"); });
             htmlPreviewModal.querySelector('.modal-close-btn').addEventListener('click', closeHtmlPreviewModal);
+            listContainer.addEventListener('pointerdown', handleListLongPressStart);
+            listContainer.addEventListener('pointermove', handleListLongPressMove);
+            listContainer.addEventListener('pointerup', handleListLongPressEnd);
+            listContainer.addEventListener('pointercancel', handleListLongPressEnd);
+            listContainer.addEventListener('pointerleave', handleListLongPressEnd);
+            listContainer.addEventListener('contextmenu', (e) => {
+                if (listSelectionMode && e.target.closest('.list-item')) {
+                    e.preventDefault();
+                }
+            });
             listContainer.addEventListener('click', (e) => {
                 const listItem = e.target.closest('.list-item');
                 if (!listItem) return;
+                if (listLongPressFired) {
+                    e.preventDefault();
+                    listLongPressFired = false;
+                    return;
+                }
                 const id = listItem.dataset.id;
                 const item = savedItems.find(i => i.id === id);
                 if (!item) return;
+                if (listSelectionMode) {
+                    toggleSelectedItem(id);
+                    return;
+                }
                 if (e.target.closest('.item-icon')) {
                     const newPinnedState = !item.isPinned;
                     itemsRef.child(id).update({ isPinned: newPinnedState })
                         .catch(err => showAlert('핀 상태 변경 실패: ' + err.message));
                     return;
                 }
-                if (e.target.classList.contains('delete-btn')) {
+                if (e.target.closest('.delete-btn')) {
                     showConfirmModal('정말로 이 항목을 삭제하시겠습니까?', () => {
-                        itemsRef.child(id).remove().then(() => {
-                            if (item.type === 'file') {
-                                if (item.storageProvider === 'local-agent' && item.localAgentFileId) {
-                                    deleteLocalAgentFile(item);
-                                } else if (item.storagePath) {
-                                    storage.ref(item.storagePath).delete().catch(err => console.warn('Storage 파일 삭제 실패:', err));
-                                }
-                            }
-                        }).catch(err => showAlert('삭제 실패: ' + err.message));
+                        deleteSingleItem(item);
                     });
                     return;
                 }
@@ -2147,6 +2408,13 @@
                 }
             });
             clearAllBtn.addEventListener('click', () => { showConfirmModal('모든 항목이 삭제됩니다. 계속하시겠습니까?', () => { itemsRef.remove().catch(err => showAlert('모두 지우기 실패: ' + err.message)); }); });
+            deleteSelectedBtn.addEventListener('click', deleteSelectedItems);
+            cancelSelectionBtn.addEventListener('click', () => setListSelectionMode(false));
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && listSelectionMode) {
+                    setListSelectionMode(false);
+                }
+            });
             [titleInput, textInput, linkInput].forEach(el => el.addEventListener('input', updateSaveButtonState));
             fileInput.addEventListener('change', () => { updateSaveButtonState(); dropZoneText.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : '드래그 또는 클릭'; });
             dropZone.addEventListener('click', () => fileInput.click());
@@ -2159,6 +2427,7 @@
             window.addEventListener('popstate', (event) => { if (modal.style.display === 'flex') { closeModal(); } });
             listFilterTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
+                    setListSelectionMode(false);
                     listFilterTabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
                     currentListFilter = tab.dataset.filter;
@@ -2352,7 +2621,7 @@
                 }
                 loadItemsFromFirebase();
             });
-            new Sortable(listContainer, {
+            listSortable = new Sortable(listContainer, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 delay: 1000,
