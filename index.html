@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="/youtube/icons/icon-192x192.png">
-    <link rel="manifest" href="/youtube/manifest.json">
+    <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
+    <link rel="manifest" href="/manifest.json">
     <title>Clould Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
     <link rel="stylesheet"
@@ -32,14 +32,24 @@
     <script src="https://unpkg.com/pulltorefreshjs@0.1.22/dist/index.umd.js"></script>
     <style>
         :root {
-            --bg-color: #f0f2f5;
-            --surface-color: #ffffff;
-            --sidebar-color: #f7f8fa;
-            --primary-text: #050505;
-            --secondary-text: #65676b;
-            --accent-color: #1b74e4;
-            --border-color: #dddfe2;
-            --shadow-color: rgba(0, 0, 0, 0.1);
+            --bg-color: #0f1115;
+            --surface-color: #181c22;
+            --sidebar-color: #141820;
+            --primary-text: #f4f7fb;
+            --secondary-text: #aab3c2;
+            --accent-color: #6aa6ff;
+            --border-color: #303744;
+            --shadow-color: rgba(0, 0, 0, 0.45);
+            --surface-hover: #222832;
+            --surface-active: #111827;
+            --danger-color: #ff5c7a;
+            --disabled-bg: #30343b;
+            --disabled-text: #7c8594;
+            --pinned-bg: #272313;
+            --pinned-border: #d6a431;
+            --drop-active-bg: #10243f;
+            --ghost-bg: #17324a;
+            --focus-ring: rgba(106, 166, 255, 0.28);
         }
         * {
             margin: 0;
@@ -55,6 +65,24 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--primary-text);
+            color-scheme: dark;
+        }
+        ::selection {
+            background: var(--focus-ring);
+        }
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-text);
         }
         .app-container {
             display: flex;
@@ -117,7 +145,7 @@
             font-weight: 600;
         }
         #clearAllBtn:hover {
-            color: #e02c4f;
+            color: var(--danger-color);
         }
         h2 {
             font-size: 20px;
@@ -129,7 +157,7 @@
             background-color: var(--surface-color);
             border-radius: 12px;
             padding: 6px;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
             flex-shrink: 0;
         }
         .tab-btn {
@@ -145,11 +173,11 @@
             transition: background-color 0.2s, box-shadow 0.2s;
         }
         .tab-btn:hover {
-            background-color: rgba(0, 0, 0, 0.03);
+            background-color: rgba(255, 255, 255, 0.06);
         }
         .tab-btn.active {
             color: var(--accent-color);
-            background-color: var(--bg-color);
+            background-color: var(--surface-active);
             box-shadow: 0 1px 3px var(--shadow-color);
         }
         .input-field {
@@ -160,6 +188,16 @@
             font-size: 15px;
             margin-bottom: 15px;
             background-color: var(--surface-color);
+            color: var(--primary-text);
+            caret-color: var(--accent-color);
+        }
+        .input-field::placeholder {
+            color: var(--secondary-text);
+            opacity: 0.75;
+        }
+        .input-field:focus {
+            outline: 2px solid var(--focus-ring);
+            border-color: var(--accent-color);
         }
         #saveBtn {
             width: 100%;
@@ -176,11 +214,11 @@
             flex-shrink: 0;
         }
         #saveBtn:hover {
-            background-color: #1868cd;
+            background-color: #4d91f0;
         }
         #saveBtn:disabled {
-            background-color: #e0e0e0;
-            color: #a0a0a0;
+            background-color: var(--disabled-bg);
+            color: var(--disabled-text);
             cursor: not-allowed;
         }
         #textInput-container,
@@ -219,13 +257,14 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             background-color: var(--surface-color);
+            color: var(--primary-text);
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
         }
         .html-action-btn:hover {
-            background-color: #e9ebee;
+            background-color: var(--surface-hover);
         }
         #runHtmlBtn {
             background-color: var(--accent-color);
@@ -233,7 +272,7 @@
             border-color: var(--accent-color);
         }
         #runHtmlBtn:hover {
-            background-color: #1868cd;
+            background-color: #4d91f0;
         }
         .drop-zone {
             position: relative;
@@ -248,7 +287,7 @@
             overflow: hidden;
         }
         .drop-zone.drag-over {
-            background-color: #e8f0fe;
+            background-color: var(--drop-active-bg);
             border-color: var(--accent-color);
         }
         #fileInput {
@@ -285,8 +324,11 @@
             margin-top: 10px;
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
+            overflow-x: auto;
+            scrollbar-width: thin;
         }
         .list-filter-tab {
+            flex: 0 0 auto;
             padding: 10px 15px;
             border: none;
             background: none;
@@ -295,6 +337,7 @@
             cursor: pointer;
             position: relative;
             border-bottom: 3px solid transparent;
+            white-space: nowrap;
         }
         .list-filter-tab.active {
             color: var(--accent-color);
@@ -318,6 +361,7 @@
             cursor: pointer;
             transition: background-color .2s, box-shadow 0.2s, border-color 0.2s;
             background-color: var(--surface-color);
+            border: 1px solid transparent;
             box-shadow: 0 1px 2px var(--shadow-color);
             position: relative;
         }
@@ -334,7 +378,7 @@
             position: absolute;
             bottom: -5px;
             right: -8px;
-            background-color: #e02c4f;
+            background-color: var(--danger-color);
             color: white;
             font-size: 10px;
             font-weight: bold;
@@ -383,7 +427,7 @@
             margin: 0;
         }
         .delete-btn:hover {
-            color: #e02c4f;
+            color: var(--danger-color);
         }
         .pin-indicator {
             position: absolute;
@@ -398,15 +442,15 @@
             align-items: center;
             justify-content: center;
             line-height: 1;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
         }
         .list-item.pinned {
-            background-color: #fdfaf0;
-            border-left: 4px solid #f9c74f;
+            background-color: var(--pinned-bg);
+            border-left: 4px solid var(--pinned-border);
         }
         .sortable-ghost {
             opacity: 0.4;
-            background: #c8ebfb;
+            background: var(--ghost-bg);
         }
         .modal-overlay {
             position: fixed;
@@ -414,7 +458,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.74);
             display: none;
             justify-content: center;
             align-items: center;
@@ -422,6 +466,8 @@
         }
         .modal-content {
             background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px var(--shadow-color);
             padding: 24px;
             border-radius: 12px;
             width: 95%;
@@ -451,7 +497,7 @@
             cursor: pointer;
         }
         .modal-close-btn:hover {
-            background-color: #e4e6e9;
+            background-color: var(--surface-hover);
         }
         #modalBody {
             flex-grow: 1;
@@ -478,6 +524,9 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+        }
+        .modal-btn:hover {
+            background-color: var(--surface-hover);
         }
         #modalActionBtn {
             background-color: var(--accent-color);
@@ -514,7 +563,7 @@
         }
         #htmlPreviewModal .modal-body {
             padding: 0;
-            background: #fff;
+            background: var(--bg-color);
             flex-grow: 1;
         }
         #htmlPreviewModal .modal-body iframe {
@@ -558,6 +607,42 @@
             flex-grow: 1;
             min-height: 0;
         }
+        #secretModal .modal-content {
+            max-width: 760px;
+            background: linear-gradient(180deg, #1a1f27 0%, var(--surface-color) 100%);
+        }
+        #secretModalBody h4 {
+            margin-bottom: 12px;
+            color: var(--primary-text);
+            font-size: 15px;
+        }
+        #secretUploadInput::file-selector-button {
+            margin-right: 12px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--surface-hover);
+            color: var(--primary-text);
+            cursor: pointer;
+        }
+        #secretUploadInput {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        #secretUploadBtn {
+            flex: 0 0 110px !important;
+            width: 110px !important;
+            min-width: 110px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #secretUploadBtn:disabled {
+            background-color: var(--disabled-bg);
+            color: var(--disabled-text);
+            cursor: not-allowed;
+        }
         .secret-list-item {
             display: flex;
             justify-content: space-between;
@@ -565,14 +650,32 @@
             gap: 15px;
             padding: 15px;
             background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             box-shadow: 0 1px 2px var(--shadow-color);
             cursor: pointer;
         }
         .secret-list-item:hover {
-            background-color: #e9ebee;
+            background-color: var(--surface-hover);
+        }
+        .secret-list-item.pinned {
+            background-color: var(--pinned-bg);
+            border-left: 4px solid var(--pinned-border);
+        }
+        .secret-item-icon {
+            position: relative;
+            width: 32px;
+            min-width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background-color: var(--surface-active);
+            color: var(--accent-color);
         }
         .secret-list-item-title {
+            flex: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -587,7 +690,7 @@
             padding: 0 5px;
         }
         .secret-delete-btn:hover {
-            color: #e02c4f;
+            color: var(--danger-color);
         }
         #videoPlayerModal .modal-content {
             width: 95vw;
@@ -696,6 +799,7 @@
             transition: background-color 0.2s;
             border: 1px solid var(--border-color);
             background-color: var(--surface-color);
+            color: var(--primary-text);
         }
         /* Google 로그인 버튼 전용 스타일 */
         #loginBtn {
@@ -726,6 +830,24 @@
             background-color: var(--sidebar-color);
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
+        }
+        #migrateBtn {
+            background-color: var(--surface-color) !important;
+            border-color: var(--border-color) !important;
+            color: var(--primary-text) !important;
+        }
+        #migrateBtn:hover {
+            background-color: var(--surface-hover) !important;
+        }
+        .CodeMirror-dialog {
+            background: var(--surface-color);
+            color: var(--primary-text);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .CodeMirror-dialog input {
+            background: var(--bg-color);
+            color: var(--primary-text);
+            border: 1px solid var(--border-color);
         }
         /* ✨ 라인 구간 선택 시작 지점 하이라이트 스타일 */
         .cm-start-line {
@@ -919,8 +1041,10 @@
 </div>
             <div class="list-filter-tabs">
                 <button class="list-filter-tab active" data-filter="all">전체</button>
-                <button class="list-filter-tab" data-filter="document">문서</button>
+                <button class="list-filter-tab" data-filter="link">링크</button>
+                <button class="list-filter-tab" data-filter="file">파일</button>
                 <button class="list-filter-tab" data-filter="photo">사진</button>
+                <button class="list-filter-tab" data-filter="document">문서</button>
                 <button class="list-filter-tab" data-filter="vehicle">차량</button>
             </div>
             <div id="listContainer" class="list-container"></div>
@@ -1003,6 +1127,7 @@
    <video id="videoPlayer" 
        controls 
        playsinline 
+       muted
        preload="auto" 
        style="width: 100%; max-height: 85vh; background: #000;">
 </video>
@@ -1163,6 +1288,19 @@
         function formatTimestamp(date) { return new Intl.DateTimeFormat('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }
         function formatFileSize(bytes) { if (bytes === 0) return '0 Bytes'; const k = 1024; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i]; }
         function isHtml(text) { return text.trim().startsWith('<') && text.trim().endsWith('>'); }
+        function getFileExtension(fileName) {
+            const match = String(fileName || '').trim().match(/\.([a-z0-9]{1,12})$/i);
+            return match ? match[1].toLowerCase() : '';
+        }
+        function isLinkItem(item) {
+            const content = String(item.content || '').trim();
+            return item.type === 'link' || /^https?:\/\/\S+$/i.test(content);
+        }
+        function isPhotoItem(item) {
+            if (item.type !== 'file') return false;
+            const extension = getFileExtension(item.fileName);
+            return item.isImage === true || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif', 'svg'].includes(extension);
+        }
         // ✨ 액션 모달을 보여주고 상태를 초기화하는 함수들
         function showEditorActionModal(x, y) {
             const modal = editorActionModal;
@@ -1193,15 +1331,13 @@
             selectionInProgress = false;
         }
        function getCategoryForItem(item) {
-            // 1. DB에 이미 'vehicle'이라고 저장된 놈은 무조건 차량 탭으로 보냄
             if (item.category === 'vehicle') return 'vehicle';
-
-            // 2. 그 외 기존 로직
-            if (item.type === 'text' || item.type === 'html' || item.type === 'link') return 'document';
+            if (isLinkItem(item)) return 'link';
             if (item.type === 'file') {
-                if (item.isImage) return 'photo';
-                return 'document';
+                if (isPhotoItem(item)) return 'photo';
+                return 'file';
             }
+            if (item.type === 'text' || item.type === 'html') return 'document';
             return 'document';
         }
 
@@ -1210,7 +1346,7 @@
             if (item.category === 'vehicle') return '🚗';
 
             if (item.type === 'link') return '🔗';
-            const category = item.category || getCategoryForItem(item);
+            const category = getCategoryForItem(item);
             if (category === 'photo') return '🖼️';
             // if (category === 'music') return '🎵'; // 삭제됨
             if (item.type === 'file') {
@@ -1265,6 +1401,8 @@
             const container = document.getElementById('videoPlayerContainer');
 
             videoTitle.textContent = fileName;
+            setVideoPlayerMutedByDefault(videoPlayer);
+            setupVideoMediaSessionControls(videoPlayer, fileName);
             videoPlayer.src = fileUrl;
             
             // ✨ [설정] 반복 재생 & 백그라운드 재생 지원
@@ -1345,6 +1483,7 @@
 
             const closeModalAndExitFullscreen = () => {
                 videoPlayer.pause();
+                clearVideoMediaSessionControls();
                 videoPlayer.src = "";
                 videoModal.style.display = 'none';
                 if (document.fullscreenElement && document.exitFullscreen) {
@@ -1519,7 +1658,7 @@
             });
             const filteredItems = sortedItems.filter(item => {
                 if (currentListFilter === 'all') return true;
-                return (item.category || getCategoryForItem(item)) === currentListFilter;
+                return getCategoryForItem(item) === currentListFilter;
             });
             filteredItems.forEach(item => {
                 const isHtmlItem = item.type === 'html' || (item.type === 'text' && isHtml(item.content));
@@ -1771,7 +1910,7 @@
                 const urlRegex = /^(http|https):\/\/[^ "]+$/;
                 if (urlRegex.test(content)) {
                     newItem.type = 'link';
-                    newItem.category = 'document';
+                    newItem.category = 'link';
                 } else if (content) {
                     newItem.type = 'text';
                     newItem.category = 'document';
@@ -2436,6 +2575,57 @@
         return fileUrl || '';
     }
 
+    function setVideoPlayerMutedByDefault(videoPlayer) {
+        videoPlayer.muted = true;
+        videoPlayer.defaultMuted = true;
+        videoPlayer.setAttribute('muted', '');
+    }
+
+    function seekVideoBy(videoPlayer, seconds) {
+        const duration = Number.isFinite(videoPlayer.duration) ? videoPlayer.duration : Infinity;
+        const nextTime = Math.min(Math.max(videoPlayer.currentTime + seconds, 0), duration);
+        videoPlayer.currentTime = nextTime;
+    }
+
+    function setMediaSessionAction(action, handler) {
+        if (!('mediaSession' in navigator)) return;
+        try {
+            navigator.mediaSession.setActionHandler(action, handler);
+        } catch (error) {
+            console.debug(`Media Session action not supported: ${action}`, error);
+        }
+    }
+
+    function setupVideoMediaSessionControls(videoPlayer, title) {
+        if (!('mediaSession' in navigator)) return;
+        if ('MediaMetadata' in window) {
+            navigator.mediaSession.metadata = new MediaMetadata({ title: title || '동영상 재생' });
+        }
+
+        setMediaSessionAction('play', () => videoPlayer.play());
+        setMediaSessionAction('pause', () => videoPlayer.pause());
+        setMediaSessionAction('seekbackward', (details) => seekVideoBy(videoPlayer, -(details.seekOffset || 10)));
+        setMediaSessionAction('seekforward', (details) => seekVideoBy(videoPlayer, details.seekOffset || 10));
+        setMediaSessionAction('seekto', (details) => {
+            if (typeof details.seekTime !== 'number') return;
+            if (details.fastSeek && typeof videoPlayer.fastSeek === 'function') {
+                videoPlayer.fastSeek(details.seekTime);
+            } else {
+                videoPlayer.currentTime = details.seekTime;
+            }
+        });
+        setMediaSessionAction('previoustrack', () => seekVideoBy(videoPlayer, -10));
+        setMediaSessionAction('nexttrack', () => seekVideoBy(videoPlayer, 10));
+    }
+
+    function clearVideoMediaSessionControls() {
+        if (!('mediaSession' in navigator)) return;
+        ['play', 'pause', 'seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack'].forEach(action => {
+            setMediaSessionAction(action, null);
+        });
+        navigator.mediaSession.metadata = null;
+    }
+
     function resetVideoPlayerSource(videoPlayer) {
         if (videoPlayer.dataset.objectUrl) {
             URL.revokeObjectURL(videoPlayer.dataset.objectUrl);
@@ -2443,6 +2633,8 @@
         }
 
         videoPlayer.pause();
+        clearVideoMediaSessionControls();
+        setVideoPlayerMutedByDefault(videoPlayer);
         videoPlayer.removeAttribute('src');
         videoPlayer.load();
     }
@@ -2504,6 +2696,8 @@
         videoModal.style.display = 'flex';
         videoTitle.textContent = "비밀 금고 확인 중...🕵️";
         resetVideoPlayerSource(videoPlayer);
+        setVideoPlayerMutedByDefault(videoPlayer);
+        setupVideoMediaSessionControls(videoPlayer, fileName);
         videoPlayer.onerror = () => {
             showAlert(getVideoPlaybackErrorMessage(videoPlayer));
         };
@@ -2554,6 +2748,8 @@
             if (resolvedUrl && videoPlayer.src !== resolvedUrl) {
                 try {
                     resetVideoPlayerSource(videoPlayer);
+                    setVideoPlayerMutedByDefault(videoPlayer);
+                    setupVideoMediaSessionControls(videoPlayer, fileName);
                     videoPlayer.src = resolvedUrl;
                     await videoPlayer.play();
                     videoPlayer.loop = true;

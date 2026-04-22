@@ -1,8 +1,8 @@
-const CACHE_NAME = 'cloudbox-cache-v3';
+const CACHE_NAME = 'cloudbox-cache-v8';
 const STATIC_ASSETS = [
-    '/youtube/manifest.json',
-    '/youtube/icons/icon-192x192.png',
-    '/youtube/icons/icon-512x512.png'
+    '/manifest.json',
+    '/icons/icon-192x192.png',
+    '/icons/icon-512x512.png'
 ];
 
 function isFirebaseRequest(url) {
@@ -14,6 +14,8 @@ function isFirebaseRequest(url) {
 function isAppShellRequest(requestUrl, request) {
     const pathname = requestUrl.pathname;
     return request.mode === 'navigate'
+        || pathname === '/'
+        || pathname === '/index.html'
         || pathname === '/youtube/'
         || pathname === '/youtube/index.html'
         || pathname.endsWith('/index.html')
