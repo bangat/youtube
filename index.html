@@ -1252,6 +1252,7 @@
         const ADMIN_UID = 'WZGm0K9WdaUl6J8hEjMYcHy5Hd42';
         const LOCAL_UPLOAD_AGENT_PORTS = [48621, 48622, 48623, 48624, 48625, 48626, 48627, 48628, 48629, 48630];
         const LOCAL_UPLOAD_AGENT_TIMEOUT_MS = 5000;
+        const DIRECT_DOWNLOAD_THRESHOLD_BYTES = 64 * 1024 * 1024;
         let localUploadAgentBase = null;
         // DOM Elements
         const modalDownloadHtmlBtn = document.getElementById('modalDownloadHtmlBtn');
@@ -1470,12 +1471,43 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
+        function isLargeFileDownload(item) {
+            return Number(item?.fileSize || 0) >= DIRECT_DOWNLOAD_THRESHOLD_BYTES;
+        }
+        function isLocalAgentDownload(item) {
+            if (!item?.fileUrl) return false;
+            if (item.storageProvider === 'local-agent' || item.localAgentFileId) return true;
+            try {
+                const url = new URL(item.fileUrl, window.location.href);
+                return (url.hostname === '127.0.0.1' || url.hostname === 'localhost') && url.pathname.includes('/api/files/');
+            } catch {
+                return false;
+            }
+        }
+        function triggerDirectDownload(url, fileName) {
+            const link = document.createElement('a');
+            link.href = url;
+            if (fileName) {
+                link.download = fileName;
+            }
+            link.target = '_blank';
+            link.rel = 'noopener';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
         async function downloadFile(item) {
             if (!item || !item.fileUrl) return;
             const originalButtonText = modalActionBtn.textContent;
             modalActionBtn.disabled = true;
             modalActionBtn.textContent = '준비 중...';
             try {
+                // 큰 파일은 브라우저가 직접 내려받도록 넘겨야 메모리 버퍼링으로 실패하지 않는다.
+                if (isLargeFileDownload(item) || isLocalAgentDownload(item)) {
+                    triggerDirectDownload(item.fileUrl, item.fileName || item.title || 'download');
+                    return;
+                }
+
                 const response = await fetch(item.fileUrl);
                 if (!response.ok) throw new Error('파일을 가져오는 데 실패했습니다.');
                 const blob = await response.blob();
